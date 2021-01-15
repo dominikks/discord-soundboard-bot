@@ -1,0 +1,27 @@
+:host {
+  // For the box shadow to appear
+  position: relative;
+  z-index: 1;
+}
+
+.app-title {
+  color: inherit;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.dropdown-menu {
+  display: none;
+}
+
+@media screen and (max-width: 850px) {
+  .dropdown-menu {
+    display: unset;
+  }
+
+  a.mat-button {
+    display: none;
+  }
+}

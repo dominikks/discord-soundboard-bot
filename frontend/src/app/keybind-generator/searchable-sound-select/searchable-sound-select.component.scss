@@ -1,0 +1,12 @@
+::ng-deep ngx-mat-select-search input {
+  color: white !important;
+}
+
+mat-select-trigger {
+  display: flex;
+  align-items: center;
+
+  mat-icon {
+    margin-right: 16px;
+  }
+}

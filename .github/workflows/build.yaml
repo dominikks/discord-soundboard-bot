@@ -1,0 +1,116 @@
+name: Build app
+
+on: push
+
+jobs:
+  compile-backend:
+    name: Compile backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          default: true
+
+      - name: Initialize cache
+        uses: Swatinem/rust-cache@v1
+        with:
+          working-directory: backend
+
+      - name: Compile
+        run: |
+          export BUILD_TIMESTAMP=$(git show -s --format=%ct "$GITHUB_SHA")
+          export BUILD_ID=${GITHUB_REF#refs/heads/}#$(git rev-parse --short "$GITHUB_SHA")
+          cargo build --release
+        working-directory: backend
+
+      - name: Archive binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: backend
+          path: backend/target/release/discord-soundboard-bot
+
+  compile-frontend:
+    name: Compile frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: frontend
+
+      - name: Archive binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: frontend
+          path: frontend/dist/discord-soundboard-bot/**
+
+  docker:
+    name: Build docker image
+    needs: [compile-backend, compile-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download frontend
+        uses: actions/download-artifact@v2
+        with:
+          name: frontend
+          path: frontend/dist/discord-soundboard-bot/
+
+      - name: Download backend
+        uses: actions/download-artifact@v2
+        with:
+          name: backend
+          path: backend/target/release/
+
+      - name: Docker meta
+        id: docker_meta
+        uses: crazy-max/ghaction-docker-meta@v1
+        with:
+          images: ghcr.io/dominikks/discord-soundboard-bot
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max

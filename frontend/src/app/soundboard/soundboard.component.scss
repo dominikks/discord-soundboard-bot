@@ -1,0 +1,86 @@
+$main-width: 1200px;
+
+.max-width {
+  margin: 0 auto;
+  max-width: $main-width;
+  width: 100%;
+}
+
+mat-toolbar {
+  height: auto;
+  min-height: 64px;
+
+  .toolbar-content-wrapper {
+    @extend .max-width;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    font-size: 14px;
+  }
+}
+
+mat-toolbar.title-row .toolbar-content-wrapper > * {
+  margin: 5px;
+}
+
+mat-toolbar.controls-row {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin-bottom: 16px;
+
+  .controls-left,
+  .controls-right {
+    margin: 0 10px;
+  }
+
+  .controls-right {
+    display: flex;
+  }
+
+  mat-form-field {
+    flex: 1;
+  }
+
+  .volume-slider-wrapper {
+    display: flex;
+    align-items: center;
+  }
+}
+
+::ng-deep mat-toolbar {
+  .mat-form-field-wrapper {
+    padding-bottom: 0;
+  }
+  .mat-button-toggle-checked .mat-button-toggle-focus-overlay {
+    border-bottom: 0;
+  }
+}
+
+main {
+  padding: 0 5px;
+
+  .loading-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .button-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    app-soundboard-button {
+      margin: 5px;
+      flex: 1 0 175px;
+      max-width: 300px;
+      height: 70px;
+    }
+  }
+}
+
+.invisible {
+  visibility: hidden;
+  user-select: none;
+}

@@ -1,0 +1,23 @@
+<mat-toolbar color="primary" class="mat-elevation-z8">
+  <a class="app-title" routerLink="/">📢 {{ apiService.appInfo.title }} {{ pageTitle }}</a>
+  <div class="spacer"></div>
+
+  <a mat-button routerLink="/"><mat-icon>speaker</mat-icon> Soundboard</a>
+  <a mat-button routerLink="/keybind-generator"><mat-icon>keyboard</mat-icon> Keybind Generator</a>
+  <a mat-button routerLink="/recorder"><mat-icon>voicemail</mat-icon> Sound Recorder</a>
+  <a mat-button *ngIf="apiService.appInfo.file_management_url" [href]="apiService.appInfo.file_management_url" target="_blank"
+    ><mat-icon>folder</mat-icon> Manage files</a
+  >
+
+  <div class="dropdown-menu">
+    <button mat-icon-button [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item routerLink="/"><mat-icon>speaker</mat-icon> Soundboard</button>
+      <button mat-menu-item routerLink="/keybind-generator"><mat-icon>keyboard</mat-icon> Keybind Generator</button>
+      <button mat-menu-item routerLink="/recorder"><mat-icon>voicemail</mat-icon> Sound Recorder</button>
+      <a mat-menu-item *ngIf="apiService.appInfo.file_management_url" [href]="apiService.appInfo.file_management_url" target="_blank"
+        ><mat-icon>folder</mat-icon> Manage files</a
+      >
+    </mat-menu>
+  </div>
+</mat-toolbar>

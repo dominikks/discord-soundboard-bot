@@ -1,0 +1,14 @@
+<footer>
+  <mat-icon>code</mat-icon>
+  <a href="https://github.com/dominikks/discord-soundboard-bot" target="_blank">
+    discord-soundboard-bot {{ apiService.appInfo.version }}
+    <ng-container *ngIf="apiService.appInfo.build_id">
+      &mdash;
+      {{ apiService.appInfo.build_id }}
+    </ng-container>
+    <ng-container *ngIf="apiService.appInfo.build_timestamp">
+      &mdash;
+      {{ apiService.appInfo.build_timestamp * 1000 | date: 'medium' }}
+    </ng-container>
+  </a>
+</footer>

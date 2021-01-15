@@ -1,0 +1,5 @@
+<ng-container [ngSwitch]="state">
+  <router-outlet *ngSwitchCase="'finished'"></router-outlet>
+  <div *ngSwitchCase="'loading'" class="center-wrapper"><mat-spinner [diameter]="56"></mat-spinner> Loading...</div>
+  <div *ngSwitchCase="'error'" class="center-wrapper"><mat-icon>error</mat-icon> Failed to load app information.</div>
+</ng-container>

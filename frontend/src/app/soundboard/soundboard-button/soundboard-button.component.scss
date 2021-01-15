@@ -1,0 +1,33 @@
+.wrapper {
+  height: 100%;
+  width: 100%;
+  padding: 0 4px;
+
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+
+  background-color: #424242;
+  transition: background-color 250ms;
+  border-radius: 5px;
+
+  user-select: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #393939;
+  }
+}
+
+.sound-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+.sound-source {
+  font-style: italic;
+  opacity: 0.25;
+}

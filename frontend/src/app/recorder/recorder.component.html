@@ -1,0 +1,108 @@
+<app-header pageTitle="Sound Recorder"></app-header>
+
+<mat-toolbar>
+  <div class="toolbar-content">
+    <mat-form-field appearance="outline">
+      <mat-label>Discord Server</mat-label>
+      <mat-select [ngModel]="settings.guildId$ | async" (ngModelChange)="settings.guildId$.next($event)">
+        <mat-option *ngFor="let guild of guilds$ | async" [value]="guild.id">{{ guild.name || guild.id }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="slider-container">
+      <mat-icon>volume_up</mat-icon>
+      <mat-slider
+        [value]="settings.localVolume$ | async"
+        (valueChange)="settings.localVolume$.next($event)"
+        color="primary"
+        min="0"
+        max="100"
+        thumbLabel
+      ></mat-slider>
+    </div>
+    <button mat-raised-button (click)="record$.next()"><mat-icon>voicemail</mat-icon> Record last 60s</button>
+    <button mat-icon-button (click)="reload()" matTooltip="Reload recordings"><mat-icon>refresh</mat-icon></button>
+  </div>
+</mat-toolbar>
+
+<div class="max-width">
+  <p
+    >The soundboard is continuously recording while it is connected to a voice channel. By pressing the button above or issuing the chat
+    command <code>~record</code>, the last 60s of recorded audio is saved.</p
+  >
+
+  <main>
+    <ng-container *ngIf="recordings$ | async as recordings; else loading">
+      <mat-accordion *ngIf="recordings.length > 0; else empty">
+        <mat-expansion-panel *ngFor="let recording of recordings" class="recording">
+          <mat-expansion-panel-header>
+            <mat-panel-title
+              timeago
+              [date]="recording.timestamp * 1000"
+              [matTooltip]="recording.timestamp * 1000 | date: 'medium'"
+            ></mat-panel-title>
+            <mat-panel-description>
+              {{ getUsernames(recording.users) }}, Duration {{ recording.length | number: '1.0-0' }}s
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <ng-template matExpansionPanelContent>
+            <mat-divider></mat-divider>
+            <div class="sound-channel-controls">
+              Select audio tracks
+              <mat-checkbox
+                *ngFor="let user of recording.users; let userIndex = index"
+                color="primary"
+                [(ngModel)]="recording.selected[userIndex]"
+                >{{ user.username }}</mat-checkbox
+              >
+            </div>
+            <div>
+              Trim <span class="text-muted">(in s)</span>
+              <ngx-slider
+                class="custom-range-slider"
+                [options]="{ floor: 0, ceil: recording.length, step: 0.1, hideLimitLabels: true }"
+                [(value)]="recording.start"
+                [(highValue)]="recording.end"
+              ></ngx-slider>
+            </div>
+            <mat-divider></mat-divider>
+            <div class="button-row">
+              <button mat-raised-button color="primary" (click)="downloadMix(recording)"><mat-icon>download</mat-icon> Download</button>
+              <button mat-raised-button *ngIf="isPlaying === recording; else notPlaying" (click)="stop()"
+                ><mat-icon>pause</mat-icon> Stop</button
+              >
+              <ng-template #notPlaying>
+                <button mat-raised-button (click)="play(recording)"><mat-icon>play_arrow</mat-icon> Play</button>
+              </ng-template>
+              <div class="filler"></div>
+              <button mat-button (click)="deleteRecording$.next(recording)"><mat-icon>delete</mat-icon> Delete</button>
+            </div>
+
+            <!-- Audio playback -->
+            <ng-container *ngIf="isPlaying === recording" waAudioContext>
+              <ng-container waGainNode #gainNode="AudioNode" [gain]="gain | async">
+                <ng-container waAudioDestinationNode></ng-container>
+              </ng-container>
+              <ng-container *ngFor="let user of recording.users; let userIndex = index">
+                <ng-container
+                  *ngIf="recording.selected[userIndex]"
+                  [buffer]="user.url"
+                  [waOutput]="gainNode"
+                  (ended)="stop()"
+                  waAudioBufferSourceNode
+                ></ng-container
+              ></ng-container>
+            </ng-container>
+          </ng-template>
+        </mat-expansion-panel>
+      </mat-accordion>
+      <ng-template #empty><p>No recordings present</p></ng-template>
+    </ng-container>
+
+    <ng-template #loading>
+      <div class="spinner-wrapper"><mat-spinner [diameter]="50"></mat-spinner></div>
+    </ng-template>
+  </main>
+
+  <app-footer></app-footer>
+</div>

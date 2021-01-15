@@ -1,0 +1,22 @@
+@import 'variables';
+
+.keybind-input {
+  width: 250px;
+  padding: 5px 10px;
+  border: 2px solid grey;
+  transition: border-color 0.2s;
+  border-radius: 5px;
+  user-select: none;
+
+  &:focus {
+    border-color: $primary;
+  }
+
+  &.invalid:not(:focus) {
+    border-color: $warn;
+  }
+}
+
+.placeholder {
+  opacity: 0.6;
+}

@@ -1,0 +1,6 @@
+<div class="keybind-input" tabindex="0" (keydown)="onKey($event)" [class.invalid]="keycombination.key === ''">
+  <span *ngIf="keycombination.key; else placeholder"
+    >{{ keycombination.isControl ? 'Strg+' : '' }}{{ keycombination.isAlt ? 'Alt+' : '' }}{{ keycombination.key }}</span
+  >
+  <ng-template #placeholder><span class="placeholder">Enter key combination</span></ng-template>
+</div>

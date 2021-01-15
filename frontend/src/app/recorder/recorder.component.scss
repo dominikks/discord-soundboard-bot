@@ -1,0 +1,124 @@
+@import 'variables';
+
+.max-width {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+mat-toolbar {
+  height: auto;
+  min-height: 64px;
+  font-size: 14px;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+
+  .toolbar-content {
+    @extend .max-width;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+
+    > * {
+      margin: 5px;
+    }
+  }
+
+  .slider-container {
+    display: flex;
+    align-items: center;
+  }
+}
+
+::ng-deep mat-toolbar {
+  .mat-form-field-wrapper {
+    padding-bottom: 0;
+  }
+}
+
+.text-muted {
+  opacity: 0.6;
+}
+
+p {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+main {
+  mat-checkbox {
+    margin-left: 2em;
+  }
+
+  mat-divider {
+    margin: 1em 0;
+
+    &:first-of-type {
+      margin-top: 0;
+    }
+  }
+
+  button:not(:last-child) {
+    margin-right: 1em;
+  }
+
+  .spinner-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .sound-channel-controls {
+    margin-bottom: 16px;
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+
+    .filler {
+      flex: 1;
+    }
+  }
+}
+
+::ng-deep {
+  mat-expansion-panel {
+    mat-expansion-panel-header > .mat-content {
+      justify-content: space-between;
+    }
+
+    .mat-content > mat-panel-title,
+    .mat-content > mat-panel-description {
+      flex: 0 0 auto;
+    }
+  }
+}
+
+::ng-deep .ngx-slider.custom-range-slider {
+  .ngx-slider-bar {
+    background: rgba(255, 255, 255, 0.3);
+    height: 2px;
+  }
+  .ngx-slider-selection {
+    background: $primary;
+  }
+
+  .ngx-slider-pointer {
+    width: 12px;
+    height: 12px;
+    top: auto; /* to remove the default positioning */
+    bottom: -3px;
+    background-color: $primary;
+    border-radius: 100%;
+  }
+
+  .ngx-slider-pointer:after {
+    display: none;
+  }
+
+  .ngx-slider-bubble {
+    bottom: 14px;
+    color: white;
+  }
+}

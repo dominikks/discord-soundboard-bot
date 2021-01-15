@@ -1,0 +1,27 @@
+@import '~@angular/material/theming';
+
+// Define the palettes for your theme using the Material Design palettes available in palette.scss
+// (imported above). For each palette, you can optionally specify a default, lighter, and darker
+// hue. Available color palettes: https://material.io/design/color/
+$soundboard-primary: mat-palette($mat-orange);
+$soundboard-accent: mat-palette($mat-light-blue);
+
+// The warn palette is optional (defaults to red).
+$soundboard-warn: mat-palette($mat-red);
+
+// Create the theme object. A theme consists of configurations for individual
+// theming systems such as "color" or "typography".
+$soundboard-theme: mat-dark-theme(
+  (
+    color: (
+      primary: $soundboard-primary,
+      accent: $soundboard-accent,
+      warn: $soundboard-warn,
+    ),
+  )
+);
+
+// Save the colors separately for easy access
+$primary: mat-color($soundboard-primary);
+$accent: mat-color($soundboard-accent);
+$warn: mat-color($soundboard-warn);
