@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Sound, SoundsService } from '../services/sounds.service';
 import { KeyCombination } from './keycombination-input/keycombination-input.component';
-import { pull, isEqual } from 'lodash-es';
+import { pull } from 'lodash-es';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { SettingsService } from '../services/settings.service';
 import { ApiService } from '../services/api.service';
-import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
-import { shareReplay, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { combineLatest, EMPTY, Subject } from 'rxjs';
+import { catchError, mergeMap, shareReplay, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { LoginService } from '../services/login.service';
 
 export type KeyCommand = Sound | 'stop' | 'record';
 
@@ -27,12 +28,12 @@ const STORAGE_KEY = 'keybinds';
 export class KeybindGeneratorComponent implements OnInit, OnDestroy {
   displayedColumns = ['dragDrop', 'keyCombination', 'discordServer', 'command', 'actions'];
 
-  guilds$ = this.apiService.guilds$;
+  user$ = this.apiService.user$;
   sounds$ = this.soundsService.sounds$;
   private _keybinds$ = new Subject<Keybind[]>();
   keybinds$ = this._keybinds$.asObservable().pipe(shareReplay());
 
-  onDestroy$ = new Subject<void>();
+  private onDestroy$ = new Subject<void>();
   loadKeybinds$ = new Subject<Keybind[]>();
   saveKeybinds$ = new Subject<void>();
   addKeybind$ = new Subject<void>();
@@ -44,6 +45,7 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiService,
     private soundsService: SoundsService,
+    private loginService: LoginService,
     private settingsService: SettingsService,
     private snackBar: MatSnackBar
   ) {}
@@ -64,11 +66,11 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
         this._keybinds$.next(keybinds);
       });
 
-    this.saveKeybinds$.pipe(withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
+    this.saveKeybinds$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(keybinds));
     });
 
-    this.addKeybind$.pipe(withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
+    this.addKeybind$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
       // Recreate the array
       this._keybinds$.next([
         ...keybinds,
@@ -80,28 +82,42 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
       ]);
     });
 
-    this.deleteKeybind$.pipe(withLatestFrom(this.keybinds$)).subscribe(([toDelete, keybinds]) => {
+    this.deleteKeybind$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([toDelete, keybinds]) => {
       keybinds = keybinds.slice();
       pull(keybinds, toDelete);
       this._keybinds$.next(keybinds);
     });
 
-    this.moveKeybind$.pipe(withLatestFrom(this.keybinds$)).subscribe(([move, keybinds]) => {
+    this.moveKeybind$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([move, keybinds]) => {
       keybinds = keybinds.slice();
       moveItemInArray(keybinds, move.from, move.to);
       this._keybinds$.next(keybinds);
     });
 
-    this.downloadKeybinds$.pipe(withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
+    this.downloadKeybinds$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
       this.downloadText(JSON.stringify(keybinds), 'keybinds.json');
     });
 
-    this.generateAutohotkey$.pipe(withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
-      this.generateAutohotkey(keybinds);
-    });
+    this.generateAutohotkey$
+      .pipe(
+        takeUntil(this.onDestroy$),
+        mergeMap(() =>
+          this.loginService.getAuthToken().pipe(
+            catchError(error => {
+              console.error(error);
+              this.snackBar.open('Failed to fetch auth token', 'Damn');
+              return EMPTY;
+            })
+          )
+        ),
+        withLatestFrom(this.keybinds$)
+      )
+      .subscribe(([authtoken, keybinds]) => {
+        this.generateAutohotkey(authtoken, keybinds);
+      });
 
     // Save every time the keybinds change
-    this.keybinds$.subscribe(_ => this.saveKeybinds$.next());
+    this.keybinds$.pipe(takeUntil(this.onDestroy$)).subscribe(_ => this.saveKeybinds$.next());
 
     const saved = localStorage.getItem(STORAGE_KEY);
     let initialKeybinds = [];
@@ -131,20 +147,22 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
     };
     fileReader.onerror = error => {
       console.error(error);
-      this.snackBar.open('Importieren failed');
+      this.snackBar.open('Import failed');
     };
   }
 
-  private generateAutohotkey(keybinds: Keybind[]) {
+  private generateAutohotkey(authtoken: string, keybinds: Keybind[]) {
     let script = 'PlaySound(server, id) {\n';
-    script += `command := "curl -X POST ""${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/discord/" . server . "/play/" . id . """"\n`;
+    script += `command := "curl -X POST -H ""Authorization: Bearer ${authtoken}"" `;
+    script += `""${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/guilds/" . server . "/play/" . id . """"\n`;
     script += 'shell := ComObjCreate("WScript.Shell")\n';
     script += 'launch := "cmd.exe /c " . command\n';
     script += 'exec := shell.Run(launch, 0, true)\n';
     script += '}\n';
 
     script += 'ExecCommand(server, cmd) {\n';
-    script += `command := "curl -X POST ""${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/discord/" . server . "/" . cmd . """"\n`;
+    script += `command := "curl -X POST -H ""Authorization: Bearer ${authtoken}"" `;
+    script += `""${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/guilds/" . server . "/" . cmd . """"\n`;
     script += 'shell := ComObjCreate("WScript.Shell")\n';
     script += 'launch := "cmd.exe /c " . command\n';
     script += 'exec := shell.Run(launch, 0, true)\n';

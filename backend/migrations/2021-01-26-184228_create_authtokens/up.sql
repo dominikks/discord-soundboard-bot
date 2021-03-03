@@ -1,0 +1,7 @@
+CREATE TABLE authtokens (
+  user_id NUMERIC PRIMARY KEY NOT NULL,
+  token VARCHAR(32) UNIQUE NOT NULL,
+  creation_time TIMESTAMP NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+  ON DELETE CASCADE
+)

@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest } from 'rxjs';
-import { withLatestFrom } from 'rxjs/operators';
+import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
+import { takeUntil, withLatestFrom } from 'rxjs/operators';
 import { ApiService } from './api.service';
 
 export type SoundTarget = 'discord' | 'local';
@@ -9,7 +9,7 @@ export interface SoundboardSettings {
   soundTarget$: BehaviorSubject<SoundTarget>;
   localVolume$: BehaviorSubject<number>;
   guildId$: BehaviorSubject<string>;
-  soundCategory$: BehaviorSubject<string>;
+  soundCategories$: BehaviorSubject<string[]>;
   debug$: BehaviorSubject<boolean>;
 }
 
@@ -18,12 +18,14 @@ const STORAGE_KEY = 'soundboard-settings';
 @Injectable({
   providedIn: 'root',
 })
-export class SettingsService {
+export class SettingsService implements OnDestroy {
+  private onDestroy$ = new Subject<void>();
+
   private _settings: SoundboardSettings = {
-    soundTarget$: new BehaviorSubject('local'),
+    soundTarget$: new BehaviorSubject('discord'),
     guildId$: new BehaviorSubject(null),
     localVolume$: new BehaviorSubject(100),
-    soundCategory$: new BehaviorSubject(''),
+    soundCategories$: new BehaviorSubject([]),
     debug$: new BehaviorSubject(false),
   };
 
@@ -44,9 +46,9 @@ export class SettingsService {
       } catch {}
     }
 
-    apiService.guilds$.pipe(withLatestFrom(this.settings.guildId$)).subscribe(([guilds, guildId]) => {
-      if (guildId == null && guilds.length > 0) {
-        this.settings.guildId$.next(guilds[0].id);
+    apiService.user$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.settings.guildId$)).subscribe(([user, guildId]) => {
+      if (guildId == null && user.guilds.length > 0) {
+        this.settings.guildId$.next(user.guilds[0].id);
       }
     });
 
@@ -54,13 +56,20 @@ export class SettingsService {
       this.settings.soundTarget$,
       this.settings.guildId$,
       this.settings.localVolume$,
-      this.settings.soundCategory$,
+      this.settings.soundCategories$,
       this.settings.debug$,
-    ]).subscribe(_ => this.save());
+    ])
+      .pipe(takeUntil(this.onDestroy$))
+      .subscribe(_ => this.save());
   }
 
   private save() {
     const transformedObject = Object.fromEntries(Object.entries(this.settings).map(([key, value]) => [key, value.value]));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(transformedObject));
+  }
+
+  ngOnDestroy() {
+    this.onDestroy$.next();
+    this.onDestroy$.complete();
   }
 }

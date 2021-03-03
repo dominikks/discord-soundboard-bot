@@ -1,11 +1,5 @@
-.center-wrapper {
-  width: 100vw;
-  height: 100vh;
+:host {
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-mat-spinner {
-  margin-right: 1em;
+  flex-direction: column;
 }

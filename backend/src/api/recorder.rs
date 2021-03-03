@@ -1,32 +1,34 @@
+use crate::api::auth::UserId;
 use crate::api::CachedFile;
-use crate::api::BASE_URL;
-use crate::audio_utils::get_length;
+use crate::api::Snowflake;
+use crate::db::DbConn;
+use crate::discord::management::check_guild_user;
+use crate::discord::management::get_guilds_for_user;
+use crate::discord::management::PermissionError;
+use crate::file_handling;
 use crate::file_handling::MIXES_FOLDER;
 use crate::file_handling::RECORDINGS_FOLDER;
+use crate::CacheHttp;
+use crate::BASE_URL;
 use rand::random;
-use rocket::delete;
-use rocket::get;
-use rocket::http::uri::Uri;
-use rocket::post;
 use rocket::response::Responder;
-use rocket::routes;
 use rocket::Route;
+use rocket::State;
 use rocket_contrib::json::Json;
 use sanitize_filename;
 use serde::Deserialize;
 use serde::Serialize;
+use serenity::model::id::GuildId;
+use std::convert::TryFrom;
 use std::ffi::OsString;
 use std::path::Path;
 use std::process::Stdio;
+use std::time::SystemTime;
 use tokio::fs;
-use tokio::fs::ReadDir;
 use tokio::io;
 use tokio::process::Command;
 use tokio::time::sleep;
 use tokio::time::Duration;
-use tracing::debug;
-use tracing::instrument;
-use tracing::span;
 use tracing::Instrument;
 use tracing::Level;
 
@@ -43,11 +45,15 @@ pub fn get_routes() -> Vec<Route> {
 #[derive(Debug, Responder)]
 enum RecorderError {
   #[response(status = 500)]
+  InternalError(String),
+  #[response(status = 500)]
   IoError(String),
   #[response(status = 400)]
   RequestError(String),
   #[response(status = 404)]
   NotFound(String),
+  #[response(status = 401)]
+  NotAMember(String),
 }
 
 impl From<io::Error> for RecorderError {
@@ -62,68 +68,94 @@ impl From<OsString> for RecorderError {
   }
 }
 
+impl From<serenity::Error> for RecorderError {
+  fn from(_: serenity::Error) -> Self {
+    RecorderError::InternalError(String::from("Error fetching Discord API"))
+  }
+}
+
+impl From<file_handling::FileError> for RecorderError {
+  fn from(_: file_handling::FileError) -> Self {
+    RecorderError::IoError(String::from("Error handling recordings"))
+  }
+}
+
+impl From<PermissionError> for RecorderError {
+  fn from(_: PermissionError) -> Self {
+    Self::NotAMember(String::from(
+      "You must be a member of the guild to perform this task",
+    ))
+  }
+}
+
+#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
 struct Recording {
+  guild_id: Snowflake,
   timestamp: u64,
-  users: Vec<RecordingUser>,
   length: f32,
+  users: Vec<RecordingUser>,
 }
 
 #[derive(Serialize, Debug)]
 struct RecordingUser {
+  /// Externally, we use the file nameas id. Is a unique id together with the guild_id and timestamp.
+  id: String,
   username: String,
-  url: String,
 }
 
-#[get("/recordings")]
-async fn get_recordings() -> Result<Json<Vec<Recording>>, RecorderError> {
-  let mut dir = (fs::read_dir(RECORDINGS_FOLDER).await as Result<ReadDir, io::Error>)?;
+impl TryFrom<file_handling::Recording> for Recording {
+  type Error = RecorderError;
 
-  let mut output = Vec::new();
-  while let Some(file) = dir.next_entry().await? {
-    let filename = file.file_name().into_string()?;
-    let metadata = file.metadata().await?;
+  fn try_from(r: file_handling::Recording) -> std::result::Result<Self, Self::Error> {
+    let users: Result<Vec<RecordingUser>, _> = r
+      .users
+      .into_iter()
+      .map(|user| {
+        user
+          .file_name
+          .clone()
+          .into_string()
+          .map(|file_name| RecordingUser {
+            id: file_name,
+            username: user.name,
+          })
+      })
+      .collect();
 
-    if metadata.is_dir() {
-      if let Ok(timestamp) = filename.parse::<u64>() {
-        let mut rec_dir = (fs::read_dir(file.path()).await as Result<ReadDir, io::Error>)?;
-
-        let mut users = Vec::new();
-        let mut length: f32 = 0.0;
-        while let Some(rec_file) = rec_dir.next_entry().await? {
-          users.push(RecordingUser {
-            username: String::from(
-              rec_file
-                .path()
-                .file_stem()
-                .and_then(|stem| stem.to_str())
-                .ok_or(RecorderError::IoError(String::from(
-                  "Failed to remove file extension",
-                )))?,
-            ),
-            url: format!(
-              "{}/api/recorder/recordings/{}/{}",
-              BASE_URL.clone(),
-              timestamp,
-              Uri::percent_encode(&rec_file.file_name().into_string()?)
-            ),
-          });
-
-          length = length.max(get_length(rec_file.path().as_os_str()).await.unwrap_or(0.0));
-        }
-
-        output.push(Recording {
-          timestamp,
-          users,
-          length,
-        });
-      }
-    }
+    Ok(Self {
+      guild_id: Snowflake(r.guild_id),
+      timestamp: r
+        .timestamp
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map_err(|_| RecorderError::InternalError(String::from("Failed to handle timestamps")))?
+        .as_secs(),
+      length: r.length,
+      users: users?,
+    })
   }
-
-  Ok(Json(output))
 }
 
+#[instrument(skip(cache_http, db, user))]
+#[get("/recordings")]
+async fn get_recordings(
+  cache_http: State<'_, CacheHttp>,
+  db: DbConn,
+  user: UserId,
+) -> Result<Json<Vec<Recording>>, RecorderError> {
+  let guilds = get_guilds_for_user(cache_http.inner(), &db, user.into()).await?;
+  let mut results = vec![];
+  for (guild, _) in guilds.iter() {
+    results.append(&mut file_handling::get_recordings_for_guild(guild.id.0).await?);
+  }
+  let results: Result<Vec<_>, _> = results
+    .into_iter()
+    .map(|s| Recording::try_from(s))
+    .collect();
+  Ok(Json(results?))
+}
+
+#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
 struct MixingParameter {
   /// Where the mixed part should start and end. To calculate this, the sound
@@ -131,23 +163,34 @@ struct MixingParameter {
   start: f32,
   end: f32,
   /// All files that should be included
-  users: Vec<String>,
+  user_ids: Vec<String>,
 }
 
+#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
 struct MixingResult {
   download_url: String,
 }
 
-#[instrument]
-#[post("/recordings/<timestamp>", format = "json", data = "<params>")]
+#[instrument(skip(params, cache_http, db, user))]
+#[post(
+  "/guilds/<guild_id>/recordings/<timestamp>",
+  format = "json",
+  data = "<params>"
+)]
 async fn mix_recording(
+  guild_id: u64,
   timestamp: u64,
   params: Json<MixingParameter>,
+  cache_http: State<'_, CacheHttp>,
+  db: DbConn,
+  user: UserId,
 ) -> Result<Json<MixingResult>, RecorderError> {
-  debug!("Creating mix of recordings");
+  let guild_id = GuildId(guild_id);
+  check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
+
   let params = params.0;
-  if params.users.len() == 0 {
+  if params.user_ids.len() == 0 {
     return Err(RecorderError::RequestError(String::from(
       "At least one user must be specified",
     )));
@@ -157,18 +200,20 @@ async fn mix_recording(
       "End must lie after Start",
     )));
   }
-  let folder = format!("{}/{}", RECORDINGS_FOLDER, timestamp);
-  if !Path::new(&folder).exists() {
+  let folder = (*RECORDINGS_FOLDER)
+    .join(guild_id.0.to_string())
+    .join(timestamp.to_string());
+  if !folder.exists() {
     return Err(RecorderError::NotFound(format!(
       "Recording {} not found",
       timestamp
     )));
   }
 
-  let files: Vec<String> = params
-    .users
+  let files: Vec<_> = params
+    .user_ids
     .iter()
-    .map(|user| format!("{}/{}.mp3", folder, sanitize_filename::sanitize(user)))
+    .map(|user| folder.join(sanitize_filename::sanitize(user)))
     .collect();
 
   let filter = format!(
@@ -181,58 +226,91 @@ async fn mix_recording(
 
   let mut dynamic_args = Vec::new();
   for file in files {
-    dynamic_args.push(String::from("-i"));
-    dynamic_args.push(file);
+    dynamic_args.push(OsString::from("-i"));
+    dynamic_args.push(file.into_os_string());
   }
 
-  let file_name = random::<u32>();
-  let file_path = format!("{}/{}.mp3", MIXES_FOLDER, file_name);
+  let file_name = format!("{}.mp3", random::<u32>());
+  let out_dir = (*MIXES_FOLDER).join(guild_id.0.to_string());
+  fs::create_dir_all(&out_dir).await?;
+  let out_file = out_dir.join(&file_name);
 
-  let _ = Command::new("ffmpeg")
+  let ffmpeg_out = Command::new("ffmpeg")
     .kill_on_drop(true)
     .args(&static_args)
     .args(&dynamic_args)
-    .arg(&file_path)
+    .arg(&out_file)
     .stdin(Stdio::null())
     .output()
     .await?;
+  if !ffmpeg_out.status.success() {
+    let output = String::from_utf8(ffmpeg_out.stderr);
+    error!(?output, "Failed to mix file with ffmpeg");
+    return Err(RecorderError::InternalError(String::from(
+      "Failed to mix recording",
+    )));
+  }
 
   // Automatically delete the mix after 5 minutes
   let span = span!(Level::INFO, "mix_gc");
   tokio::spawn(
     async move {
       sleep(Duration::from_secs(5 * 60)).await;
-      let result = fs::remove_file(Path::new(&file_path)).await;
-      debug!(?file_path, ?result, "Removing timed out mix");
+      let result = fs::remove_file(Path::new(&out_file)).await;
+      debug!(?out_file, ?result, "Removing timed out mix");
     }
     .instrument(span),
   );
 
   Ok(Json(MixingResult {
-    download_url: format!("{}/api/recorder/mixes/{}.mp3", BASE_URL.clone(), file_name),
+    download_url: format!(
+      "{}/api/guilds/{}/mixes/{}",
+      BASE_URL.clone(),
+      guild_id,
+      file_name
+    ),
   }))
 }
 
-#[instrument]
-#[delete("/recordings/<timestamp>")]
-async fn delete_recording(timestamp: u64) -> Result<(), RecorderError> {
-  debug!("Deleting recording");
-  let folder = Path::new(RECORDINGS_FOLDER).join(timestamp.to_string());
+#[delete("/guilds/<guild_id>/recordings/<timestamp>")]
+async fn delete_recording(
+  guild_id: u64,
+  timestamp: u64,
+  cache_http: State<'_, CacheHttp>,
+  db: DbConn,
+  user: UserId,
+) -> Result<(), RecorderError> {
+  let guild_id = GuildId(guild_id);
+  check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
+
+  let folder = (*RECORDINGS_FOLDER)
+    .join(guild_id.to_string())
+    .join(timestamp.to_string());
   if !folder.exists() {
-    return Err(RecorderError::NotFound(format!(
-      "Recording {} not found",
-      timestamp
-    )));
+    return Err(RecorderError::NotFound(String::from("Recording not found")));
   }
   fs::remove_dir_all(folder).await?;
 
   Ok(())
 }
 
-#[get("/recordings/<timestamp>/<filename>")]
-async fn get_recording(timestamp: u64, filename: String) -> Option<CachedFile> {
+#[get("/guilds/<guild_id>/recordings/<timestamp>/<filename>")]
+async fn get_recording(
+  guild_id: u64,
+  timestamp: u64,
+  filename: String,
+  cache_http: State<'_, CacheHttp>,
+  db: DbConn,
+  user: UserId,
+) -> Option<CachedFile> {
+  let guild_id = GuildId(guild_id);
+  check_guild_user(&cache_http.inner(), &db, user.into(), guild_id)
+    .await
+    .ok()?;
+
   CachedFile::open(
-    Path::new(RECORDINGS_FOLDER)
+    (*RECORDINGS_FOLDER)
+      .join(guild_id.0.to_string())
       .join(timestamp.to_string())
       .join(sanitize_filename::sanitize(filename)),
   )
@@ -240,9 +318,24 @@ async fn get_recording(timestamp: u64, filename: String) -> Option<CachedFile> {
   .ok()
 }
 
-#[get("/mixes/<filename>")]
-async fn get_mix(filename: String) -> Option<CachedFile> {
-  CachedFile::open(Path::new(MIXES_FOLDER).join(sanitize_filename::sanitize(filename)))
+#[get("/guilds/<guild_id>/mixes/<filename>")]
+async fn get_mix(
+  guild_id: u64,
+  filename: String,
+  cache_http: State<'_, CacheHttp>,
+  db: DbConn,
+  user: UserId,
+) -> Option<CachedFile> {
+  let guild_id = GuildId(guild_id);
+  check_guild_user(&cache_http.inner(), &db, user.into(), guild_id)
     .await
-    .ok()
+    .ok()?;
+
+  CachedFile::open(
+    (*MIXES_FOLDER)
+      .join(guild_id.0.to_string())
+      .join(sanitize_filename::sanitize(filename)),
+  )
+  .await
+  .ok()
 }

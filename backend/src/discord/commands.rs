@@ -1,17 +1,13 @@
 use crate::discord::player;
-use crate::discord::player::PlayError;
 use crate::discord::recorder;
 use crate::discord::recorder::RecordingError;
-use crate::file_handling;
+use crate::BASE_URL;
 use crate::BUILD_ID;
 use crate::BUILD_TIMESTAMP;
 use crate::VERSION;
-use lazy_static::lazy_static;
-use regex::Regex;
 use serenity::client::Context;
 use serenity::framework::standard::macros::command;
 use serenity::framework::standard::macros::group;
-use serenity::framework::standard::Args;
 use serenity::framework::standard::CommandResult;
 use serenity::framework::StandardFramework;
 use serenity::model::channel::Message;
@@ -19,18 +15,16 @@ use serenity::model::prelude::ReactionType;
 use serenity::prelude::*;
 use serenity::Result as SerenityResult;
 use std::convert::TryFrom;
-use std::path::PathBuf;
-use tracing::{error, instrument};
 
 /// Creates the framework used by the discord client
 pub fn create_framework() -> StandardFramework {
   StandardFramework::new()
-    .configure(|c| c.prefix("~").delimiters(vec![","]))
+    .configure(|c| c.prefix("~"))
     .group(&GENERAL_GROUP)
 }
 
 #[group]
-#[commands(join, leave, play, stop, ping, list, record, guildid, version)]
+#[commands(join, leave, stop, ping, record, guildid, info)]
 struct General;
 
 #[command]
@@ -52,19 +46,17 @@ async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     }
   };
 
-  let manager = songbird::get(ctx)
+  let songbird = songbird::get(ctx)
     .await
     .expect("Songbird Voice client placed in at initialisation.")
     .clone();
+  let recorder = recorder::get(ctx)
+    .await
+    .expect("Recorder placed in at initialization");
 
-  let (call_lock, result) = manager.join(guild_id, connect_to).await;
+  let result = player::join_channel(guild_id, connect_to, songbird, recorder).await;
 
   if result.is_ok() {
-    let recorder = recorder::get(ctx)
-      .await
-      .expect("Recorder placed in at initialization");
-    recorder::register_recorder(recorder, guild_id, call_lock).await;
-
     check_msg(
       msg
         .channel_id
@@ -122,97 +114,6 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 #[only_in(guilds)]
-async fn play(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
-  lazy_static! {
-    static ref RE: Regex = Regex::new(r"\.\.").unwrap();
-  }
-  let guild_id = msg.guild(&ctx.cache).await.unwrap().id;
-
-  let path = match args.single::<String>().ok() {
-    Some(file_name) => PathBuf::from(&RE.replace_all(&file_name, "").into_owned()),
-    None => {
-      check_msg(
-        msg
-          .channel_id
-          .say(&ctx.http, ":x: Must provide sound file name as parameter")
-          .await,
-      );
-      return Ok(());
-    }
-  };
-
-  let sound = match file_handling::get_sound(&path).await {
-    Some(sound) => sound,
-    None => {
-      check_msg(
-        msg
-          .channel_id
-          .say(
-            &ctx.http,
-            format!(":x: Sound file `{}` not found", path.to_string_lossy()),
-          )
-          .await,
-      );
-      return Ok(());
-    }
-  };
-
-  let manager = songbird::get(ctx)
-    .await
-    .expect("Songbird Voice client placed in at initialisation.");
-
-  match player::play(&sound, guild_id, manager, &ctx.into()).await {
-    Ok(info) => {
-      let mut output = format!(
-        ":fast_forward: Playing sound file `{}` | ",
-        path.to_string_lossy()
-      );
-      if let Some(volume) = info.volume {
-        output += &format!(
-          "max_volume: {} dB, mean_volume: {} dB, automatic ",
-          volume.max_volume, volume.mean_volume
-        );
-      } else {
-        output += "manual ";
-      }
-      output += &format!("adjustment {} dB", info.volume_adjustment);
-      check_msg(msg.channel_id.say(&ctx.http, output).await);
-    }
-    Err(err) => {
-      match err {
-        PlayError::FailedToJoinChannel => check_msg(
-          msg
-            .channel_id
-            .say(
-              &ctx.http,
-              ":x: Failed to automatically join a voice channel",
-            )
-            .await,
-        ),
-        PlayError::AnalysisFailed => check_msg(
-          msg
-            .channel_id
-            .say(&ctx.http, ":x: Failed to analyze sound file")
-            .await,
-        ),
-        PlayError::Decoding(_) => check_msg(
-          msg
-            .channel_id
-            .say(
-              &ctx.http,
-              ":x: Unknown error playing the sound file. It might me corrupted.",
-            )
-            .await,
-        ),
-      };
-    }
-  };
-
-  Ok(())
-}
-
-#[command]
-#[only_in(guilds)]
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
   let guild_id = msg.guild(&ctx.cache).await.unwrap().id;
 
@@ -230,35 +131,6 @@ async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
         .await,
     );
   }
-
-  Ok(())
-}
-
-#[command]
-async fn list(ctx: &Context, msg: &Message) -> CommandResult {
-  let mut output = match file_handling::get_sounds().await.ok().map(|sounds| {
-    sounds
-      .into_iter()
-      .map(|s| s.file_path.to_string_lossy().to_string())
-      .collect::<Vec<_>>()
-  }) {
-    Some(sounds) => sounds,
-    None => {
-      check_msg(
-        msg
-          .channel_id
-          .say(&ctx.http, ":x: Failed to list sound files")
-          .await,
-      );
-      return Ok(());
-    }
-  };
-
-  output.sort();
-  output.insert(0, "Available sounds:\n```".to_string());
-  output.push("```".to_string());
-
-  check_msg(msg.channel_id.say(&ctx.http, output.join("\n")).await);
 
   Ok(())
 }
@@ -321,16 +193,16 @@ async fn guildid(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 #[command]
-async fn version(ctx: &Context, msg: &Message) -> CommandResult {
+async fn info(ctx: &Context, msg: &Message) -> CommandResult {
   let mut resp = format!(
-    "[discord-soundboard-bot](https://github.com/dominikks/discord-soundboard-bot)\nversion: `{}`",
+    "discord-soundboard-bot v{}\n\
+    Control at {}\n\
+    Source code at https://github.com/dominikks/discord-soundboard-bot",
+    BASE_URL.clone(),
     VERSION
   );
-  if let Some(bid) = BUILD_ID {
-    resp += &format!("\nbuild: `{}`", bid);
-  }
-  if let Some(bt) = BUILD_TIMESTAMP {
-    resp += &format!("\ntimestamp: `{}`", bt);
+  if let (Some(bid), Some(bt)) = (BUILD_ID, BUILD_TIMESTAMP) {
+    resp += &format!("\n\nbuild {}, timestamp {}", bid, bt);
   }
   check_msg(msg.channel_id.say(&ctx.http, &resp).await);
 

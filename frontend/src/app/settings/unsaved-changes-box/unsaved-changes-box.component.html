@@ -1,0 +1,15 @@
+<div class="wrapper" @enterLeave *ngIf="hasChanges || isSaving">
+  <mat-card class="mat-elevation-z16">
+    <div class="text-wrapper mat-h3">You have unsaved changes</div>
+    <div class="flex-filler"></div>
+    <button mat-button [disabled]="isSaving || disabled" (click)="!isSaving && !disabled && discardChanges.emit()">Reset</button>
+    <div class="save-button-container">
+      <button mat-raised-button color="primary" [disabled]="isSaving" (click)="!isSaving && !disabled && saveChanges.emit()"
+        >Save changes</button
+      >
+      <div class="spinner-container" *ngIf="isSaving">
+        <mat-spinner diameter="24"></mat-spinner>
+      </div>
+    </div>
+  </mat-card>
+</div>

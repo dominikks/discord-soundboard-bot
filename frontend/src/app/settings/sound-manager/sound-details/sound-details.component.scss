@@ -1,0 +1,49 @@
+mat-panel-title {
+  display: flex;
+  align-items: center;
+
+  mat-icon {
+    margin-left: 0.25em;
+  }
+}
+
+mat-form-field {
+  margin-right: 0.5em;
+}
+
+.spinner-button-container {
+  position: relative;
+
+  .spinner-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.hidden {
+  visibility: collapse;
+}
+
+.statistics-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  margin-top: 1em;
+
+  h3 {
+    min-width: 200px;
+  }
+
+  .statistics-container > div {
+    display: flex;
+    justify-content: space-between;
+    min-width: 300px;
+  }
+}

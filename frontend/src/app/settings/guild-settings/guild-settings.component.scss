@@ -1,0 +1,35 @@
+:host {
+  position: relative;
+  flex: 1;
+}
+
+.loading-wrapper {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.guild-container {
+  padding: 16px;
+}
+
+.guild-name {
+  font-style: italic;
+}
+
+.section-title {
+  mat-icon,
+  span {
+    vertical-align: middle;
+  }
+}
+
+.setting-input-wrapper {
+  display: flex;
+  align-items: baseline;
+
+  mat-form-field {
+    margin-right: 0.5em;
+  }
+}

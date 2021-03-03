@@ -1,12 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RecorderService, Recording as SrvRecording, RecordingUser } from '../services/recorder.service';
 import { SettingsService } from '../services/settings.service';
 import { clamp } from 'lodash-es';
 import { WebAudioBufferSource, WebAudioContext, WebAudioGain } from '@ng-web-apis/audio';
 import { ApiService } from '../services/api.service';
-import { BehaviorSubject, EMPTY, empty, Observable, Subject } from 'rxjs';
-import { catchError, flatMap, map, mergeMap, withLatestFrom } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, EMPTY, Subject } from 'rxjs';
+import { catchError, map, mergeMap, takeUntil, withLatestFrom } from 'rxjs/operators';
 
 interface Recording extends SrvRecording {
   selected: boolean[];
@@ -19,15 +19,20 @@ interface Recording extends SrvRecording {
   styleUrls: ['./recorder.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RecorderComponent implements OnInit {
+export class RecorderComponent implements OnInit, OnDestroy {
   get settings() {
     return this.settingsService.settings;
   }
 
-  guilds$ = this.apiService.guilds$;
-  recordings$ = new BehaviorSubject<Recording[]>(null);
+  private onDestroy$ = new Subject<void>();
+  user$ = this.apiService.user$;
   deleteRecording$ = new Subject<Recording>();
   record$ = new Subject<void>();
+
+  private recordings$ = new BehaviorSubject<Recording[]>(null);
+  shownRecordings$ = combineLatest([this.settings.guildId$, this.recordings$]).pipe(
+    map(([guildId, recordings]) => recordings?.filter(recording => recording.guildId === guildId))
+  );
 
   @ViewChildren(WebAudioBufferSource) audioBufferSources: QueryList<WebAudioBufferSource>;
   @ViewChild(WebAudioGain) gainNode: WebAudioGain;
@@ -46,8 +51,9 @@ export class RecorderComponent implements OnInit {
   ngOnInit() {
     this.deleteRecording$
       .pipe(
+        takeUntil(this.onDestroy$),
         mergeMap(recording =>
-          this.recorderService.deleteRecording(recording.timestamp).pipe(
+          this.recorderService.deleteRecording(recording).pipe(
             catchError(error => {
               console.error(error);
               this.snackBar.open('Deleting failed', 'Ok');
@@ -68,6 +74,7 @@ export class RecorderComponent implements OnInit {
 
     this.record$
       .pipe(
+        takeUntil(this.onDestroy$),
         withLatestFrom(this.settings.guildId$),
         mergeMap(([, guildId]) => {
           this.snackBar.open(`Preparing recording. This may take up to one minute.`);
@@ -92,21 +99,20 @@ export class RecorderComponent implements OnInit {
     this.reload();
   }
 
+  ngOnDestroy() {
+    this.onDestroy$.next();
+    this.onDestroy$.complete();
+  }
+
   reload() {
     this.recordings$.next(null);
-    this.recorderService.loadRecordings().subscribe(
-      recordings => {
-        this.recordings$.next(
-          recordings
-            .sort((a, b) => b.timestamp - a.timestamp)
-            .map(recording => ({ ...recording, selected: recording.users.map(_ => true), start: 0, end: recording.length }))
-        );
-      },
-      error => {
-        console.error(error);
-        this.snackBar.open('Failed to load data');
-      }
-    );
+    this.recorderService.loadRecordings().subscribe(recordings => {
+      this.recordings$.next(
+        recordings
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .map(recording => ({ ...recording, selected: recording.users.map(_ => true), start: 0, end: recording.length }))
+      );
+    });
   }
 
   getUsernames(users: RecordingUser[]) {
@@ -130,14 +136,14 @@ export class RecorderComponent implements OnInit {
 
   downloadMix(recording: Recording) {
     this.recorderService
-      .mixRecording(recording.timestamp, {
+      .mixRecording(recording, {
         start: recording.start,
         end: recording.end,
-        users: recording.users.filter((_, i) => recording.selected[i]).map(user => user.username),
+        userIds: recording.users.filter((_, i) => recording.selected[i]).map(user => user.id),
       })
       .subscribe(
         data => {
-          window.open(data.download_url, '_blank');
+          window.open(data.downloadUrl, '_blank');
         },
         error => {
           console.error(error);

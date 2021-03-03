@@ -1,61 +1,90 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, retry, shareReplay } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
+import { map, mergeMap, retry, shareReplay, tap } from 'rxjs/operators';
+import { ErrorService } from './error.service';
+import { sortBy } from 'lodash-es';
 
 export interface AppInfo {
   version: string;
-  build_id?: string;
-  build_timestamp?: number;
-  title: string;
-  file_management_url?: string;
+  buildId?: string;
+  buildTimestamp?: number;
+  title?: string;
+  discordClientId: string;
 }
+
+export type UserRole = 'admin' | 'moderator' | 'user';
 
 export interface Guild {
   id: string;
-  name?: string;
+  name: string;
+  iconUrl?: string;
+  role: UserRole;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  discriminator: number;
+  avatarUrl: string;
+  guilds: Guild[];
+}
+
+export interface RandomInfix {
+  guildId: string;
+  infix: string;
+  displayName: string;
+}
+
+export interface GuildSettings {
+  userRoleId: string;
+  moderatorRoleId: string;
+  targetMeanVolume: number;
+  targetMaxVolume: number;
+}
+
+export interface GuildData extends GuildSettings {
+  roles: Map<string, string>;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class ApiService {
-  private _appInfo: AppInfo;
-  get appInfo() {
-    return this._appInfo;
-  }
-
-  private _guilds$ = this.http.get('/api/discord', { responseType: 'text' }).pipe(
+  appInfo$ = this.http.get<AppInfo>('/api/info').pipe(
     retry(5),
-    map(response => {
-      response = response.replace(/("id"\s*:\s*)(\d+)/g, '$1"$2"');
-      return JSON.parse(response) as Guild[];
+    this.errorService.showError('Failed to fetch Server info'),
+    tap(info => {
+      info.title = info.title ?? '';
     }),
     shareReplay()
   );
-  private _randomInfixes$ = this.http.get<string[]>('/api/randominfixes').pipe(retry(5), shareReplay());
+  user$ = this.http.get<User>('/api/user').pipe(retry(5), this.errorService.showError('Failed to fetch user data'), shareReplay());
 
-  get guilds$() {
-    return this._guilds$;
+  private loadRandomInfixes$ = new BehaviorSubject<void>(null);
+  randomInfixes$ = this.loadRandomInfixes$.pipe(
+    mergeMap(_ => this.http.get<RandomInfix[]>('/api/randominfixes')),
+    retry(5),
+    this.errorService.showError('Failed to fetch random buttons'),
+    map(infixes => sortBy(infixes, infix => infix.displayName.toLowerCase())),
+    shareReplay()
+  );
+
+  constructor(private http: HttpClient, private errorService: ErrorService) {
+    this.loadRandomInfixes$.next();
   }
-  get randomInfixes$() {
-    return this._randomInfixes$;
+
+  updateRandomInfixes(guildId: string, infixes: { infix: string; displayName: string }[]) {
+    return this.http
+      .put(`/api/guilds/${encodeURIComponent(guildId)}/randominfixes`, infixes, { responseType: 'text' })
+      .pipe(tap(() => this.loadRandomInfixes$.next()));
   }
 
-  constructor(private http: HttpClient) {}
+  loadGuildSettings(guildId: string) {
+    return this.http.get<GuildData>(`/api/guilds/${encodeURIComponent(guildId)}/settings`);
+  }
 
-  loadAppInfo() {
-    return new Promise<AppInfo>((resolve, reject) => {
-      this.http
-        .get<AppInfo>('/api/info')
-        .pipe(retry(5))
-        .subscribe(
-          info => {
-            info.title = info.title ?? '';
-            this._appInfo = info;
-            resolve(info);
-          },
-          error => reject(error)
-        );
-    });
+  updateGuildSettings(guildId: string, guildSettings: Partial<GuildSettings>) {
+    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/settings`, guildSettings, { responseType: 'text' });
   }
 }

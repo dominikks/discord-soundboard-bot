@@ -1,5 +1,9 @@
-<ng-container [ngSwitch]="state">
-  <router-outlet *ngSwitchCase="'finished'"></router-outlet>
-  <div *ngSwitchCase="'loading'" class="center-wrapper"><mat-spinner [diameter]="56"></mat-spinner> Loading...</div>
-  <div *ngSwitchCase="'error'" class="center-wrapper"><mat-icon>error</mat-icon> Failed to load app information.</div>
+<ng-container *ngIf="loggedIn$ | async; else needsLogin">
+  <router-outlet></router-outlet>
 </ng-container>
+
+<ng-template #needsLogin>
+  <app-login></app-login>
+</ng-template>
+
+<app-error-box></app-error-box>

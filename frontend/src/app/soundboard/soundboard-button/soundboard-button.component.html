@@ -1,4 +1,8 @@
 <div matRipple class="wrapper mat-elevation-z2">
   <div class="sound-name"><ng-content></ng-content></div>
-  <div *ngIf="category" class="sound-source mat-small">{{ category }}</div>
+  <div class="sound-source mat-small" [matTooltip]="(guildId | guildName | async) + dispCategory" matTooltipShowDelay="500">
+    <ng-container *ngIf="category == null">{{ guildId | guildName | async }}</ng-container>
+    <ng-container *ngIf="category === ''"><span class="no-category">-- empty --</span></ng-container>
+    <ng-container *ngIf="category != null && category.length > 0">{{ category }}</ng-container>
+  </div>
 </div>

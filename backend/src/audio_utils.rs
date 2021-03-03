@@ -1,12 +1,7 @@
-use cached::proc_macro::cached;
-use lazy_static::lazy_static;
 use regex::Regex;
-use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::process::Stdio;
 use tokio::process::Command;
-use tracing::debug;
-use tracing::instrument;
 
 #[derive(Clone, Debug)]
 pub struct VolumeInformation {
@@ -15,8 +10,7 @@ pub struct VolumeInformation {
 }
 
 #[instrument]
-#[cached(option = true, size = 1000, time = 86400)]
-pub async fn detect_volume(path: PathBuf) -> Option<VolumeInformation> {
+pub async fn detect_volume(path: &PathBuf) -> Option<VolumeInformation> {
   lazy_static! {
     static ref RE_MAX: Regex = Regex::new("max_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap();
     static ref RE_MEAN: Regex = Regex::new("mean_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap();
@@ -46,7 +40,8 @@ pub async fn detect_volume(path: PathBuf) -> Option<VolumeInformation> {
   })
 }
 
-pub async fn get_length(path: &OsStr) -> Option<f32> {
+#[instrument]
+pub async fn get_length(path: &PathBuf) -> Option<f32> {
   let args = [
     "-show_entries",
     "format=duration",
@@ -67,5 +62,6 @@ pub async fn get_length(path: &OsStr) -> Option<f32> {
 
   let out = out.ok()?;
   let parsed = String::from_utf8(out.stdout).ok()?;
+  debug!(?parsed, "Read sound file length");
   parsed.trim().parse::<f32>().ok()
 }

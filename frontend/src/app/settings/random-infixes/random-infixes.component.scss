@@ -1,0 +1,20 @@
+mat-card {
+  margin-bottom: 8px;
+  max-width: 1200px;
+}
+
+.infix-list-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 8px 0;
+
+  mat-form-field {
+    flex: 1;
+    margin-right: 0.4em;
+  }
+}
+
+::ng-deep .infix-list-item .mat-form-field-appearance-outline .mat-form-field-wrapper {
+  padding-bottom: 0;
+}

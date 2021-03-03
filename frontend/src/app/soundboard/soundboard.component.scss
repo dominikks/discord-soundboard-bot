@@ -1,3 +1,9 @@
+:host {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 $main-width: 1200px;
 
 .max-width {
@@ -49,22 +55,9 @@ mat-toolbar.controls-row {
   }
 }
 
-::ng-deep mat-toolbar {
-  .mat-form-field-wrapper {
-    padding-bottom: 0;
-  }
-  .mat-button-toggle-checked .mat-button-toggle-focus-overlay {
-    border-bottom: 0;
-  }
-}
-
 main {
+  flex: 1;
   padding: 0 5px;
-
-  .loading-wrapper {
-    display: flex;
-    justify-content: center;
-  }
 
   .button-container {
     display: flex;
@@ -76,6 +69,20 @@ main {
       flex: 1 0 175px;
       max-width: 300px;
       height: 70px;
+    }
+  }
+
+  &.centering-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  &.guild-warning-wrapper {
+    padding: 16px;
+
+    mat-icon {
+      margin-right: 8px;
     }
   }
 }

@@ -1,0 +1,39 @@
+:host {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+}
+
+.wrapper {
+  padding: 16px;
+}
+
+.mat-card {
+  display: flex;
+  align-items: baseline;
+  height: 64px;
+
+  .flex-filler {
+    flex: 1;
+  }
+
+  .text-wrapper {
+    margin-right: 2em;
+  }
+}
+
+.save-button-container {
+  position: relative;
+
+  .spinner-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}

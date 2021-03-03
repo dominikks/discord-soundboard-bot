@@ -1,135 +1,118 @@
-use lazy_static::lazy_static;
-use regex::Captures;
-use regex::Regex;
+use crate::audio_utils;
+use std::ffi::OsString;
+use std::fmt;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::Duration;
+use std::time::SystemTime;
 use tokio::fs;
 use tokio::fs::ReadDir;
 use tokio::io;
-use tracing::debug;
-use tracing::instrument;
-use tracing::trace;
 
-const SOUNDS_FOLDER: &str = "data/sounds";
-pub const RECORDINGS_FOLDER: &str = "data/recorder";
-pub const MIXES_FOLDER: &str = "data/mixes";
+lazy_static! {
+  static ref SOUNDS_FOLDER: &'static Path = Path::new("data/sounds");
+  pub static ref RECORDINGS_FOLDER: &'static Path = Path::new("data/recorder");
+  pub static ref MIXES_FOLDER: &'static Path = Path::new("data/mixes");
+}
 
 pub async fn create_folders() -> Result<(), io::Error> {
-  fs::create_dir_all(Path::new(SOUNDS_FOLDER)).await?;
-  fs::create_dir_all(Path::new(RECORDINGS_FOLDER)).await?;
-  fs::create_dir_all(Path::new(MIXES_FOLDER)).await?;
+  fs::create_dir_all(*SOUNDS_FOLDER).await?;
+  fs::create_dir_all(*RECORDINGS_FOLDER).await?;
+  if MIXES_FOLDER.exists() {
+    // Clean temporary mixes that might be remaining
+    fs::remove_dir_all(*MIXES_FOLDER).await?;
+  }
+  fs::create_dir_all(*MIXES_FOLDER).await?;
 
   Ok(())
 }
 
+pub fn get_full_sound_path(filename: &str) -> PathBuf {
+  (*SOUNDS_FOLDER).join(filename)
+}
+
 #[derive(Debug)]
 pub enum FileError {
-  InvalidFilename,
   IoError(io::Error),
 }
+
 impl From<io::Error> for FileError {
   fn from(err: io::Error) -> Self {
     FileError::IoError(err)
   }
 }
 
-#[derive(Debug)]
-pub enum VolumeAdjustment {
-  Automatic,
-  Manual(f32),
-}
-
-#[derive(Debug)]
-pub struct Sound {
-  /// Parsed name. This is not equivalent to the file name.
-  pub name: String,
-  /// This path is relative to SOUNDS_FOLDER
-  pub file_path: PathBuf,
-  pub volume_adjustment: VolumeAdjustment,
-}
-
-impl Sound {
-  /// Returns the full path relative to the program's root
-  pub fn get_full_path(&self) -> PathBuf {
-    get_full_sound_path(&self.file_path)
+impl fmt::Display for FileError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+    match self {
+      FileError::IoError(err) => write!(f, "FileError: IoError occurred. {}", err),
+    }
   }
 }
 
-/// Recursively traverse all directories and files and list them
-#[instrument]
-pub async fn get_sounds() -> Result<Vec<Sound>, FileError> {
+#[derive(Debug)]
+pub struct Recording {
+  pub guild_id: u64,
+  pub timestamp: SystemTime,
+  pub length: f32,
+  pub users: Vec<RecordingUser>,
+}
+
+#[derive(Debug)]
+pub struct RecordingUser {
+  /// Parsed name. This is not equivalent to the file name.
+  pub name: String,
+  /// This is the file name in the recordings folder
+  pub file_name: OsString,
+}
+
+#[instrument(err)]
+pub async fn get_recordings_for_guild(guild_id: u64) -> Result<Vec<Recording>, FileError> {
   let mut results = Vec::new();
-  let mut backlog = vec![PathBuf::from(SOUNDS_FOLDER)];
+  let start_dir = (*RECORDINGS_FOLDER).join(guild_id.to_string());
+  if !start_dir.exists() {
+    return Ok(vec![]);
+  }
 
-  while let Some(dir) = backlog.pop() {
-    trace!(?dir, "Traversing sound files");
-    let mut handle = (fs::read_dir(dir).await as Result<ReadDir, io::Error>)?;
+  let mut dir = (fs::read_dir(start_dir).await as Result<ReadDir, io::Error>)?;
+  while let Some(file) = dir.next_entry().await? {
+    let filename = file.file_name();
+    let filename = filename.to_string_lossy();
+    let metadata = file.metadata().await?;
 
-    while let Some(file) = handle.next_entry().await? {
-      let ft = file.file_type().await?;
-      if ft.is_dir() {
-        backlog.push(file.path());
-      } else if ft.is_file() {
-        if let Ok(sound) = parse_sound(&file.path()).await {
-          results.push(sound);
+    if metadata.is_dir() {
+      if let Ok(timestamp) = filename.parse::<u64>() {
+        let mut rec_dir = (fs::read_dir(file.path()).await as Result<ReadDir, io::Error>)?;
+
+        let mut users = Vec::new();
+        let mut length: f32 = 0.0;
+        while let Some(rec_file) = rec_dir.next_entry().await? {
+          if let Some(file_stem) = rec_file.path().file_stem().and_then(|stem| stem.to_str()) {
+            users.push(RecordingUser {
+              name: file_stem.to_string(),
+              file_name: rec_file.file_name(),
+            });
+            length = length.max(
+              audio_utils::get_length(&rec_file.path())
+                .await
+                .unwrap_or(0.0),
+            );
+          }
         }
+
+        results.push(Recording {
+          guild_id,
+          timestamp: SystemTime::UNIX_EPOCH + Duration::from_secs(timestamp),
+          length,
+          users,
+        });
+      } else {
+        warn!(?file, "Directory has invalid name. Must be a number.");
       }
+    } else {
+      warn!(?file, "File found in invalid location");
     }
   }
 
   Ok(results)
-}
-
-/// `path` is assumed to be realtive to SOUNDS_FOLDER. It is also assumed to be safe
-/// (i.e. no special symbols or characters like ..).
-pub async fn get_sound(path: &PathBuf) -> Option<Sound> {
-  let path = Path::new(SOUNDS_FOLDER).join(path);
-  if path.exists() {
-    parse_sound(&path).await.ok()
-  } else {
-    None
-  }
-}
-
-/// `path` is assumed to be realtive to SOUNDS_FOLDER. It is also assumed to be safe
-/// (i.e. no special symbols or characters like ..).
-#[instrument]
-async fn parse_sound(path: &PathBuf) -> Result<Sound, FileError> {
-  lazy_static! {
-    // Search for a string of the form vol:+1.5 or vol:-0.5 or vol:off surrounded by whitespace
-    static ref RE_VOL: Regex = Regex::new(r"\bvol:([+-]?[\d]+(.[\d]+)?|off)\b").unwrap();
-  }
-
-  let name = path
-    .file_stem()
-    .ok_or(FileError::InvalidFilename)?
-    .to_string_lossy();
-
-  let mut vol_adj = VolumeAdjustment::Automatic;
-  let name = RE_VOL.replace(&name, |caps: &Captures| {
-    if let Some(adj) = caps.get(1).map(|cap| cap.as_str()).and_then(|cap| {
-      if cap == "off" {
-        Some(0.0)
-      } else {
-        cap.parse::<f32>().ok()
-      }
-    }) {
-      vol_adj = VolumeAdjustment::Manual(adj);
-    }
-    ""
-  });
-
-  debug!(?name, ?vol_adj, "Parsed sound name");
-  Ok(Sound {
-    name: name.to_string(),
-    file_path: path
-      .strip_prefix(SOUNDS_FOLDER)
-      .map_err(|_| FileError::InvalidFilename)?
-      .to_path_buf(),
-    volume_adjustment: vol_adj,
-  })
-}
-
-pub fn get_full_sound_path(relative_path: &PathBuf) -> PathBuf {
-  Path::new(SOUNDS_FOLDER).join(relative_path)
 }

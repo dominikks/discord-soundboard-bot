@@ -7,5 +7,10 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SoundboardButtonComponent {
+  @Input() guildId: string;
   @Input() category?: string;
+
+  get dispCategory() {
+    return this.category == null || this.category === '' ? '' : `/${this.category}`;
+  }
 }

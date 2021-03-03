@@ -14,6 +14,7 @@
     "eofline": true,
     "import-blacklist": [true, "rxjs/Rx"],
     "import-spacing": true,
+    "no-unused-variable": true,
     "indent": {
       "options": ["spaces"]
     },

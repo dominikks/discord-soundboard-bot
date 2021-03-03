@@ -1,6 +1,34 @@
 @import 'variables';
 
+* {
+  box-sizing: border-box;
+}
+
 a {
   color: $primary;
   text-decoration: none;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.mat-expansion-panel-header-title,
+.mat-expansion-panel-header-description {
+  flex-basis: 0;
+}
+
+// https://github.com/angular/components/issues/4892
+.mat-tooltip-trigger {
+  touch-action: auto !important;
+}
+
+// Form fields in toolbar have no bottom padding
+mat-toolbar .mat-form-field-appearance-outline {
+  .mat-form-field-wrapper {
+    padding-bottom: 0;
+  }
+  .mat-button-toggle-checked .mat-button-toggle-focus-overlay {
+    border-bottom: 0;
+  }
 }

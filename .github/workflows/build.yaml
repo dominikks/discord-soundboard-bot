@@ -3,37 +3,6 @@ name: Build app
 on: push
 
 jobs:
-  compile-backend:
-    name: Compile backend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          default: true
-
-      - name: Initialize cache
-        uses: Swatinem/rust-cache@v1
-        with:
-          working-directory: backend
-
-      - name: Compile
-        run: |
-          export BUILD_TIMESTAMP=$(git show -s --format=%ct "$GITHUB_SHA")
-          export BUILD_ID=${GITHUB_REF#refs/heads/}#$(git rev-parse --short "$GITHUB_SHA")
-          cargo build --release
-        working-directory: backend
-
-      - name: Archive binary
-        uses: actions/upload-artifact@v2
-        with:
-          name: backend
-          path: backend/target/release/discord-soundboard-bot
-
   compile-frontend:
     name: Compile frontend
     runs-on: ubuntu-latest
@@ -61,7 +30,7 @@ jobs:
 
   docker:
     name: Build docker image
-    needs: [compile-backend, compile-frontend]
+    needs: [compile-frontend]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -72,17 +41,17 @@ jobs:
           name: frontend
           path: frontend/dist/discord-soundboard-bot/
 
-      - name: Download backend
-        uses: actions/download-artifact@v2
-        with:
-          name: backend
-          path: backend/target/release/
-
       - name: Docker meta
         id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v1
         with:
           images: ghcr.io/dominikks/discord-soundboard-bot
+
+      - name: Set environment variables
+        if: startsWith(github.ref, 'refs/heads/')
+        run: |
+          echo "BUILD_TIMESTAMP=$(git show -s --format=%ct $GITHUB_SHA)" >> $GITHUB_ENV
+          echo "BUILD_ID=${GITHUB_REF#refs/heads/}#$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -114,3 +83,6 @@ jobs:
           labels: ${{ steps.docker_meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+          build-args: |
+            BUILD_TIMESTAMP
+            BUILD_ID

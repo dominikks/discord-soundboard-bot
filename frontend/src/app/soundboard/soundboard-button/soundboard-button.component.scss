@@ -1,7 +1,6 @@
 .wrapper {
   height: 100%;
   width: 100%;
-  padding: 0 4px;
 
   display: flex;
   flex-direction: column;
@@ -19,15 +18,34 @@
   }
 }
 
+.sound-name,
+.sound-source {
+  padding: 0 8px;
+}
+
 .sound-name {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 500;
+  padding-bottom: 1em;
 }
 
 .sound-source {
-  font-style: italic;
-  opacity: 0.25;
+  opacity: 0.3;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  .no-category {
+    font-style: italic;
+  }
 }

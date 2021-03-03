@@ -1,14 +1,19 @@
+use crate::api::auth::UserId;
+use crate::db;
 use crate::discord::recorder::Recorder;
 use crate::CacheHttp;
 use crate::BUILD_ID;
 use crate::BUILD_TIMESTAMP;
 use crate::VERSION;
-use lazy_static::lazy_static;
 use rocket::error::Error as RocketError;
-use rocket::get;
-use rocket::routes;
+use rocket::fairing::AdHoc;
+use rocket_contrib::helmet::SpaceHelmet;
 use rocket_contrib::json::Json;
+use serde::Deserialize;
 use serde::Serialize;
+use serde_with::serde_as;
+use serde_with::skip_serializing_none;
+use serde_with::DisplayFromStr;
 use songbird::Songbird;
 use std::env::var;
 use std::path::Path;
@@ -16,18 +21,25 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use utils::CachedFile;
 
-mod discord;
+mod auth;
+mod commands;
 mod recorder;
-mod sound_browser;
+mod settings;
+mod sounds;
 mod utils;
 
+/// 64 bit integers can not be accurately represented in javascript. They are therefore
+/// treated as strings. This is similar to the Twitter Snowflake type.
+#[serde_as]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
+struct Snowflake(#[serde_as(as = "DisplayFromStr")] pub u64);
+
 lazy_static! {
-  // Used for generating the direct URLs for the sound files
-  pub static ref BASE_URL: String = var("BASE_URL").unwrap_or(String::from(""));
   // Custom settings for the frontend
   static ref APP_TITLE: Option<String> = var("APP_TITLE").ok();
-  static ref FILE_MANAGEMENT_URL: Option<String> = var("FILE_MANAGEMENT_URL").ok();
-  static ref RANDOM_INFIXES: Vec<String> = var("RANDOM_INFIXES").map(|s| s.split(",").map(|infix| String::from(infix.trim())).collect::<Vec<String>>()).unwrap_or(Vec::new());
+  // Discord data found in env
+  static ref DISCORD_CLIENT_ID: String = var("DISCORD_CLIENT_ID").expect("Expected DISCORD_CLIENT_ID as env");
+  static ref DISCORD_CLIENT_SECRET: String = var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env");
 }
 
 pub async fn run(
@@ -36,13 +48,22 @@ pub async fn run(
   recorder: Arc<Recorder>,
 ) -> Result<(), RocketError> {
   rocket::ignite()
-    .mount("/", routes![index, files, info, random_infixes])
-    .mount("/api/discord", discord::get_routes())
-    .mount("/api/sounds", sound_browser::get_routes())
-    .mount("/api/recorder", recorder::get_routes())
+    .attach(SpaceHelmet::default())
+    .attach(db::DbConn::fairing())
+    .attach(AdHoc::on_attach(
+      "Database Migrations",
+      db::run_db_migrations,
+    ))
+    .mount("/", routes![index, files, info])
+    .mount("/api", auth::get_routes())
+    .mount("/api/guilds", commands::get_routes())
+    .mount("/api/sounds", sounds::get_routes())
+    .mount("/api", recorder::get_routes())
+    .mount("/api", settings::get_routes())
     .manage(songbird)
     .manage(cache_http)
     .manage(recorder)
+    .manage(auth::get_oauth_client())
     .launch()
     .await
 }
@@ -61,17 +82,15 @@ async fn files(path: PathBuf) -> Option<CachedFile> {
     .ok()
 }
 
+#[skip_serializing_none]
+#[serde(rename_all = "camelCase")]
 #[derive(Debug, Serialize)]
 struct InfoResponse {
   version: String,
-  #[serde(skip_serializing_if = "Option::is_none")]
   build_id: Option<String>,
-  #[serde(skip_serializing_if = "Option::is_none")]
   build_timestamp: Option<u64>,
-  #[serde(skip_serializing_if = "Option::is_none")]
   title: Option<String>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  file_management_url: Option<String>,
+  discord_client_id: String,
 }
 
 #[get("/api/info")]
@@ -81,11 +100,6 @@ async fn info() -> Json<InfoResponse> {
     build_id: BUILD_ID.map(|s| s.to_string()),
     build_timestamp: BUILD_TIMESTAMP.and_then(|s| s.parse::<u64>().ok()),
     title: APP_TITLE.clone(),
-    file_management_url: FILE_MANAGEMENT_URL.clone(),
+    discord_client_id: DISCORD_CLIENT_ID.clone(),
   })
-}
-
-#[get("/api/randominfixes")]
-async fn random_infixes() -> Json<Vec<String>> {
-  Json(RANDOM_INFIXES.clone())
 }

@@ -1,6 +1,5 @@
 use crate::file_handling::RECORDINGS_FOLDER;
 use crate::CacheHttp;
-use lazy_static::lazy_static;
 use serenity::async_trait;
 use serenity::client::ClientBuilder;
 use serenity::client::Context;
@@ -9,8 +8,6 @@ use serenity::model::voice_gateway::id::UserId;
 use serenity::prelude::Mutex;
 use serenity::prelude::RwLock;
 use serenity::prelude::TypeMapKey;
-use songbird::model::payload::ClientConnect;
-use songbird::model::payload::ClientDisconnect;
 use songbird::model::payload::Speaking;
 use songbird::Call;
 use songbird::CoreEvent;
@@ -19,7 +16,7 @@ use songbird::EventContext;
 use songbird::EventHandler as VoiceEventHandler;
 use std::collections::HashMap;
 use std::env::var;
-use std::path::Path;
+use std::fmt;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::Arc;
@@ -29,12 +26,6 @@ use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 use tokio::time::sleep;
 use tokio::time::Duration;
-use tracing::debug;
-use tracing::error;
-use tracing::info;
-use tracing::instrument;
-use tracing::span;
-use tracing::trace;
 use tracing::Instrument;
 use tracing::Level;
 
@@ -89,6 +80,15 @@ pub enum RecordingError {
   NoData,
 }
 
+impl fmt::Display for RecordingError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+    match self {
+      RecordingError::NoData => write!(f, "RecordingError: no data to record"),
+      RecordingError::IoError(err) => write!(f, "RecordingError: IoError occurred. {}", err),
+    }
+  }
+}
+
 impl From<std::io::Error> for RecordingError {
   fn from(err: std::io::Error) -> Self {
     RecordingError::IoError(err)
@@ -97,9 +97,9 @@ impl From<std::io::Error> for RecordingError {
 
 pub struct Recorder {
   /// Contains currently running recordings
-  active: RwLock<HashMap<u32, VoiceRecording>>,
+  active: Mutex<HashMap<u32, VoiceRecording>>,
   /// Contains all recordings for this ssrc up to this point
-  archive: RwLock<HashMap<u32, HashMap<SystemTime, VoiceRecording>>>,
+  archive: Mutex<HashMap<u32, HashMap<SystemTime, VoiceRecording>>>,
   /// Maps an ssrc to a user
   users: RwLock<HashMap<u32, UserData>>,
 }
@@ -113,8 +113,25 @@ impl Recorder {
     })
   }
 
+  /// Register the recorder as event handler
+  pub async fn register_with_call(self: Arc<Self>, guild_id: GuildId, call_lock: Arc<Mutex<Call>>) {
+    let mut call = call_lock.lock().await;
+    call.add_global_event(
+      CoreEvent::SpeakingStateUpdate.into(),
+      RecorderHandler::new(self.clone(), guild_id),
+    );
+    call.add_global_event(
+      CoreEvent::SpeakingUpdate.into(),
+      RecorderHandler::new(self.clone(), guild_id),
+    );
+    call.add_global_event(
+      CoreEvent::VoicePacket.into(),
+      RecorderHandler::new(self.clone(), guild_id),
+    );
+  }
+
   /// Saves the recording to disk
-  #[instrument(skip(self, cache_and_http))]
+  #[instrument(skip(self, cache_and_http), err)]
   pub async fn save_recording(
     &self,
     guild_id: GuildId,
@@ -133,8 +150,8 @@ impl Recorder {
 
     let mut recordings: HashMap<UserId, Vec<VoiceRecording>> = HashMap::new();
     {
-      let mut active = self.active.write().await;
-      let mut archive = self.archive.write().await;
+      let mut active = self.active.lock().await;
+      let mut archive = self.archive.lock().await;
 
       for (ssrc, uid) in relevant_users {
         let mut rec = Vec::new();
@@ -176,14 +193,14 @@ impl Recorder {
       "Extracted start and end time"
     );
 
-    let folder = Path::new(RECORDINGS_FOLDER).join(format!(
-      "{}",
+    let folder = (*RECORDINGS_FOLDER).join(guild_id.0.to_string()).join(
       SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_secs()
-    ));
-    fs::create_dir(&folder).await?;
+        .to_string(),
+    );
+    fs::create_dir_all(&folder).await?;
 
     let mut tasks = Vec::new();
     for (uid, rec) in recordings.into_iter() {
@@ -350,9 +367,19 @@ impl VoiceEventHandler for RecorderHandler {
 
                   debug!(delete, ssrc, "Checking time out of user data");
                   if delete {
-                    let mut users = recorder.users.write().await;
-                    users.remove(&ssrc);
-                    debug!("{} remaining known users", users.len());
+                    {
+                      let mut users = recorder.users.write().await;
+                      users.remove(&ssrc);
+                      debug!("{} remaining known users", users.len());
+                    }
+                    {
+                      let mut active = recorder.active.lock().await;
+                      active.remove(&ssrc);
+                    }
+                    {
+                      let mut archive = recorder.archive.lock().await;
+                      archive.remove(&ssrc);
+                    }
                     break;
                   }
                 }
@@ -363,8 +390,6 @@ impl VoiceEventHandler for RecorderHandler {
         }
       }
       Ctx::SpeakingUpdate { ssrc, speaking } => {
-        // You can implement logic here which reacts to a user starting
-        // or stopping speaking.
         trace!(
           "Source {} has {} speaking.",
           ssrc,
@@ -374,19 +399,22 @@ impl VoiceEventHandler for RecorderHandler {
         if *speaking {
           // Add a new active recording
           {
-            let mut active = self.recorder.active.write().await;
-            active.entry(*ssrc).or_insert_with(|| VoiceRecording::new());
+            let mut active = self.recorder.active.lock().await;
+            active.insert(*ssrc, VoiceRecording::new());
           }
 
-          let mut users = self.recorder.users.write().await;
-          users
-            .entry(*ssrc)
-            .and_modify(|user| user.last_voice_activity = SystemTime::now());
+          // Update last voice activity
+          {
+            let mut users = self.recorder.users.write().await;
+            users
+              .entry(*ssrc)
+              .and_modify(|user| user.last_voice_activity = SystemTime::now());
+          }
         } else {
           // Move the active recording to the archive
           let recording;
           {
-            let mut active = self.recorder.active.write().await;
+            let mut active = self.recorder.active.lock().await;
             recording = active.remove(ssrc);
           }
 
@@ -394,7 +422,7 @@ impl VoiceEventHandler for RecorderHandler {
             let start_time = recording.start;
 
             {
-              let mut archive = self.recorder.archive.write().await;
+              let mut archive = self.recorder.archive.lock().await;
               let archive_entry = archive.entry(*ssrc).or_insert_with(|| Default::default());
               archive_entry.insert(start_time, recording);
             }
@@ -406,7 +434,8 @@ impl VoiceEventHandler for RecorderHandler {
             tokio::spawn(
               async move {
                 sleep(Duration::from_secs(*RECORDING_LENGTH)).await;
-                let mut archive = recorder.archive.write().await;
+
+                let mut archive = recorder.archive.lock().await;
                 if let Some(entry) = archive.get_mut(&ssrc) {
                   entry.remove(&start_time);
                   debug!(
@@ -414,15 +443,6 @@ impl VoiceEventHandler for RecorderHandler {
                     "Removed timed out recording, {} recordings remaining",
                     entry.len()
                   );
-
-                  if entry.is_empty() {
-                    archive.remove(&ssrc);
-                    debug!(
-                      ssrc,
-                      "Removing archive entry, {} entries remaining",
-                      archive.len()
-                    );
-                  }
                 }
               }
               .instrument(span),
@@ -442,35 +462,13 @@ impl VoiceEventHandler for RecorderHandler {
             packet.ssrc,
           );
 
-          let mut active = self.recorder.active.write().await;
+          let mut active = self.recorder.active.lock().await;
           active
             .entry(packet.ssrc)
             .and_modify(|active_entry| active_entry.data.extend(audio));
         } else {
           error!("RTP packet, but no audio. Driver may not be configured to decode.");
         }
-      }
-      Ctx::ClientConnect(ClientConnect {
-        audio_ssrc,
-        video_ssrc,
-        user_id,
-        ..
-      }) => {
-        // You can implement your own logic here to handle a user who has joined the
-        // voice channel e.g., allocate structures, map their SSRC to User ID.
-
-        debug!(
-          "Client connected: user {:?} has audio SSRC {:?}, video SSRC {:?}",
-          user_id, audio_ssrc, video_ssrc,
-        );
-      }
-      Ctx::ClientDisconnect(ClientDisconnect { user_id, .. }) => {
-        // You can implement your own logic here to handle a user who has left the
-        // voice channel e.g., finalise processing of statistics etc.
-        // You will typically need to map the User ID to their SSRC; observed when
-        // speaking or connecting.
-
-        debug!("Client disconnected: user {:?}", user_id);
       }
       _ => {
         // We won't be registering this struct for any more event classes.
@@ -506,33 +504,4 @@ pub async fn get(ctx: &Context) -> Option<Arc<Recorder>> {
   let data = ctx.data.read().await;
 
   data.get::<RecorderKey>().cloned()
-}
-
-/// Register the recorder as event handler
-pub async fn register_recorder(
-  recorder: Arc<Recorder>,
-  guild_id: GuildId,
-  call_lock: Arc<Mutex<Call>>,
-) {
-  let mut call = call_lock.lock().await;
-  call.add_global_event(
-    CoreEvent::SpeakingStateUpdate.into(),
-    RecorderHandler::new(recorder.clone(), guild_id),
-  );
-  call.add_global_event(
-    CoreEvent::SpeakingUpdate.into(),
-    RecorderHandler::new(recorder.clone(), guild_id),
-  );
-  call.add_global_event(
-    CoreEvent::VoicePacket.into(),
-    RecorderHandler::new(recorder.clone(), guild_id),
-  );
-  call.add_global_event(
-    CoreEvent::ClientConnect.into(),
-    RecorderHandler::new(recorder.clone(), guild_id),
-  );
-  call.add_global_event(
-    CoreEvent::ClientDisconnect.into(),
-    RecorderHandler::new(recorder.clone(), guild_id),
-  );
 }

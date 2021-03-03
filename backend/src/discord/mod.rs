@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 pub mod client;
 mod commands;
+pub mod management;
 pub mod player;
 pub mod recorder;
 
@@ -41,5 +42,11 @@ impl From<&Arc<CacheAndHttp>> for CacheHttp {
       cache: cachehttp.cache.clone(),
       http: cachehttp.http.clone(),
     }
+  }
+}
+
+impl AsRef<Cache> for CacheHttp {
+  fn as_ref(&self) -> &Cache {
+    self.cache.as_ref()
   }
 }

@@ -1,4 +1,4 @@
-**
-!/backend/target/release/discord-soundboard-bot
-!/backend/Rocket.toml
+/backend/target
+/backend/data
+/frontend/**
 !/frontend/dist/discord-soundboard-bot/**

@@ -1,27 +1,32 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { TimeagoIntl } from 'ngx-timeago';
-import { strings as germanStrings } from 'ngx-timeago/language-strings/de';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ApiService } from './services/api.service';
+import { LoginService } from './services/login.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   state: 'loading' | 'finished' | 'error' = 'loading';
+  get loggedIn$() {
+    return this.loginService.loggedIn$;
+  }
 
-  constructor(private intl: TimeagoIntl, apiService: ApiService, title: Title) {
-    this.intl.strings = germanStrings;
-    apiService
-      .loadAppInfo()
-      .then(info => {
-        this.state = 'finished';
-        title.setTitle((info.title + ' Soundboard').trim());
-      })
-      .catch(error => {
-        this.state = 'error';
-        console.error(error);
-      });
+  private onDestroy$ = new Subject<void>();
+
+  constructor(private loginService: LoginService, private apiService: ApiService, private title: Title) {}
+
+  ngOnInit() {
+    this.apiService.appInfo$.pipe(takeUntil(this.onDestroy$)).subscribe(appInfo => {
+      this.title.setTitle((appInfo.title + ' Soundboard').trim());
+    });
+  }
+
+  ngOnDestroy() {
+    this.onDestroy$.next();
+    this.onDestroy$.complete();
   }
 }

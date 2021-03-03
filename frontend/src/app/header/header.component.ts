@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ApiService } from '../services/api.service';
+import { LoginService } from '../services/login.service';
 
 @Component({
   selector: 'app-header',
@@ -8,6 +9,13 @@ import { ApiService } from '../services/api.service';
 })
 export class HeaderComponent {
   @Input() pageTitle: string;
+  @Input() showSidenavToggle = false;
 
-  constructor(public apiService: ApiService) {}
+  @Output() toggleSidenav = new EventEmitter<void>();
+
+  constructor(public apiService: ApiService, private loginService: LoginService) {}
+
+  logout() {
+    this.loginService.logout().subscribe();
+  }
 }

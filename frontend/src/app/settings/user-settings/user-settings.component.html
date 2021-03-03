@@ -1,0 +1,9 @@
+<div class="settings-container">
+  <h1>User Settings</h1>
+  <mat-checkbox
+    color="primary"
+    [ngModel]="settingsService.settings.debug$ | async"
+    (ngModelChange)="settingsService.settings.debug$.next($event)"
+    >Show debug information when playing sounds.</mat-checkbox
+  >
+</div>

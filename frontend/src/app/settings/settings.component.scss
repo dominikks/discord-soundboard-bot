@@ -1,0 +1,44 @@
+.settings-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.is-mobile app-header {
+  position: fixed;
+  z-index: 2;
+  width: 100%;
+}
+
+mat-sidenav-container {
+  flex: 1;
+}
+.is-mobile mat-sidenav-container {
+  flex: 1 0 auto;
+}
+
+.sidenav-list {
+  width: 250px;
+}
+
+mat-nav-list {
+  a,
+  mat-list-item {
+    &.active-nav-link {
+      background-color: rgba(white, 0.08);
+    }
+    &:hover {
+      background-color: rgba(white, 0.12);
+    }
+  }
+
+  .guild-menu-item {
+    padding-left: 48px;
+  }
+}
+
+mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+}

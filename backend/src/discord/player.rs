@@ -1,51 +1,46 @@
-use crate::audio_utils::detect_volume;
-use crate::audio_utils::VolumeInformation;
+use crate::discord::recorder::Recorder;
 use crate::discord::CacheHttp;
-use crate::file_handling::Sound;
-use crate::file_handling::VolumeAdjustment;
-use lazy_static::lazy_static;
 use serenity::model::channel::ChannelType;
+use serenity::model::id::ChannelId;
 use serenity::model::id::GuildId;
 use songbird::Songbird;
-use std::env::var;
+use std::path::PathBuf;
 use std::sync::Arc;
-use tracing::{debug, instrument, trace, warn};
-
-lazy_static! {
-  static ref TARGET_MAX_VOLUME: f32 = var("TARGET_MAX_VOLUME")
-    .map(|content| content
-      .parse::<f32>()
-      .expect("Invalid value for TARGET_MAX_VALUE"))
-    .unwrap_or(-3.0);
-  static ref TARGET_MEAN_VOLUME: f32 = var("TARGET_MEAN_VOLUME")
-    .map(|content| content
-      .parse::<f32>()
-      .expect("Invalid value for TARGET_MEAN_VALUE"))
-    .unwrap_or(-10.0);
-}
+use tokio::sync::Mutex;
 
 #[derive(Debug)]
 pub enum PlayError {
   FailedToJoinChannel,
-  AnalysisFailed,
   Decoding(songbird::input::error::Error),
 }
 
-#[derive(Debug)]
-pub struct PlayResult {
-  pub volume: Option<VolumeInformation>,
-  pub volume_adjustment: f32,
+#[instrument(skip(songbird, recorder))]
+pub async fn join_channel(
+  guild_id: GuildId,
+  channel_id: ChannelId,
+  songbird: Arc<Songbird>,
+  recorder: Arc<Recorder>,
+) -> Result<Arc<Mutex<songbird::Call>>, ()> {
+  let (call_lock, result) = songbird.join(guild_id, channel_id).await;
+  result.map_err(|_| ())?;
+
+  recorder
+    .register_with_call(guild_id, call_lock.clone())
+    .await;
+
+  Ok(call_lock)
 }
 
-#[instrument(skip(songbird, cache_and_http))]
+#[instrument(skip(songbird, recorder, cache_and_http))]
 pub async fn play(
-  sound: &Sound,
+  sound_path: &PathBuf,
+  volume_adjustment: f32,
   guild_id: GuildId,
   songbird: Arc<Songbird>,
+  recorder: Arc<Recorder>,
   cache_and_http: &CacheHttp,
-) -> Result<PlayResult, PlayError> {
-  let manager = songbird.clone();
-  let handler_lock = match manager.get(guild_id) {
+) -> Result<(), PlayError> {
+  let handler_lock = match songbird.get(guild_id) {
     Some(handler_lock) => handler_lock,
     None => {
       // Try to join the voice channel with the most users in it
@@ -73,33 +68,16 @@ pub async fn play(
         .ok_or(PlayError::FailedToJoinChannel)?;
 
       debug!(?channel_id, "Auto-joining channel");
-      let (handler_lock, result) = manager.join(guild_id, *channel_id).await;
-      let _ = result.map_err(|_| PlayError::FailedToJoinChannel)?;
-
-      handler_lock
+      join_channel(guild_id, *channel_id, songbird, recorder)
+        .await
+        .map_err(|_| PlayError::FailedToJoinChannel)?
     }
   };
   let mut handler = handler_lock.lock().await;
 
-  let file_path = sound.get_full_path();
-  let (volume, volume_adjustment) = match sound.volume_adjustment {
-    VolumeAdjustment::Automatic => {
-      // Adjust the max and mean volumes to be at least the specified value
-      let volume = detect_volume(file_path.clone())
-        .await
-        .ok_or(PlayError::AnalysisFailed)?;
-      let adjustment = (*TARGET_MAX_VOLUME - volume.max_volume)
-        .max(*TARGET_MEAN_VOLUME - volume.mean_volume)
-        .max(0.0);
-      (Some(volume), adjustment)
-    }
-    VolumeAdjustment::Manual(adj) => (None, adj),
-  };
-  debug!(?volume_adjustment, "Adjusting volume of file");
   let volume_adjustment_string = format!("volume={}dB", volume_adjustment);
-
   let source = match songbird::input::ffmpeg_optioned(
-    file_path,
+    sound_path,
     &[],
     &[
       "-f",
@@ -123,10 +101,7 @@ pub async fn play(
   };
 
   handler.play_only_source(source);
-  Ok(PlayResult {
-    volume,
-    volume_adjustment: volume_adjustment,
-  })
+  Ok(())
 }
 
 #[instrument(skip(songbird))]
