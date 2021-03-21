@@ -14,14 +14,13 @@ use bigdecimal::FromPrimitive;
 use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
-use rocket::data::ToByteUnit;
-use rocket::response::NamedFile;
+use rocket::fs::NamedFile;
+use rocket::fs::TempFile;
 use rocket::response::Responder;
 use rocket::routes;
-use rocket::Data;
+use rocket::serde::json::Json;
 use rocket::Route;
 use rocket::State;
-use rocket_contrib::json::Json;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::serde_as;
@@ -105,8 +104,8 @@ impl From<PermissionError> for SoundsError {
 }
 
 #[serde_as]
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct Sound {
   id: Snowflake,
   guild_id: Snowflake,
@@ -119,8 +118,8 @@ struct Sound {
 }
 
 #[serde_as]
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct Soundfile {
   max_volume: f32,
   mean_volume: f32,
@@ -153,7 +152,7 @@ impl TryFrom<(models::Sound, Option<models::Soundfile>)> for Sound {
 
 #[get("/")]
 async fn list_sounds(
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Result<Json<Vec<Sound>>, SoundsError> {
@@ -188,7 +187,7 @@ async fn list_sounds(
 #[get("/<sound_id>")]
 async fn get_sound(
   sound_id: i32,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Result<NamedFile, SoundsError> {
@@ -213,8 +212,8 @@ async fn get_sound(
   Ok(NamedFile::open(file_handling::get_full_sound_path(&filename)).await?)
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct CreateSoundParameter {
   guild_id: Snowflake,
   name: String,
@@ -224,7 +223,7 @@ struct CreateSoundParameter {
 
 #[post("/", format = "json", data = "<params>")]
 async fn create_sound(
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
   params: Json<CreateSoundParameter>,
@@ -261,8 +260,8 @@ async fn create_sound(
   Ok(Json(Sound::try_from((sound, None))?))
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct UpdateSoundParameter {
   name: Option<String>,
   category: Option<String>,
@@ -283,7 +282,7 @@ impl From<UpdateSoundParameter> for models::SoundChangeset {
 #[put("/<sound_id>", format = "json", data = "<params>")]
 async fn update_sound(
   sound_id: i32,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
   params: Json<UpdateSoundParameter>,
@@ -329,7 +328,7 @@ async fn update_sound(
 #[delete("/<sound_id>")]
 async fn delete_sound(
   sound_id: i32,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Result<(), SoundsError> {
@@ -365,11 +364,11 @@ async fn delete_sound(
   }
 }
 
-#[post("/<sound_id>", format = "audio/mpeg", data = "<data>")]
+#[post("/<sound_id>", format = "audio/mpeg", data = "<file>")]
 async fn upload_sound(
   sound_id: i32,
-  data: Data,
-  cache_http: State<'_, CacheHttp>,
+  file: TempFile<'_>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Result<Json<Soundfile>, SoundsError> {
@@ -386,7 +385,7 @@ async fn upload_sound(
   let file_name = file_name.unwrap_or(format!("{}_{}.mp3", guild_id, sound_id));
   let file_path = file_handling::get_full_sound_path(&file_name);
 
-  let save_res = save_sound_file(sound_id, uid, file_name, &file_path, data, &db).await;
+  let save_res = save_sound_file(sound_id, uid, file_name, &file_path, file, &db).await;
 
   if save_res.is_err() {
     // Clean up everything
@@ -410,13 +409,13 @@ async fn save_sound_file(
   user_id: BigDecimal,
   file_name: String,
   file_path: &PathBuf,
-  data: Data,
+  mut file: TempFile<'_>,
   db: &DbConn,
 ) -> Result<Json<Soundfile>, SoundsError> {
-  data.open(10.mebibytes()).stream_to_file(file_path).await?;
+  file.persist_to(file_path).await?;
 
-  let volume = audio_utils::detect_volume(&file_path).await;
-  let length = audio_utils::get_length(&file_path).await;
+  let volume = audio_utils::detect_volume(file_path).await;
+  let length = audio_utils::get_length(file_path).await;
   if let (Some(volume), Some(length)) = (volume, length) {
     let sound_info = models::Soundfile {
       sound_id,

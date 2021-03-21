@@ -8,6 +8,8 @@ use serenity::model::voice_gateway::id::UserId;
 use serenity::prelude::Mutex;
 use serenity::prelude::RwLock;
 use serenity::prelude::TypeMapKey;
+use songbird::events::context_data::SpeakingUpdateData;
+use songbird::events::context_data::VoiceData;
 use songbird::model::payload::Speaking;
 use songbird::Call;
 use songbird::CoreEvent;
@@ -389,7 +391,7 @@ impl VoiceEventHandler for RecorderHandler {
           }
         }
       }
-      Ctx::SpeakingUpdate { ssrc, speaking } => {
+      Ctx::SpeakingUpdate(SpeakingUpdateData { ssrc, speaking, .. }) => {
         trace!(
           "Source {} has {} speaking.",
           ssrc,
@@ -450,7 +452,7 @@ impl VoiceEventHandler for RecorderHandler {
           }
         }
       }
-      Ctx::VoicePacket { audio, packet, .. } => {
+      Ctx::VoicePacket(VoiceData { audio, packet, .. }) => {
         // An event which fires for every received audio packet,
         // containing the decoded data.
         if let Some(audio) = audio {

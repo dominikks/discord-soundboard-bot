@@ -7,8 +7,7 @@ use crate::BUILD_TIMESTAMP;
 use crate::VERSION;
 use rocket::error::Error as RocketError;
 use rocket::fairing::AdHoc;
-use rocket_contrib::helmet::SpaceHelmet;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::serde_as;
@@ -47,10 +46,9 @@ pub async fn run(
   songbird: Arc<Songbird>,
   recorder: Arc<Recorder>,
 ) -> Result<(), RocketError> {
-  rocket::ignite()
-    .attach(SpaceHelmet::default())
+  rocket::build()
     .attach(db::DbConn::fairing())
-    .attach(AdHoc::on_attach(
+    .attach(AdHoc::try_on_ignite(
       "Database Migrations",
       db::run_db_migrations,
     ))
@@ -83,8 +81,8 @@ async fn files(path: PathBuf) -> Option<CachedFile> {
 }
 
 #[skip_serializing_none]
-#[serde(rename_all = "camelCase")]
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct InfoResponse {
   version: String,
   build_id: Option<String>,

@@ -13,9 +13,9 @@ use bigdecimal::ToPrimitive;
 use core::convert::TryFrom;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
+use rocket::serde::json::Json;
 use rocket::Route;
 use rocket::State;
-use rocket_contrib::json::Json;
 use serde::Deserialize;
 use serde::Serialize;
 use serenity::model::id::GuildId;
@@ -70,8 +70,8 @@ impl From<PermissionError> for SettingsError {
   }
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct RandomInfix {
   guild_id: Snowflake,
   infix: String,
@@ -94,7 +94,7 @@ impl TryFrom<models::RandomInfix> for RandomInfix {
 async fn get_all_random_infixes(
   user: UserId,
   db: DbConn,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
 ) -> Result<Json<Vec<RandomInfix>>, SettingsError> {
   use crate::db::schema::randominfixes::dsl::*;
 
@@ -120,8 +120,8 @@ async fn get_all_random_infixes(
   Ok(Json(infixes))
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct RandomInfixParameter {
   infix: String,
   display_name: String,
@@ -132,7 +132,7 @@ async fn set_random_infixes(
   guild_id: u64,
   user: UserId,
   db: DbConn,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   params: Json<Vec<RandomInfixParameter>>,
 ) -> Result<(), SettingsError> {
   check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId(guild_id)).await?;
@@ -165,8 +165,8 @@ async fn set_random_infixes(
   Ok(())
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct GuildSettings {
   user_role_id: Option<Snowflake>,
   moderator_role_id: Option<Snowflake>,
@@ -180,7 +180,7 @@ async fn get_guild_settings(
   guild_id: u64,
   user: UserId,
   db: DbConn,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
 ) -> Result<Json<GuildSettings>, SettingsError> {
   let guild_id = GuildId(guild_id);
   check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
@@ -228,8 +228,8 @@ async fn get_guild_settings(
   }))
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct GuildSettingsParameter {
   #[serde(default, with = "::serde_with::rust::double_option")]
   user_role_id: Option<Option<Snowflake>>,
@@ -244,7 +244,7 @@ async fn set_guild_settings(
   guild_id: u64,
   user: UserId,
   db: DbConn,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   params: Json<GuildSettingsParameter>,
 ) -> Result<(), SettingsError> {
   let guild_id = GuildId(guild_id);

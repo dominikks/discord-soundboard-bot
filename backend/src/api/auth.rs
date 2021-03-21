@@ -33,6 +33,7 @@ use rocket::http::Cookie;
 use rocket::http::CookieJar;
 use rocket::http::SameSite;
 use rocket::http::Status;
+use rocket::outcome::try_outcome;
 use rocket::outcome::IntoOutcome;
 use rocket::request;
 use rocket::request::FromRequest;
@@ -40,21 +41,21 @@ use rocket::request::Outcome;
 use rocket::response::status;
 use rocket::response::Redirect;
 use rocket::response::Responder;
+use rocket::serde::json::Json;
 use rocket::Request;
 use rocket::Route;
 use rocket::State;
-use rocket_contrib::json::Json;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 use serde_with::serde_as;
-use serde_with::DisplayFromStr;
 use serde_with::TimestampSeconds;
 use serenity::model::id::UserId as SerenityUserId;
 use std::error::Error;
 use std::iter;
 use std::time::Duration;
 use std::time::SystemTime;
+use time::OffsetDateTime;
 
 static SESSION_COOKIE: &str = "auth_session";
 static LOGIN_COOKIE: &str = "auth_login";
@@ -70,7 +71,7 @@ pub fn get_oauth_client() -> BasicClient {
         .expect("Parse discord token url"),
     ),
   )
-  .set_redirect_url(
+  .set_redirect_uri(
     RedirectUrl::new(format!("{}/api/auth/login", BASE_URL.clone())).expect("Create redirect url"),
   )
 }
@@ -104,11 +105,11 @@ struct SessionInfo {
 }
 
 #[rocket::async_trait]
-impl<'a, 'r> FromRequest<'a, 'r> for UserId {
+impl<'r> FromRequest<'r> for UserId {
   type Error = ();
 
   /// Protected api endpoints can inject `User`.
-  async fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+  async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
     let cookies = request.cookies();
     cookies
       .get_private(SESSION_COOKIE)
@@ -151,11 +152,11 @@ impl From<TokenUserId> for SerenityUserId {
 }
 
 #[rocket::async_trait]
-impl<'a, 'r> FromRequest<'a, 'r> for TokenUserId {
+impl<'r> FromRequest<'r> for TokenUserId {
   type Error = ();
 
   /// Protected api endpoints can inject `User`.
-  async fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+  async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
     const TOKEN_PREFIX: &str = "Bearer ";
     let db = try_outcome!(request.guard::<DbConn>().await);
 
@@ -259,8 +260,8 @@ impl From<serenity::Error> for AuthError {
   }
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct User {
   id: Snowflake,
   username: String,
@@ -269,8 +270,8 @@ struct User {
   guilds: Vec<GuildInfo>,
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct GuildInfo {
   id: Snowflake,
   name: String,
@@ -294,7 +295,7 @@ impl Serialize for UserPermission {
 #[get("/user")]
 async fn user(
   user: UserId,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
 ) -> Result<Json<User>, AuthError> {
   let s_user = SerenityUserId::from(user.clone())
@@ -361,10 +362,6 @@ struct LoginInfo {
 #[derive(Deserialize, Debug)]
 struct DiscordUser {
   id: Snowflake,
-  username: String,
-  #[serde_as(as = "DisplayFromStr")]
-  discriminator: u16,
-  avatar: Option<String>,
 }
 
 /// This is the callback of the oauth request
@@ -372,7 +369,7 @@ struct DiscordUser {
 #[get("/auth/login?<code>&<state>", rank = 2)]
 async fn login_post(
   cookies: &CookieJar<'_>,
-  oauth: State<'_, BasicClient>,
+  oauth: &State<BasicClient>,
   db: DbConn,
   code: String,
   state: String,
@@ -441,10 +438,7 @@ async fn login_post(
 /// This initializes the oauth request
 #[instrument(skip(cookies, oauth))]
 #[get("/auth/login", rank = 3)]
-fn login_pre(
-  cookies: &CookieJar<'_>,
-  oauth: State<'_, BasicClient>,
-) -> Result<Redirect, AuthError> {
+fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redirect, AuthError> {
   let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
   // Generate the full authorization URL.
@@ -464,7 +458,7 @@ fn login_pre(
       })
       .map_err(|_| AuthError::InternalError(String::from("Failed to set temporary cookie.")))?,
     )
-    .expires((SystemTime::now() + Duration::from_secs(5 * 60)).into())
+    .expires(OffsetDateTime::now_utc() + Duration::from_secs(5 * 60))
     .same_site(SameSite::Lax)
     .finish(),
   );

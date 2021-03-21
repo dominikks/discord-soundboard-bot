@@ -77,8 +77,8 @@ impl From<DieselError> for CommandError {
 #[post("/<guild_id>/stop")]
 async fn stop(
   guild_id: u64,
-  songbird: State<'_, Arc<Songbird>>,
-  cache_http: State<'_, CacheHttp>,
+  songbird: &State<Arc<Songbird>>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: TokenUserId,
 ) -> Result<String, CommandError> {
@@ -98,9 +98,9 @@ async fn stop(
 async fn play(
   guild_id: u64,
   sound_id: i32,
-  songbird: State<'_, Arc<Songbird>>,
-  recorder: State<'_, Arc<Recorder>>,
-  cache_http: State<'_, CacheHttp>,
+  songbird: &State<Arc<Songbird>>,
+  recorder: &State<Arc<Recorder>>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: TokenUserId,
 ) -> Result<(), CommandError> {
@@ -171,8 +171,8 @@ async fn play(
 #[post("/<guild_id>/record")]
 async fn record(
   guild_id: u64,
-  recorder: State<'_, Arc<Recorder>>,
-  cache_http: State<'_, CacheHttp>,
+  recorder: &State<Arc<Recorder>>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: TokenUserId,
 ) -> Result<String, CommandError> {

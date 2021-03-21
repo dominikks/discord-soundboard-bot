@@ -12,9 +12,9 @@ use crate::CacheHttp;
 use crate::BASE_URL;
 use rand::random;
 use rocket::response::Responder;
+use rocket::serde::json::Json;
 use rocket::Route;
 use rocket::State;
-use rocket_contrib::json::Json;
 use sanitize_filename;
 use serde::Deserialize;
 use serde::Serialize;
@@ -88,8 +88,8 @@ impl From<PermissionError> for RecorderError {
   }
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct Recording {
   guild_id: Snowflake,
   timestamp: u64,
@@ -139,7 +139,7 @@ impl TryFrom<file_handling::Recording> for Recording {
 #[instrument(skip(cache_http, db, user))]
 #[get("/recordings")]
 async fn get_recordings(
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Result<Json<Vec<Recording>>, RecorderError> {
@@ -155,8 +155,8 @@ async fn get_recordings(
   Ok(Json(results?))
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct MixingParameter {
   /// Where the mixed part should start and end. To calculate this, the sound
   /// files are assumed to be aligned at the end.
@@ -166,8 +166,8 @@ struct MixingParameter {
   user_ids: Vec<String>,
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct MixingResult {
   download_url: String,
 }
@@ -182,7 +182,7 @@ async fn mix_recording(
   guild_id: u64,
   timestamp: u64,
   params: Json<MixingParameter>,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Result<Json<MixingResult>, RecorderError> {
@@ -276,7 +276,7 @@ async fn mix_recording(
 async fn delete_recording(
   guild_id: u64,
   timestamp: u64,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Result<(), RecorderError> {
@@ -299,7 +299,7 @@ async fn get_recording(
   guild_id: u64,
   timestamp: u64,
   filename: String,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Option<CachedFile> {
@@ -322,7 +322,7 @@ async fn get_recording(
 async fn get_mix(
   guild_id: u64,
   filename: String,
-  cache_http: State<'_, CacheHttp>,
+  cache_http: &State<CacheHttp>,
   db: DbConn,
   user: UserId,
 ) -> Option<CachedFile> {

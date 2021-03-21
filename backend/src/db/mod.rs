@@ -1,7 +1,8 @@
 use diesel::PgConnection;
 use diesel_migrations::embed_migrations;
+use rocket::Build;
 use rocket::Rocket;
-use rocket_contrib::database;
+use rocket_sync_db_pools::database;
 
 pub mod models;
 pub mod schema;
@@ -11,7 +12,7 @@ pub struct DbConn(PgConnection);
 
 embed_migrations!();
 
-pub async fn run_db_migrations(rocket: Rocket) -> Result<Rocket, Rocket> {
+pub async fn run_db_migrations(rocket: Rocket<Build>) -> Result<Rocket<Build>, Rocket<Build>> {
   DbConn::get_one(&rocket)
     .await
     .expect("database connection")
