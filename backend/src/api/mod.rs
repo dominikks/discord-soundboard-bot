@@ -83,8 +83,8 @@ async fn files(path: PathBuf) -> Option<CachedFile> {
 }
 
 #[skip_serializing_none]
-#[serde(rename_all = "camelCase")]
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct InfoResponse {
   version: String,
   build_id: Option<String>,

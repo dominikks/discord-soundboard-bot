@@ -88,8 +88,8 @@ impl From<PermissionError> for RecorderError {
   }
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct Recording {
   guild_id: Snowflake,
   timestamp: u64,
@@ -155,8 +155,8 @@ async fn get_recordings(
   Ok(Json(results?))
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct MixingParameter {
   /// Where the mixed part should start and end. To calculate this, the sound
   /// files are assumed to be aligned at the end.
@@ -166,8 +166,8 @@ struct MixingParameter {
   user_ids: Vec<String>,
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct MixingResult {
   download_url: String,
 }

@@ -70,8 +70,8 @@ impl From<PermissionError> for SettingsError {
   }
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct RandomInfix {
   guild_id: Snowflake,
   infix: String,
@@ -120,8 +120,8 @@ async fn get_all_random_infixes(
   Ok(Json(infixes))
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct RandomInfixParameter {
   infix: String,
   display_name: String,
@@ -165,8 +165,8 @@ async fn set_random_infixes(
   Ok(())
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct GuildSettings {
   user_role_id: Option<Snowflake>,
   moderator_role_id: Option<Snowflake>,
@@ -228,8 +228,8 @@ async fn get_guild_settings(
   }))
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct GuildSettingsParameter {
   #[serde(default, with = "::serde_with::rust::double_option")]
   user_role_id: Option<Option<Snowflake>>,
