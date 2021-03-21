@@ -1,6 +1,6 @@
 ############################################################
 ### Stage 1: Build
-FROM clux/muslrust:nightly-2020-11-25 as builder
+FROM clux/muslrust:nightly-2021-03-15 as builder
 WORKDIR /app
 
 # Statically link libopus
