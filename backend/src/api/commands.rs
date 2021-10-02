@@ -1,11 +1,10 @@
 use crate::api::auth::TokenUserId;
 use crate::db::models;
 use crate::db::DbConn;
+use crate::discord::client::Client;
+use crate::discord::client::PlayError as DiscordPlayError;
 use crate::discord::management::check_guild_user;
 use crate::discord::management::PermissionError;
-use crate::discord::player;
-use crate::discord::player::PlayError as DiscordPlayError;
-use crate::discord::recorder::Recorder;
 use crate::discord::recorder::RecordingError;
 use crate::discord::CacheHttp;
 use crate::file_handling;
@@ -18,8 +17,6 @@ use rocket::response::Responder;
 use rocket::Route;
 use rocket::State;
 use serenity::model::id::GuildId;
-use songbird::Songbird;
-use std::sync::Arc;
 
 pub fn get_routes() -> Vec<Route> {
   routes![stop, play, record]
@@ -77,7 +74,7 @@ impl From<DieselError> for CommandError {
 #[post("/<guild_id>/stop")]
 async fn stop(
   guild_id: u64,
-  songbird: &State<Arc<Songbird>>,
+  client: &State<Client>,
   cache_http: &State<CacheHttp>,
   db: DbConn,
   user: TokenUserId,
@@ -85,7 +82,7 @@ async fn stop(
   let guild_id = GuildId(guild_id);
   check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
 
-  if player::stop(guild_id, songbird.inner().clone()).await {
+  if client.stop(guild_id).await {
     Ok(String::from("Stopped playback"))
   } else {
     Err(CommandError::InternalError(String::from(
@@ -98,8 +95,7 @@ async fn stop(
 async fn play(
   guild_id: u64,
   sound_id: i32,
-  songbird: &State<Arc<Songbird>>,
-  recorder: &State<Arc<Recorder>>,
+  client: &State<Client>,
   cache_http: &State<CacheHttp>,
   db: DbConn,
   user: TokenUserId,
@@ -154,24 +150,23 @@ async fn play(
       .max(0.0)
   });
 
-  player::play(
-    &file_handling::get_full_sound_path(&soundfile.file_name),
-    adjustment,
-    GuildId(guild_id),
-    songbird.inner().clone(),
-    recorder.inner().clone(),
-    cache_http.inner(),
-  )
-  .await?;
+  client
+    .play(
+      &file_handling::get_full_sound_path(&soundfile.file_name),
+      adjustment,
+      GuildId(guild_id),
+      cache_http.inner(),
+    )
+    .await?;
 
   Ok(())
 }
 
-#[instrument(skip(recorder, cache_http, db, user))]
+#[instrument(skip(client, cache_http, db, user))]
 #[post("/<guild_id>/record")]
 async fn record(
   guild_id: u64,
-  recorder: &State<Arc<Recorder>>,
+  client: &State<Client>,
   cache_http: &State<CacheHttp>,
   db: DbConn,
   user: TokenUserId,
@@ -179,8 +174,8 @@ async fn record(
   let guild_id = GuildId(guild_id);
   check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
 
-  match recorder
-    .inner()
+  match client
+    .recorder
     .save_recording(guild_id, &cache_http.inner())
     .await
   {

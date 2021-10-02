@@ -1,5 +1,4 @@
-use crate::discord::player;
-use crate::discord::recorder;
+use crate::discord::client;
 use crate::discord::recorder::RecordingError;
 use crate::BASE_URL;
 use crate::BUILD_ID;
@@ -46,15 +45,11 @@ async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     }
   };
 
-  let songbird = songbird::get(ctx)
-    .await
-    .expect("Songbird Voice client placed in at initialisation.")
-    .clone();
-  let recorder = recorder::get(ctx)
+  let client = client::get(ctx)
     .await
     .expect("Recorder placed in at initialization");
 
-  let result = player::join_channel(guild_id, connect_to, songbird, recorder).await;
+  let result = client.join_channel(guild_id, connect_to).await;
 
   if result.is_ok() {
     check_msg(
@@ -117,11 +112,11 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
   let guild_id = msg.guild(&ctx.cache).await.unwrap().id;
 
-  let manager = songbird::get(ctx)
+  let client = client::get(ctx)
     .await
     .expect("Songbird Voice client placed in at initialisation.");
 
-  if player::stop(guild_id, manager).await {
+  if client.stop(guild_id).await {
     check_msg(msg.channel_id.say(&ctx.http, ":stop_button: Stopped").await);
   } else {
     check_msg(
@@ -143,11 +138,11 @@ async fn record(ctx: &Context, msg: &Message) -> CommandResult {
     .await;
 
   let guild_id = msg.guild(&ctx.cache).await.unwrap().id;
-  let recorder = recorder::get(ctx)
+  let client = client::get(ctx)
     .await
     .expect("Recorder placed in at initialization");
 
-  match recorder.save_recording(guild_id, &ctx.into()).await {
+  match client.recorder.save_recording(guild_id, &ctx.into()).await {
     Ok(_) => check_msg(
       msg
         .channel_id

@@ -1,13 +1,10 @@
 use crate::file_handling::RECORDINGS_FOLDER;
 use crate::CacheHttp;
 use serenity::async_trait;
-use serenity::client::ClientBuilder;
-use serenity::client::Context;
 use serenity::model::prelude::GuildId;
 use serenity::model::voice_gateway::id::UserId;
 use serenity::prelude::Mutex;
 use serenity::prelude::RwLock;
-use serenity::prelude::TypeMapKey;
 use songbird::events::context_data::SpeakingUpdateData;
 use songbird::events::context_data::VoiceData;
 use songbird::model::payload::Speaking;
@@ -47,13 +44,6 @@ fn samples_to_duration(samples: usize) -> Duration {
 }
 fn nanos_to_samples(nanos: u128) -> usize {
   (nanos as f64 * 1e-9 * SAMPLE_RATE * CHANNEL_COUNT as f64).round() as usize
-}
-
-/// Key used to put the Recorders into the serenity TypeMap
-struct RecorderKey;
-
-impl TypeMapKey for RecorderKey {
-  type Value = Arc<Recorder>;
 }
 
 struct VoiceRecording {
@@ -116,7 +106,11 @@ impl Recorder {
   }
 
   /// Register the recorder as event handler
-  pub async fn register_with_call(self: Arc<Self>, guild_id: GuildId, call_lock: Arc<Mutex<Call>>) {
+  pub async fn register_with_call(
+    self: &Arc<Self>,
+    guild_id: GuildId,
+    call_lock: Arc<Mutex<Call>>,
+  ) {
     let mut call = call_lock.lock().await;
     call.add_global_event(
       CoreEvent::SpeakingStateUpdate.into(),
@@ -486,24 +480,4 @@ impl RecorderHandler {
   pub fn new(recorder: Arc<Recorder>, guild_id: GuildId) -> Self {
     Self { recorder, guild_id }
   }
-}
-
-/// Helper trait to add installation/creation methods to serenity's
-/// `ClientBuilder`.
-pub trait RecorderInit {
-  fn register_recorder(self, recorder: Arc<Recorder>) -> Self;
-}
-
-impl RecorderInit for ClientBuilder<'_> {
-  fn register_recorder(self, recorder: Arc<Recorder>) -> Self {
-    self.type_map_insert::<RecorderKey>(recorder)
-  }
-}
-
-/// Retrieve the Recorder State from a serenity context's
-/// shared key-value store.
-pub async fn get(ctx: &Context) -> Option<Arc<Recorder>> {
-  let data = ctx.data.read().await;
-
-  data.get::<RecorderKey>().cloned()
 }

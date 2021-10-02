@@ -19,7 +19,7 @@ mod db;
 mod discord;
 mod file_handling;
 
-use discord::client::DiscordClient;
+use discord::connector::Connector as DiscordConnector;
 use discord::CacheHttp;
 use dotenv::dotenv;
 use std::env;
@@ -52,13 +52,12 @@ async fn main() {
     .await
     .expect("failed to create data-folders");
 
-  let mut client = DiscordClient::new().await;
-  let cache_http = CacheHttp::from(&client.client.cache_and_http);
-  let songbird = client.songbird.clone();
-  let recorder = client.recorder.clone();
-  let discord_future = client.run();
+  let mut connector = DiscordConnector::new().await;
+  let cache_http = connector.cache_http.clone();
+  let client = connector.client.clone();
+  let discord_future = connector.run();
 
-  let rocket_future = api::run(cache_http, songbird, recorder);
+  let rocket_future = api::run(cache_http, client);
 
   info!("Startup successful");
   select!(_ = discord_future => info!("Serenity terminated"), _ = rocket_future => info!("Rocket terminated"));

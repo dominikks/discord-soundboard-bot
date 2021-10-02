@@ -7,8 +7,8 @@ use std::sync::Arc;
 
 pub mod client;
 mod commands;
+pub mod connector;
 pub mod management;
-pub mod player;
 pub mod recorder;
 
 /// Instead of the built-in serenity struct, we use this

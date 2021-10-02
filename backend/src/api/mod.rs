@@ -1,6 +1,6 @@
 use crate::api::auth::UserId;
 use crate::db;
-use crate::discord::recorder::Recorder;
+use crate::discord::client::Client;
 use crate::CacheHttp;
 use crate::BUILD_ID;
 use crate::BUILD_TIMESTAMP;
@@ -13,11 +13,9 @@ use serde::Serialize;
 use serde_with::serde_as;
 use serde_with::skip_serializing_none;
 use serde_with::DisplayFromStr;
-use songbird::Songbird;
 use std::env::var;
 use std::path::Path;
 use std::path::PathBuf;
-use std::sync::Arc;
 use utils::CachedFile;
 
 mod auth;
@@ -41,11 +39,7 @@ lazy_static! {
   static ref DISCORD_CLIENT_SECRET: String = var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env");
 }
 
-pub async fn run(
-  cache_http: CacheHttp,
-  songbird: Arc<Songbird>,
-  recorder: Arc<Recorder>,
-) -> Result<(), RocketError> {
+pub async fn run(cache_http: CacheHttp, client: Client) -> Result<(), RocketError> {
   rocket::build()
     .attach(db::DbConn::fairing())
     .attach(AdHoc::try_on_ignite(
@@ -58,9 +52,8 @@ pub async fn run(
     .mount("/api/sounds", sounds::get_routes())
     .mount("/api", recorder::get_routes())
     .mount("/api", settings::get_routes())
-    .manage(songbird)
     .manage(cache_http)
-    .manage(recorder)
+    .manage(client)
     .manage(auth::get_oauth_client())
     .launch()
     .await
