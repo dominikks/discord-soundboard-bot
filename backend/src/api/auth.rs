@@ -1,3 +1,4 @@
+use super::utils::GetIconUrl;
 use crate::api::Snowflake;
 use crate::api::DISCORD_CLIENT_ID;
 use crate::api::DISCORD_CLIENT_SECRET;
@@ -305,20 +306,7 @@ async fn user(
       AuthError::InternalError(String::from("Failed to fetch user data from Discord API."))
     })?;
 
-  // Get avatar or default one, if no avatar is present
-  let avatar_url = s_user
-    .avatar
-    .clone()
-    .map(|avatar_hash| {
-      format!(
-        "https://cdn.discordapp.com/avatars/{}/{}.png",
-        s_user.id, avatar_hash
-      )
-    })
-    .unwrap_or(format!(
-      "https://cdn.discordapp.com/embed/avatars/{}.png",
-      s_user.discriminator % 5
-    ));
+  let avatar_url = s_user.icon_url();
 
   let user_id: SerenityUserId = user.into();
   let user_guilds = get_guilds_for_user(cache_http.inner(), &db, user_id).await?;

@@ -1,5 +1,6 @@
 use rocket::http::ContentType;
 use rocket::response::Responder;
+use serenity::model::prelude::User as SerenityUser;
 use std::io;
 use std::path::Path;
 use std::path::PathBuf;
@@ -41,5 +42,28 @@ impl<'r> Responder<'r, 'static> for CachedFile {
     response.set_raw_header("Cache-Control", cache_string);
 
     Ok(response)
+  }
+}
+
+pub trait GetIconUrl {
+  /// Get user avatar or default icon, if no avatar is present
+  fn icon_url(&self) -> String;
+}
+
+impl GetIconUrl for SerenityUser {
+  fn icon_url(&self) -> String {
+    self
+      .avatar
+      .as_ref()
+      .map(|avatar_hash| {
+        format!(
+          "https://cdn.discordapp.com/avatars/{}/{}.png",
+          self.id, avatar_hash
+        )
+      })
+      .unwrap_or(format!(
+        "https://cdn.discordapp.com/embed/avatars/{}.png",
+        self.discriminator % 5
+      ))
   }
 }
