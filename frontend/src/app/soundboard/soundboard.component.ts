@@ -5,8 +5,12 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
 import { SettingsService } from '../services/settings.service';
 import { ApiService, RandomInfix } from '../services/api.service';
-import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable, Subject } from 'rxjs';
 import { filter, map, shareReplay, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { EventsService } from '../services/events.service';
+
+// false means local playback, string is the guildid
+type Target = false | string;
 
 @Component({
   templateUrl: './soundboard.component.html',
@@ -19,6 +23,7 @@ export class SoundboardComponent implements OnInit, OnDestroy {
   }
 
   private onDestroy$ = new Subject<void>();
+
   currentAudio$ = new BehaviorSubject<HTMLAudioElement>(null);
   playSound$ = new Subject<Sound>();
   playInfix$ = new Subject<RandomInfix>();
@@ -51,10 +56,16 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     shareReplay(1)
   );
 
+  target$ = combineLatest([this.settings.soundTarget$, this.settings.guildId$]).pipe(
+    map(([soundTarget, guildId]) => (soundTarget === 'local' ? false : guildId) as Target),
+    shareReplay(1)
+  );
+
   constructor(
     public apiService: ApiService,
     private soundsService: SoundsService,
     private settingsService: SettingsService,
+    private eventsService: EventsService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -140,11 +151,22 @@ export class SoundboardComponent implements OnInit, OnDestroy {
       .subscribe(([volume, audio]) => {
         audio.volume = clamp(volume / 100, 0, 1);
       });
+
+    // this.eventsService.getEventStream('253973667250307085').subscribe(console.log);
   }
 
   ngOnDestroy() {
     this.onDestroy$.next();
     this.onDestroy$.complete();
+  }
+
+  setTarget(guildId: Target) {
+    if (guildId === false) {
+      this.settings.soundTarget$.next('local');
+    } else {
+      this.settings.soundTarget$.next('discord');
+      this.settings.guildId$.next(guildId);
+    }
   }
 
   trackById(_: number, item: Sound) {

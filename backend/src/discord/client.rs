@@ -6,6 +6,9 @@ use serenity::model::channel::ChannelType;
 use serenity::model::id::ChannelId;
 use serenity::model::id::GuildId;
 use serenity::prelude::TypeMapKey;
+use songbird::driver::DecodeMode;
+use songbird::Config as DriverConfig;
+use songbird::SerenityInit;
 use songbird::Songbird;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -24,8 +27,11 @@ pub struct Client {
 }
 
 impl Client {
-  #[instrument(skip(songbird))]
-  pub fn new(songbird: Arc<Songbird>) -> Self {
+  #[instrument]
+  pub fn new() -> Self {
+    let songbird = Songbird::serenity();
+    songbird.set_config(DriverConfig::default().decode_mode(DecodeMode::Decode));
+
     Self {
       songbird,
       recorder: Recorder::create(),
@@ -142,7 +148,9 @@ pub trait ClientInit {
 
 impl ClientInit for ClientBuilder<'_> {
   fn register_client(self, client: &Client) -> Self {
-    self.type_map_insert::<ClientKey>(client.clone())
+    self
+      .type_map_insert::<ClientKey>(client.clone())
+      .register_songbird_with(client.songbird.clone().into())
   }
 }
 

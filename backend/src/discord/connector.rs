@@ -8,10 +8,6 @@ use serenity::client::Client as SerenityClient;
 use serenity::client::Context;
 use serenity::client::EventHandler;
 use serenity::model::gateway::Ready;
-use songbird::driver::DecodeMode;
-use songbird::Config as DriverConfig;
-use songbird::SerenityInit;
-use songbird::Songbird;
 use std::env;
 
 struct Handler;
@@ -35,11 +31,8 @@ impl Connector {
   pub async fn new() -> Self {
     let token = env::var("DISCORD_TOKEN").expect("Expected DISCORD_TOKEN in env");
 
-    let songbird = Songbird::serenity();
-    songbird.set_config(DriverConfig::default().decode_mode(DecodeMode::Decode));
-
     let framework = commands::create_framework();
-    let client = Client::new(songbird.clone());
+    let client = Client::new();
 
     let serenity_client = SerenityClient::builder(&token)
       .event_handler(Handler)
@@ -51,7 +44,6 @@ impl Connector {
           | GatewayIntents::GUILD_MESSAGES,
       )
       .framework(framework)
-      .register_songbird_with(songbird.into())
       .register_client(&client)
       .await
       .expect("Error creating client");

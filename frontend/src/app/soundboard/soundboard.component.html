@@ -10,60 +10,52 @@
   } as data"
 >
   <ng-container *ngIf="data.soundCategories && data.user && data.allSounds && data.filteredSounds && data.randomInfixes; else loading">
-    <mat-toolbar class="title-row">
+    <mat-toolbar>
       <div class="toolbar-content-wrapper">
-        <mat-form-field appearance="outline" matTooltip="Which category of sounds to display">
-          <mat-label>Filter by category</mat-label>
-          <mat-select [ngModel]="settings.soundCategories$ | async" (ngModelChange)="settings.soundCategories$.next($event)" multiple>
-            <mat-option *ngFor="let category of data.soundCategories" [value]="category">{{ category || '-- No category --' }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline" *ngIf="(settings.soundTarget$ | async) === 'discord'">
-          <mat-label>Play on server</mat-label>
-          <mat-select [ngModel]="settings.guildId$ | async" (ngModelChange)="settings.guildId$.next($event)">
-            <mat-option *ngFor="let guild of data.user.guilds" [value]="guild.id">{{ guild.name || guild.id }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-button-toggle-group
-          [ngModel]="settings.soundTarget$ | async"
-          (ngModelChange)="stopLocalSound$.next(); settings.soundTarget$.next($event)"
-          matTooltip="Play locally in the browser or via discord"
-        >
-          <mat-button-toggle value="local">Local</mat-button-toggle>
-          <mat-button-toggle value="discord">Discord</mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
-    </mat-toolbar>
-    <mat-toolbar class="controls-row">
-      <div class="toolbar-content-wrapper">
-        <mat-form-field class="controls-left" appearance="standard">
+        <mat-form-field class="search-field" appearance="outline">
           <mat-label>Search sounds...</mat-label>
           <input
             matInput
             [ngModel]="soundSearchFilter$ | async"
             (ngModelChange)="soundSearchFilter$.next($event)"
             (keydown.enter)="playFirstMatch$.next()"
+            placeholder="ENTER plays the first result"
           />
           <button mat-icon-button matSuffix (click)="soundSearchFilter$.next('')" [class.invisible]="(soundSearchFilter$ | async) === ''"
             ><mat-icon>clear</mat-icon></button
           >
-          <mat-hint>ENTER plays the first result</mat-hint>
         </mat-form-field>
 
-        <div class="controls-right">
-          <div *ngIf="(settings.soundTarget$ | async) === 'local'" class="volume-slider-wrapper">
-            <mat-icon>volume_up</mat-icon>
-            <mat-slider
-              [value]="settings.localVolume$ | async"
-              (change)="settings.localVolume$.next($event.value)"
-              color="primary"
-              min="0"
-              max="100"
-              thumbLabel
-            ></mat-slider>
-          </div>
-          <button mat-button (click)="stopSound$.next()"><mat-icon>stop</mat-icon> Stop</button>
+        <mat-form-field appearance="outline" matTooltip="Which category of sounds to display" matTooltipShowDelay="500">
+          <mat-label>Filter by category</mat-label>
+          <mat-select [ngModel]="settings.soundCategories$ | async" (ngModelChange)="settings.soundCategories$.next($event)" multiple>
+            <mat-option *ngFor="let category of data.soundCategories" [value]="category">{{ category || '-- No category --' }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" matTooltip="Where to play the sounds" matTooltipShowDelay="500">
+          <mat-label>Playback Target</mat-label>
+          <mat-select [ngModel]="target$ | async" (ngModelChange)="setTarget($event)">
+            <mat-option [value]="false" selected>This device</mat-option>
+            <mat-optgroup label="Discord Servers">
+              <mat-option *ngFor="let guild of data.user.guilds" [value]="guild.id">
+                {{ guild.name ?? guild.id }}
+              </mat-option>
+            </mat-optgroup>
+          </mat-select>
+        </mat-form-field>
+
+        <div *ngIf="(settings.soundTarget$ | async) === 'local'" class="volume-slider-wrapper">
+          <mat-icon>volume_up</mat-icon>
+          <mat-slider
+            [value]="settings.localVolume$ | async"
+            (change)="settings.localVolume$.next($event.value)"
+            color="primary"
+            min="0"
+            max="100"
+            thumbLabel
+          ></mat-slider>
         </div>
+        <button mat-button (click)="stopSound$.next()"><mat-icon>stop</mat-icon> Stop</button>
       </div>
     </mat-toolbar>
 

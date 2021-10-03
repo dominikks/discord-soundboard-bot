@@ -7,7 +7,6 @@ import { SoundboardComponent } from './soundboard/soundboard.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSliderModule } from '@angular/material/slider';
@@ -86,7 +85,6 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     // Angular Material
     MatCardModule,
     MatButtonModule,
-    MatButtonToggleModule,
     MatProgressSpinnerModule,
     MatSliderModule,
     MatIconModule,

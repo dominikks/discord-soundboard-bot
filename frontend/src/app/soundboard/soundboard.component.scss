@@ -16,6 +16,11 @@ mat-toolbar {
   height: auto;
   min-height: 64px;
 
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin-bottom: 16px;
+
   .toolbar-content-wrapper {
     @extend .max-width;
     display: flex;
@@ -23,30 +28,19 @@ mat-toolbar {
     flex-wrap: wrap;
     justify-content: flex-end;
     font-size: 14px;
-  }
-}
-
-mat-toolbar.title-row .toolbar-content-wrapper > * {
-  margin: 5px;
-}
-
-mat-toolbar.controls-row {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  margin-bottom: 16px;
-
-  .controls-left,
-  .controls-right {
-    margin: 0 10px;
-  }
-
-  .controls-right {
-    display: flex;
+    gap: 10px;
   }
 
   mat-form-field {
-    flex: 1;
+    &:not(.search-field) {
+      flex: 1 0 0;
+      min-width: 100px;
+      max-width: 180px;
+    }
+
+    &.search-field {
+      flex: 1 0 180px;
+    }
   }
 
   .volume-slider-wrapper {

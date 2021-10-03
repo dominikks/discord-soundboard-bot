@@ -65,7 +65,9 @@ export class SettingsService implements OnDestroy {
 
   private save() {
     const transformedObject = Object.fromEntries(Object.entries(this.settings).map(([key, value]) => [key, value.value]));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(transformedObject));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transformedObject));
+    } catch {}
   }
 
   ngOnDestroy() {

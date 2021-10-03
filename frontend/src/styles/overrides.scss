@@ -24,11 +24,6 @@ input[type='number'] {
 }
 
 // Form fields in toolbar have no bottom padding
-mat-toolbar .mat-form-field-appearance-outline {
-  .mat-form-field-wrapper {
-    padding-bottom: 0;
-  }
-  .mat-button-toggle-checked .mat-button-toggle-focus-overlay {
-    border-bottom: 0;
-  }
+mat-toolbar .mat-form-field-appearance-outline .mat-form-field-wrapper {
+  padding-bottom: 0;
 }

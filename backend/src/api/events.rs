@@ -26,6 +26,7 @@ pub fn get_routes() -> Vec<Route> {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 struct PlaybackStartedData {
   #[serde(flatten)]
   target_data: EventData,
@@ -33,6 +34,7 @@ struct PlaybackStartedData {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct EventData {
   guild_id: Snowflake,
   user_name: String,
