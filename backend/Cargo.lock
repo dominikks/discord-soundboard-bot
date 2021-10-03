@@ -573,6 +573,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "dotenv",
+ "futures",
  "lazy_static",
  "oauth2",
  "openssl",

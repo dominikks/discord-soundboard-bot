@@ -5,6 +5,7 @@ use crate::CacheHttp;
 use crate::BUILD_ID;
 use crate::BUILD_TIMESTAMP;
 use crate::VERSION;
+use futures::future::TryFutureExt;
 use rocket::error::Error as RocketError;
 use rocket::fairing::AdHoc;
 use rocket::serde::json::Json;
@@ -46,7 +47,7 @@ pub async fn run(cache_http: CacheHttp, client: Client) -> Result<(), RocketErro
       "Database Migrations",
       db::run_db_migrations,
     ))
-    .mount("/", routes![index, files, info])
+    .mount("/", routes![info, frontend])
     .mount("/api", auth::get_routes())
     .mount("/api/guilds", commands::get_routes())
     .mount("/api/sounds", sounds::get_routes())
@@ -59,16 +60,10 @@ pub async fn run(cache_http: CacheHttp, client: Client) -> Result<(), RocketErro
     .await
 }
 
-#[get("/")]
-async fn index() -> Option<CachedFile> {
-  CachedFile::open(Path::new("frontend/index.html"))
-    .await
-    .ok()
-}
-
 #[get("/<path..>", rank = 100)]
-async fn files(path: PathBuf) -> Option<CachedFile> {
+async fn frontend(path: PathBuf) -> Option<CachedFile> {
   CachedFile::open(Path::new("frontend/").join(path))
+    .or_else(|_| CachedFile::open(Path::new("frontend/index.html")))
     .await
     .ok()
 }

@@ -93,16 +93,14 @@ export class SoundsService implements OnDestroy {
   }
 
   createSound(guildId: string, name: string, category: string) {
-    return this.http
-      .post<ApiSound>(`/api/sounds`, { guildId, name, category })
-      .pipe(
-        map(sound => new Sound(sound)),
-        withLatestFrom(this.sounds$),
-        map(([sound, sounds]) => {
-          this._sounds$.next([sound, ...sounds]);
-          return sound;
-        })
-      );
+    return this.http.post<ApiSound>(`/api/sounds`, { guildId, name, category }).pipe(
+      map(sound => new Sound(sound)),
+      withLatestFrom(this.sounds$),
+      map(([sound, sounds]) => {
+        this._sounds$.next([sound, ...sounds]);
+        return sound;
+      })
+    );
   }
 
   updateSound(sound: Sound) {

@@ -9,6 +9,7 @@ bigdecimal = "0.1"
 diesel = { version = "1.4", default-features = false, features = ["postgres", "numeric"] }
 diesel_migrations = "1.4"
 dotenv = "0.15"
+futures = "0.3"
 lazy_static = "1.4"
 oauth2 = { git = "https://github.com/ramosbugs/oauth2-rs", branch = "main" }
 rand = "0.8"
