@@ -117,7 +117,7 @@ DISCORD_CLIENT_SECRET=<clientsecret>
 BASE_URL=http://localhost:4200
 RUST_LOG=discord_soundboard_bot=TRACE
 POSTGRES_PASSWORD=<randompassword>
-DATABASE_URL=postgres://postgres:$POSTGRES_PASSWORD@localhost/postgres
+ROCKET_DATABASES={postgres_database={url=postgres://postgres:$POSTGRES_PASSWORD@localhost/postgres}}
 EOF
 ```
 
