@@ -11,11 +11,6 @@
     "format:check": "prettier --check .",
     "e2e": "ng e2e"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged && ng lint"
-    }
-  },
   "private": true,
   "dependencies": {
     "@angular-slider/ngx-slider": "^2.0.3",
