@@ -1,4 +1,3 @@
-#![feature(proc_macro_hygiene, decl_macro, async_closure)]
 // Needed for Diesel Postgres linking for MUSL
 // https://github.com/emk/rust-musl-builder#making-diesel-work
 extern crate openssl;
