@@ -1,4 +1,5 @@
 use crate::api::auth::UserId;
+use crate::api::events::EventBus;
 use crate::db;
 use crate::discord::client::Client;
 use crate::CacheHttp;
@@ -21,6 +22,7 @@ use utils::CachedFile;
 
 mod auth;
 mod commands;
+mod events;
 mod recorder;
 mod settings;
 mod sounds;
@@ -53,9 +55,12 @@ pub async fn run(cache_http: CacheHttp, client: Client) -> Result<(), RocketErro
     .mount("/api/sounds", sounds::get_routes())
     .mount("/api", recorder::get_routes())
     .mount("/api", settings::get_routes())
+    .mount("/api", events::get_routes())
     .manage(cache_http)
     .manage(client)
     .manage(auth::get_oauth_client())
+    // Channel for server sent events
+    .manage(EventBus::new())
     .launch()
     .await
 }

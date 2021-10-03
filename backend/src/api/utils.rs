@@ -1,6 +1,7 @@
 use rocket::http::ContentType;
 use rocket::response::Responder;
-use serenity::model::prelude::User as SerenityUser;
+use serenity::model::guild::Member as SerenityMember;
+use serenity::model::user::User as SerenityUser;
 use std::io;
 use std::path::Path;
 use std::path::PathBuf;
@@ -45,13 +46,13 @@ impl<'r> Responder<'r, 'static> for CachedFile {
   }
 }
 
-pub trait GetIconUrl {
+pub trait AvatarOrDefault {
   /// Get user avatar or default icon, if no avatar is present
-  fn icon_url(&self) -> String;
+  fn avatar_url_or_default(&self) -> String;
 }
 
-impl GetIconUrl for SerenityUser {
-  fn icon_url(&self) -> String {
+impl AvatarOrDefault for SerenityUser {
+  fn avatar_url_or_default(&self) -> String {
     self
       .avatar
       .as_ref()
@@ -65,5 +66,14 @@ impl GetIconUrl for SerenityUser {
         "https://cdn.discordapp.com/embed/avatars/{}.png",
         self.discriminator % 5
       ))
+  }
+}
+
+impl AvatarOrDefault for SerenityMember {
+  fn avatar_url_or_default(&self) -> String {
+    self
+      .avatar
+      .clone()
+      .unwrap_or(self.user.avatar_url_or_default())
   }
 }

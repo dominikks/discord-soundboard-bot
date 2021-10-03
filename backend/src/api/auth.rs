@@ -1,4 +1,4 @@
-use super::utils::GetIconUrl;
+use crate::api::utils::AvatarOrDefault;
 use crate::api::Snowflake;
 use crate::api::DISCORD_CLIENT_ID;
 use crate::api::DISCORD_CLIENT_SECRET;
@@ -306,7 +306,7 @@ async fn user(
       AuthError::InternalError(String::from("Failed to fetch user data from Discord API."))
     })?;
 
-  let avatar_url = s_user.icon_url();
+  let avatar_url = s_user.avatar_url_or_default();
 
   let user_id: SerenityUserId = user.into();
   let user_guilds = get_guilds_for_user(cache_http.inner(), &db, user_id).await?;

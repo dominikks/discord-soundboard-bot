@@ -6,6 +6,7 @@ use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use serenity::model::guild::Guild;
+use serenity::model::guild::Member;
 use serenity::model::id::GuildId;
 use serenity::model::id::UserId;
 
@@ -14,6 +15,12 @@ pub enum UserPermission {
   Admin,
   Moderator,
   User,
+}
+
+#[derive(Debug)]
+pub struct PermissionResponse {
+  pub permission: UserPermission,
+  pub member: Member,
 }
 
 pub enum PermissionError {
@@ -33,7 +40,7 @@ pub async fn check_guild_user(
   db: &DbConn,
   user_id: UserId,
   guild_id: GuildId,
-) -> Result<UserPermission, PermissionError> {
+) -> Result<PermissionResponse, PermissionError> {
   get_permission_level(cache_http, db, user_id, guild_id).await
 }
 
@@ -42,11 +49,13 @@ pub async fn check_guild_moderator(
   db: &DbConn,
   user_id: UserId,
   guild_id: GuildId,
-) -> Result<UserPermission, PermissionError> {
-  let permission = get_permission_level(cache_http, db, user_id, guild_id).await?;
+) -> Result<PermissionResponse, PermissionError> {
+  let response = get_permission_level(cache_http, db, user_id, guild_id).await?;
 
-  if permission == UserPermission::Admin || permission == UserPermission::Moderator {
-    Ok(permission)
+  if response.permission == UserPermission::Admin
+    || response.permission == UserPermission::Moderator
+  {
+    Ok(response)
   } else {
     Err(PermissionError::InsufficientPermission)
   }
@@ -81,7 +90,7 @@ pub async fn get_permission_level(
   db: &DbConn,
   user_id: UserId,
   guild_id: GuildId,
-) -> Result<UserPermission, PermissionError> {
+) -> Result<PermissionResponse, PermissionError> {
   let member = guild_id
     .member(cache_http, user_id)
     .await
@@ -93,7 +102,10 @@ pub async fn get_permission_level(
     .map(|perms| perms.administrator())
     .unwrap_or(false)
   {
-    return Ok(UserPermission::Admin);
+    return Ok(PermissionResponse {
+      member,
+      permission: UserPermission::Admin,
+    });
   }
 
   let gid = BigDecimal::from_u64(guild_id.0).ok_or(PermissionError::BigDecimalError)?;
@@ -115,7 +127,10 @@ pub async fn get_permission_level(
       .ok_or(PermissionError::BigDecimalError)?;
 
     if let Some(_) = member.roles.iter().find(|role| role.0 == rid) {
-      return Ok(UserPermission::Moderator);
+      return Ok(PermissionResponse {
+        member,
+        permission: UserPermission::Moderator,
+      });
     }
   }
 
@@ -125,7 +140,10 @@ pub async fn get_permission_level(
       .ok_or(PermissionError::BigDecimalError)?;
 
     if let Some(_) = member.roles.iter().find(|role| role.0 == rid) {
-      return Ok(UserPermission::User);
+      return Ok(PermissionResponse {
+        member,
+        permission: UserPermission::User,
+      });
     }
   }
 
@@ -142,7 +160,7 @@ pub async fn get_guilds_for_user(
   for guild_id in cache_http.cache.guilds().await {
     if let Ok(perm) = get_permission_level(&cache_http, db, user_id, guild_id).await {
       if let Some(guild) = guild_id.to_guild_cached(&cache_http.cache).await {
-        response.push((guild, perm));
+        response.push((guild, perm.permission));
       }
     }
   }

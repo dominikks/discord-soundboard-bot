@@ -1,4 +1,5 @@
 use crate::api::auth::TokenUserId;
+use crate::api::EventBus;
 use crate::db::models;
 use crate::db::DbConn;
 use crate::discord::client::Client;
@@ -76,13 +77,15 @@ async fn stop(
   guild_id: u64,
   client: &State<Client>,
   cache_http: &State<CacheHttp>,
+  event_bus: &State<EventBus>,
   db: DbConn,
   user: TokenUserId,
 ) -> Result<String, CommandError> {
   let guild_id = GuildId(guild_id);
-  check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
+  let permission = check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
 
   if client.stop(guild_id).await {
+    event_bus.inner().playback_stopped(&permission.member);
     Ok(String::from("Stopped playback"))
   } else {
     Err(CommandError::InternalError(String::from(
@@ -97,12 +100,14 @@ async fn play(
   sound_id: i32,
   client: &State<Client>,
   cache_http: &State<CacheHttp>,
+  event_bus: &State<EventBus>,
   db: DbConn,
   user: TokenUserId,
 ) -> Result<(), CommandError> {
   // Check permission to play on this guild
   let serenity_user = user.into();
-  check_guild_user(&cache_http.inner(), &db, serenity_user, GuildId(guild_id)).await?;
+  let permission =
+    check_guild_user(&cache_http.inner(), &db, serenity_user, GuildId(guild_id)).await?;
 
   let (sound, soundfile) = db
     .run(move |c| {
@@ -159,27 +164,35 @@ async fn play(
     )
     .await?;
 
+  event_bus
+    .inner()
+    .playback_started(&permission.member, &sound);
+
   Ok(())
 }
 
-#[instrument(skip(client, cache_http, db, user))]
+#[instrument(skip(client, cache_http, event_bus, db, user))]
 #[post("/<guild_id>/record")]
 async fn record(
   guild_id: u64,
   client: &State<Client>,
   cache_http: &State<CacheHttp>,
+  event_bus: &State<EventBus>,
   db: DbConn,
   user: TokenUserId,
 ) -> Result<String, CommandError> {
   let guild_id = GuildId(guild_id);
-  check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
+  let permission = check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
 
   match client
     .recorder
     .save_recording(guild_id, &cache_http.inner())
     .await
   {
-    Ok(_) => Ok(String::from("Recording saved")),
+    Ok(_) => {
+      event_bus.inner().recording_saved(&permission.member);
+      Ok(String::from("Recording saved"))
+    }
     Err(err) => {
       error!(?err, "Failed to record");
       match err {
