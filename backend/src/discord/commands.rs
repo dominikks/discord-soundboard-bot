@@ -175,7 +175,7 @@ async fn record(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 #[only_in(guilds)]
 async fn guildid(ctx: &Context, msg: &Message) -> CommandResult {
-  let guild_id = msg.guild(&ctx.cache).await.unwrap().id;
+  let guild_id = msg.guild_id.unwrap();
 
   check_msg(
     msg
@@ -193,8 +193,8 @@ async fn info(ctx: &Context, msg: &Message) -> CommandResult {
     "discord-soundboard-bot v{}\n\
     Control at {}\n\
     Source code at https://github.com/dominikks/discord-soundboard-bot",
-    BASE_URL.clone(),
-    VERSION
+    VERSION,
+    BASE_URL.clone()
   );
   if let (Some(bid), Some(bt)) = (BUILD_ID, BUILD_TIMESTAMP) {
     resp += &format!("\n\nbuild {}, timestamp {}", bid, bt);
