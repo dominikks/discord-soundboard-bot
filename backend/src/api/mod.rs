@@ -10,6 +10,8 @@ use futures::future::TryFutureExt;
 use rocket::error::Error as RocketError;
 use rocket::fairing::AdHoc;
 use rocket::serde::json::Json;
+use rocket::Ignite;
+use rocket::Rocket;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::serde_as;
@@ -42,7 +44,7 @@ lazy_static! {
   static ref DISCORD_CLIENT_SECRET: String = var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env");
 }
 
-pub async fn run(cache_http: CacheHttp, client: Client) -> Result<(), RocketError> {
+pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>, RocketError> {
   rocket::build()
     .attach(db::DbConn::fairing())
     .attach(AdHoc::try_on_ignite(

@@ -43,6 +43,7 @@ use rocket::response::status;
 use rocket::response::Redirect;
 use rocket::response::Responder;
 use rocket::serde::json::Json;
+use rocket::time::OffsetDateTime;
 use rocket::Request;
 use rocket::Route;
 use rocket::State;
@@ -56,7 +57,6 @@ use std::error::Error;
 use std::iter;
 use std::time::Duration;
 use std::time::SystemTime;
-use time::OffsetDateTime;
 
 static SESSION_COOKIE: &str = "auth_session";
 static LOGIN_COOKIE: &str = "auth_login";
