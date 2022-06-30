@@ -8,6 +8,7 @@ use serenity::client::Client as SerenityClient;
 use serenity::client::Context;
 use serenity::client::EventHandler;
 use serenity::model::gateway::Ready;
+use serenity::model::id::GuildId;
 use std::env;
 
 struct Handler;
@@ -17,6 +18,11 @@ impl EventHandler for Handler {
   #[instrument(skip(self, _ctx, ready))]
   async fn ready(&self, _ctx: Context, ready: Ready) {
     info!("{} is connected!", ready.user.name);
+  }
+
+  #[instrument(skip(self, _ctx))]
+  async fn cache_ready(&self, _ctx: Context, _guilds: Vec<GuildId>) {
+    info!("Cache is ready");
   }
 }
 
