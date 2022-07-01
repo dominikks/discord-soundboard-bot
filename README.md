@@ -9,7 +9,7 @@ A soundboard for discord!
 ## Features
 
 - 📢 Play custom sounds in a voice channel
-  - Sounds can be played via the website, auto-generated [AutoHotkey](https://www.autohotkey.com/) scripts or chat commands
+  - Sounds can be played via the website or auto-generated [AutoHotkey](https://www.autohotkey.com/) scripts
 - ⏹ Record the last 60 seconds of voice activity (like Shadowplay, but for Discord)
 
 ## Installation
@@ -58,6 +58,8 @@ services:
     image: postgres
     environment:
       - POSTGRES_PASSWORD=<dbpassword>
+    volumes:
+      - db:/var/lib/postgresql/data
 ```
 
 The values from the Discord Developer Portal need to be passed to the bot via environment variables.
@@ -65,7 +67,7 @@ The secret key should be randomly generated, for example with `openssl rand -bas
 It is used to encrypt cookies stored on the client.
 You can set the database password yourself.
 For details on the other values, see the table below.
-By default, the app runs with UID 1000, so make sure that is you mount folders, they are owned by a user with that UID (e.g. `chown 1000 ./sounds && chown 1000 ./recordings`).
+By default, the app runs with UID 1000, so make sure that if you mount folders, they are owned by a user with that UID (e.g. `chown 1000 ./sounds && chown 1000 ./recordings`).
 
 Run the app via `docker-compose up -d`.
 Stop via `docker-compose down`.
