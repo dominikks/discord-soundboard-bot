@@ -1,9 +1,7 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ErrorService } from './error.service';
 
-type BaseEventData = { guildId: string; userName: string; userAvatarUrl: string };
+type BaseEventData = { guildId: string; userName: string; userAvatarUrl: string; timestamp: number };
 
 export type Event = ({ type: 'PlaybackStarted'; soundName: string } | { type: 'PlaybackStopped' } | { type: 'RecordingSaved' }) &
   BaseEventData;
@@ -12,15 +10,15 @@ export type Event = ({ type: 'PlaybackStarted'; soundName: string } | { type: 'P
   providedIn: 'root',
 })
 export class EventsService {
-  constructor(private zone: NgZone, private errorService: ErrorService) {}
+  constructor(private zone: NgZone) {}
 
-  getEventStream(guildId: string) {
+  getEventStream(guildId: string): Observable<Event> {
     return new Observable(observer => {
       const eventSource = new EventSource(`/api/${guildId}/events`);
 
       eventSource.onmessage = event => {
         this.zone.run(() => {
-          observer.next(event.data as Event);
+          observer.next(JSON.parse(event.data) as Event);
         });
       };
 

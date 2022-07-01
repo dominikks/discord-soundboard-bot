@@ -5,8 +5,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
 import { SettingsService } from '../services/settings.service';
 import { ApiService, RandomInfix } from '../services/api.service';
-import { BehaviorSubject, combineLatest, Observable, Subject } from 'rxjs';
-import { filter, map, shareReplay, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, EMPTY, Subject } from 'rxjs';
+import { filter, map, share, shareReplay, switchMap, takeUntil, withLatestFrom } from 'rxjs/operators';
 import { EventsService } from '../services/events.service';
 
 // false means local playback, string is the guildid
@@ -61,13 +61,20 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     shareReplay(1)
   );
 
+  events$ = this.target$.pipe(
+    switchMap(target => (target ? this.eventsService.getEventStream(target) : EMPTY)),
+    share()
+  );
+
   constructor(
     public apiService: ApiService,
     private soundsService: SoundsService,
     private settingsService: SettingsService,
     private eventsService: EventsService,
     private snackBar: MatSnackBar
-  ) {}
+  ) {
+    this.events$.subscribe(event => console.log(JSON.stringify(event)));
+  }
 
   ngOnInit() {
     // Play a sound
@@ -151,8 +158,6 @@ export class SoundboardComponent implements OnInit, OnDestroy {
       .subscribe(([volume, audio]) => {
         audio.volume = clamp(volume / 100, 0, 1);
       });
-
-    // this.eventsService.getEventStream('253973667250307085').subscribe(console.log);
   }
 
   ngOnDestroy() {
