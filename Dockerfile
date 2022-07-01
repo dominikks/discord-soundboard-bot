@@ -39,12 +39,12 @@ RUN addgroup --gid 1000 discordbot \
   && chown -R discordbot:discordbot /app
 
 COPY --chown=discordbot:discordbot --from=builder /app/target/x86_64-unknown-linux-musl/release/discord-soundboard-bot /app/Rocket.toml /app/
-ADD --chown=discordbot:discordbot frontend/dist/discord-soundboard-bot /app/frontend
+ADD --chown=discordbot:discordbot frontend/dist/discord-soundboard-bot /app/static
 
 ############################################################
 ### Stage 3: Final image
 FROM gcr.io/distroless/cc
-LABEL maintainer="dominik@kdtk.de"
+LABEL maintainer="dominik@kus.software"
 
 COPY --from=composer /etc/passwd /etc/
 COPY --from=composer /usr/bin/ffmpeg /usr/bin/ffprobe /usr/bin/
