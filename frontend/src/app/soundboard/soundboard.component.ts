@@ -72,9 +72,7 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     private settingsService: SettingsService,
     private eventsService: EventsService,
     private snackBar: MatSnackBar
-  ) {
-    this.events$.subscribe(event => console.log(JSON.stringify(event)));
-  }
+  ) {}
 
   ngOnInit() {
     // Play a sound
