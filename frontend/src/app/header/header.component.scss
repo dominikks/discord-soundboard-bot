@@ -1,34 +1,53 @@
+@use '@angular/material' as mat;
+
 :host {
-  // For the box shadow to appear
-  position: relative;
-  z-index: 1;
+  @include mat.elevation(8);
 }
 
 .app-title {
   color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .spacer {
   flex: 1;
 }
 
-.navigation-menu {
-  display: none;
+a.mat-button {
+  &.active,
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.07);
+  }
 }
 
-@media screen and (max-width: 850px) {
-  .navigation-menu {
-    display: unset;
+.second-row {
+  display: none;
+
+  height: 36px;
+  padding: 0;
+  overflow-y: auto;
+
+  .mat-button {
+    flex: 1;
+    min-width: 170px;
+  }
+}
+
+@media screen and (max-width: 750px) {
+  .first-row-navigation {
+    display: none;
   }
 
-  a.mat-button {
-    display: none;
+  .second-row {
+    display: flex;
   }
 }
 
 .avatar-button-wrapper {
   height: 40px;
   width: 40px;
+  margin-left: 8px;
 
   .avatar-button {
     border-radius: 50%;

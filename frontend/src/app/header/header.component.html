@@ -1,40 +1,45 @@
-<mat-toolbar *ngIf="apiService.appInfo$ | async as appInfo" color="primary" class="mat-elevation-z8">
-  <button *ngIf="showSidenavToggle" mat-icon-button (click)="toggleSidenav.emit()"><mat-icon>menu</mat-icon></button>
-  <a class="app-title" routerLink="/">📢 {{ appInfo.title }} {{ pageTitle }}</a>
-  <div class="spacer"></div>
+<mat-toolbar *ngIf="apiService.appInfo$ | async as appInfo" color="primary">
+  <mat-toolbar-row>
+    <button *ngIf="showSidenavToggle" mat-icon-button (click)="toggleSidenav.emit()"><mat-icon>menu</mat-icon></button>
+    <a class="app-title" routerLink="/">📢 {{ appInfo.title }} {{ pageTitle }}</a>
+    <div class="spacer"></div>
 
-  <a mat-button routerLink="/"><mat-icon>speaker</mat-icon> Soundboard</a>
-  <a mat-button routerLink="/keybind-generator"><mat-icon>keyboard</mat-icon> Keybind Generator</a>
-  <a mat-button routerLink="/recorder"><mat-icon>voicemail</mat-icon> Sound Recorder</a>
+    <div class="first-row-navigation">
+      <ng-container [ngTemplateOutlet]="toolbarButtons"></ng-container>
+    </div>
 
-  <div class="navigation-menu">
-    <button mat-icon-button [matMenuTriggerFor]="navigationMenu"><mat-icon>more_vert</mat-icon></button>
-    <mat-menu #navigationMenu="matMenu">
-      <button mat-menu-item routerLink="/"><mat-icon>speaker</mat-icon> Soundboard</button>
-      <button mat-menu-item routerLink="/keybind-generator"><mat-icon>keyboard</mat-icon> Keybind Generator</button>
-      <button mat-menu-item routerLink="/recorder"><mat-icon>voicemail</mat-icon> Sound Recorder</button>
+    <div class="avatar-button-wrapper">
+      <div
+        *ngIf="apiService.user$ | async as user"
+        class="avatar-button mat-elevation-z3"
+        [matTooltip]="'Logged in as ' + user.username + '#' + user.discriminator"
+        [matMenuTriggerFor]="userMenu"
+        matRipple
+        ><img [src]="user.avatarUrl"
+      /></div>
+    </div>
+
+    <mat-menu #userMenu="matMenu">
+      <a mat-menu-item routerLink="/settings"><mat-icon>settings</mat-icon> Settings</a>
+      <a
+        mat-menu-item
+        [href]="'https://discordapp.com/oauth2/authorize?client_id=' + appInfo.discordClientId + '&scope=bot&permissions=3147776'"
+        target="_blank"
+        ><mat-icon>add</mat-icon> Add Bot to Server</a
+      >
+      <button mat-menu-item (click)="logout()"><mat-icon>exit_to_app</mat-icon> Logout</button>
     </mat-menu>
-  </div>
-
-  <div class="avatar-button-wrapper">
-    <div
-      *ngIf="apiService.user$ | async as user"
-      class="avatar-button mat-elevation-z3"
-      [matTooltip]="'Logged in as ' + user.username + '#' + user.discriminator"
-      [matMenuTriggerFor]="userMenu"
-      matRipple
-      ><img [src]="user.avatarUrl"
-    /></div>
-  </div>
-
-  <mat-menu #userMenu="matMenu">
-    <a mat-menu-item routerLink="/settings"><mat-icon>settings</mat-icon> Settings</a>
-    <a
-      mat-menu-item
-      [href]="'https://discordapp.com/oauth2/authorize?client_id=' + appInfo.discordClientId + '&scope=bot&permissions=3147776'"
-      target="_blank"
-      ><mat-icon>add</mat-icon> Add Bot to Server</a
-    >
-    <button mat-menu-item (click)="logout()"><mat-icon>exit_to_app</mat-icon> Logout</button>
-  </mat-menu>
+  </mat-toolbar-row>
+  <mat-toolbar-row class="second-row">
+    <ng-container [ngTemplateOutlet]="toolbarButtons"></ng-container>
+  </mat-toolbar-row>
 </mat-toolbar>
+
+<ng-template #toolbarButtons>
+  <a mat-button routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+    <mat-icon>speaker</mat-icon>
+    Soundboard
+  </a>
+  <a mat-button routerLink="/keybind-generator" routerLinkActive="active"><mat-icon>keyboard</mat-icon> Keybind Generator</a>
+  <a mat-button routerLink="/recorder" routerLinkActive="active"><mat-icon>voicemail</mat-icon> Sound Recorder</a>
+</ng-template>

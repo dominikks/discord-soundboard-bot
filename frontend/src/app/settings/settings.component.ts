@@ -19,6 +19,7 @@ export class SettingsComponent implements OnDestroy, AfterViewInit {
   private _mediaQueryListener: () => void;
 
   private onDestroy$ = new Subject();
+  user$ = this.apiService.user$;
   guilds$ = this.apiService.user$.pipe(map(user => user.guilds.filter(guild => guild.role !== 'user')));
 
   constructor(private apiService: ApiService, private router: Router, changeDetectorRef: ChangeDetectorRef, media: MediaMatcher) {

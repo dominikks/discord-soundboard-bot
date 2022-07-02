@@ -1,7 +1,7 @@
 <div class="settings-container" [class.is-mobile]="mobileQuery.matches">
   <app-header pageTitle="Settings" [showSidenavToggle]="mobileQuery.matches" (toggleSidenav)="snav.toggle()"></app-header>
 
-  <mat-sidenav-container [style.margin-top.px]="mobileQuery.matches ? (toolbarBreakpointQuery.matches ? 56 : 64) : 0">
+  <mat-sidenav-container [style.margin-top.px]="mobileQuery.matches ? (toolbarBreakpointQuery.matches ? 92 : 100) : 0">
     <mat-sidenav
       [mode]="mobileQuery.matches ? 'over' : 'side'"
       [opened]="!mobileQuery.matches"
@@ -10,11 +10,12 @@
       [fixedTopGap]="toolbarBreakpointQuery.matches ? 56 : 64"
     >
       <mat-nav-list class="sidenav-list">
-        <div mat-subheader>General</div>
-        <a mat-list-item routerLink="/settings/user" routerLinkActive="active-nav-link">User</a>
+        <mat-list-item routerLink="/settings/user" routerLinkActive="active-nav-link" *ngIf="user$ | async as user">
+          <img mat-list-icon [src]="user.avatarUrl" />
+          <div mat-line>User settings</div>
+        </mat-list-item>
 
         <ng-container *ngFor="let guild of guilds$ | async">
-          <mat-divider></mat-divider>
           <mat-list-item [routerLink]="'/settings/guilds/' + guild.id">
             <img *ngIf="guild.iconUrl; else discordIcon" mat-list-icon [src]="guild.iconUrl" />
             <div mat-line>{{ guild.name }}</div>
