@@ -64,11 +64,9 @@
         <mat-icon>history</mat-icon>
         <ng-container *ngIf="events$ | async as event; else noEvents">
           {{ event.timestamp * 1000 | date: 'mediumTime' }}: {{ event.userName }}
-          <ng-container [ngSwitch]="event.type">
-            <ng-container *ngSwitchCase="'PlaybackStarted'">played the sound '{{ event.soundName }}'</ng-container>
-            <ng-container *ngSwitchCase="'PlaybackStopped'">stopped the playback</ng-container>
-            <ng-container *ngSwitchCase="'RecordingSaved'">saved a recording</ng-container>
-          </ng-container>
+          <ng-container *ngIf="event.type === 'PlaybackStarted'">played the sound '{{ event.soundName }}'</ng-container>
+          <ng-container *ngIf="event.type === 'PlaybackStopped'">stopped the playback</ng-container>
+          <ng-container *ngIf="event.type === 'RecordingSaved'">saved a recording</ng-container>
         </ng-container>
         <ng-template #noEvents>No event to display</ng-template>
       </div>

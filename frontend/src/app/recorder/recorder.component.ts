@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { RecorderService, Recording as SrvRecording, RecordingUser } from '../services/recorder.service';
-import { SettingsService } from '../services/settings.service';
 import { clamp } from 'lodash-es';
 import { WebAudioBufferSource, WebAudioContext, WebAudioGain } from '@ng-web-apis/audio';
-import { ApiService } from '../services/api.service';
 import { BehaviorSubject, combineLatest, EMPTY, Subject } from 'rxjs';
 import { catchError, map, mergeMap, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { ApiService } from '../services/api.service';
+import { SettingsService } from '../services/settings.service';
+import { RecorderService, Recording as SrvRecording, RecordingUser } from '../services/recorder.service';
 
 interface Recording extends SrvRecording {
   selected: boolean[];

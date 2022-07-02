@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Sound, SoundsService } from '../services/sounds.service';
-import { KeyCombination } from './keycombination-input/keycombination-input.component';
 import { pull } from 'lodash-es';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { SettingsService } from '../services/settings.service';
-import { ApiService } from '../services/api.service';
 import { combineLatest, EMPTY, Subject } from 'rxjs';
 import { catchError, mergeMap, shareReplay, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { SettingsService } from '../services/settings.service';
+import { ApiService } from '../services/api.service';
+import { Sound, SoundsService } from '../services/sounds.service';
 import { LoginService } from '../services/login.service';
+import { KeyCombination } from './keycombination-input/keycombination-input.component';
 
 export type KeyCommand = Sound | 'stop' | 'record';
 
@@ -154,6 +154,7 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
   private generateAutohotkey(authtoken: string, keybinds: Keybind[]) {
     let script = 'PlaySound(server, id) {\n';
     script += `command := "curl -X POST -H ""Authorization: Bearer ${authtoken}"" `;
+    // eslint-disable-next-line max-len
     script += `""${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/guilds/" . server . "/play/" . id . """"\n`;
     script += 'shell := ComObjCreate("WScript.Shell")\n';
     script += 'launch := "cmd.exe /c " . command\n';
@@ -162,6 +163,7 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
 
     script += 'ExecCommand(server, cmd) {\n';
     script += `command := "curl -X POST -H ""Authorization: Bearer ${authtoken}"" `;
+    // eslint-disable-next-line max-len
     script += `""${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/guilds/" . server . "/" . cmd . """"\n`;
     script += 'shell := ComObjCreate("WScript.Shell")\n';
     script += 'launch := "cmd.exe /c " . command\n';

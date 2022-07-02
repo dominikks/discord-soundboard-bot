@@ -55,7 +55,7 @@
               max="30"
               step="1"
               [ngModel]="data.guildSettings.targetMeanVolume"
-              (change)="setMeanVolume($event.target.value, data.guild.id)"
+              (change)="setMeanVolume($any($event.target).value, data.guild.id)"
               required
             />
             <span matSuffix>dB</span>
@@ -73,7 +73,7 @@
               max="30"
               step="1"
               [ngModel]="data.guildSettings.targetMaxVolume"
-              (change)="setMaxVolume($event.target.value, data.guild.id)"
+              (change)="setMaxVolume($any($event.target).value, data.guild.id)"
               required
             />
             <span matSuffix>dB</span>

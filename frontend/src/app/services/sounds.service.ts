@@ -2,9 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
 import { map, retry, shareReplay, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
 import { sortBy } from 'lodash-es';
+import { ReplaySubject, Subject } from 'rxjs';
 import { Guild } from './api.service';
 import { ErrorService } from './error.service';
-import { ReplaySubject, Subject } from 'rxjs';
 
 interface ApiSound {
   id: string;

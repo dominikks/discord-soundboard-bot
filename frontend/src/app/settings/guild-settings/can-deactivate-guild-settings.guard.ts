@@ -13,8 +13,8 @@ export class CanDeactivateGuildSettingsGuard implements CanDeactivate<GuildSetti
 
   canDeactivate(
     component: GuildSettingsComponent,
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
+    _route: ActivatedRouteSnapshot,
+    _state: RouterStateSnapshot
   ): Observable<boolean> | Promise<boolean> | boolean {
     return combineLatest([
       component.randomInfixesHasChanges$,

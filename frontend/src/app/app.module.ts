@@ -1,9 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { LOCALE_ID, NgModule } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { SoundboardComponent } from './soundboard/soundboard.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -26,16 +23,17 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDividerModule } from '@angular/material/divider';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
-import { SoundboardButtonComponent } from './soundboard/soundboard-button/soundboard-button.component';
-import { KeybindGeneratorComponent } from './keybind-generator/keybind-generator.component';
-import { KeycombinationInputComponent } from './keybind-generator/keycombination-input/keycombination-input.component';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { SearchableSoundSelectComponent } from './keybind-generator/searchable-sound-select/searchable-sound-select.component';
-import { RecorderComponent } from './recorder/recorder.component';
 import { TimeagoModule } from 'ngx-timeago';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { WebAudioModule } from '@ng-web-apis/audio';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { SoundboardButtonComponent } from './soundboard/soundboard-button/soundboard-button.component';
+import { KeybindGeneratorComponent } from './keybind-generator/keybind-generator.component';
+import { KeycombinationInputComponent } from './keybind-generator/keycombination-input/keycombination-input.component';
+import { SearchableSoundSelectComponent } from './keybind-generator/searchable-sound-select/searchable-sound-select.component';
+import { RecorderComponent } from './recorder/recorder.component';
 import { FooterComponent } from './footer/footer.component';
 import { HeaderComponent } from './header/header.component';
 import { LoginComponent } from './login/login.component';
@@ -50,7 +48,9 @@ import { SoundManagerComponent } from './settings/sound-manager/sound-manager.co
 import { SoundDetailsComponent } from './settings/sound-manager/sound-details/sound-details.component';
 import { SoundDeleteConfirmComponent } from './settings/sound-manager/sound-delete-confirm/sound-delete-confirm.component';
 import { GuildNamePipe } from './guild-name.pipe';
-import { ScrollingModule } from '@angular/cdk/scrolling';
+import { SoundboardComponent } from './soundboard/soundboard.component';
+import { AppComponent } from './app.component';
+import { AppRoutingModule } from './app-routing.module';
 
 @NgModule({
   declarations: [

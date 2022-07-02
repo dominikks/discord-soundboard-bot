@@ -22,8 +22,8 @@ import { Sound, Soundfile, SoundsService } from 'src/app/services/sounds.service
 import { SettingsService } from 'src/app/services/settings.service';
 import { clamp, sortBy } from 'lodash-es';
 import { MatDialog } from '@angular/material/dialog';
-import { SoundDeleteConfirmComponent } from './sound-delete-confirm/sound-delete-confirm.component';
 import Fuse from 'fuse.js';
+import { SoundDeleteConfirmComponent } from './sound-delete-confirm/sound-delete-confirm.component';
 
 @Component({
   templateUrl: './sound-manager.component.html',
@@ -37,7 +37,7 @@ export class SoundManagerComponent implements OnDestroy, OnInit {
     return this.settingsService.settings;
   }
 
-  guildId$ = new ReplaySubject(1);
+  guildId$ = new ReplaySubject<string>(1);
   sounds$ = new ReplaySubject<SoundEntry[]>(1);
   soundsWithChanges$ = this.sounds$.pipe(
     switchMap(sounds =>

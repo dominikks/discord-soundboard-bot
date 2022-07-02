@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { clamp, sample, uniq, sortBy } from 'lodash-es';
-import { Sound, SoundsService } from '../services/sounds.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
-import { SettingsService } from '../services/settings.service';
-import { ApiService, RandomInfix } from '../services/api.service';
 import { BehaviorSubject, combineLatest, EMPTY, Subject } from 'rxjs';
 import { filter, map, share, shareReplay, switchMap, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { SettingsService } from '../services/settings.service';
+import { ApiService, RandomInfix } from '../services/api.service';
+import { Sound, SoundsService } from '../services/sounds.service';
 import { EventsService } from '../services/events.service';
 
 // false means local playback, string is the guildid

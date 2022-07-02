@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { map, mergeMap, retry, shareReplay, tap } from 'rxjs/operators';
-import { ErrorService } from './error.service';
 import { sortBy } from 'lodash-es';
+import { ErrorService } from './error.service';
 
 export interface AppInfo {
   version: string;
