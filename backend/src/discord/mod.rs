@@ -14,39 +14,39 @@ pub mod recorder;
 /// Instead of the built-in serenity struct, we use this
 #[derive(Clone)]
 pub struct CacheHttp {
-  pub cache: Arc<Cache>,
-  pub http: Arc<Http>,
+    pub cache: Arc<Cache>,
+    pub http: Arc<Http>,
 }
 
 impl SerenityCacheHttp for CacheHttp {
-  fn http(&self) -> &Http {
-    &self.http
-  }
-  fn cache(&self) -> Option<&Arc<Cache>> {
-    Some(&self.cache)
-  }
+    fn http(&self) -> &Http {
+        &self.http
+    }
+    fn cache(&self) -> Option<&Arc<Cache>> {
+        Some(&self.cache)
+    }
 }
 
 impl From<&Context> for CacheHttp {
-  fn from(ctx: &Context) -> Self {
-    CacheHttp {
-      cache: ctx.cache.clone(),
-      http: ctx.http.clone(),
+    fn from(ctx: &Context) -> Self {
+        CacheHttp {
+            cache: ctx.cache.clone(),
+            http: ctx.http.clone(),
+        }
     }
-  }
 }
 
 impl From<&Arc<CacheAndHttp>> for CacheHttp {
-  fn from(cachehttp: &Arc<CacheAndHttp>) -> Self {
-    CacheHttp {
-      cache: cachehttp.cache.clone(),
-      http: cachehttp.http.clone(),
+    fn from(cachehttp: &Arc<CacheAndHttp>) -> Self {
+        CacheHttp {
+            cache: cachehttp.cache.clone(),
+            http: cachehttp.http.clone(),
+        }
     }
-  }
 }
 
 impl AsRef<Cache> for CacheHttp {
-  fn as_ref(&self) -> &Cache {
-    self.cache.as_ref()
-  }
+    fn as_ref(&self) -> &Cache {
+        self.cache.as_ref()
+    }
 }
