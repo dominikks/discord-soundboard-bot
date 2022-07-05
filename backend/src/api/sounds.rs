@@ -414,7 +414,7 @@ async fn save_sound_file(
     mut file: TempFile<'_>,
     db: &DbConn,
 ) -> Result<Json<Soundfile>, SoundsError> {
-    file.persist_to(file_path).await?;
+    file.move_copy_to(file_path).await?;
 
     let volume = audio_utils::detect_volume(file_path).await;
     let length = audio_utils::get_length(file_path).await;
