@@ -103,7 +103,7 @@ async fn get_all_random_infixes(
         .into_iter()
         .map(|(guild, _)| BigDecimal::from_u64(guild.id.0))
         .collect::<Option<Vec<_>>>()
-        .ok_or(SettingsError::bigdecimal_error())?;
+        .ok_or_else(SettingsError::bigdecimal_error)?;
 
     let infixes = db
         .run(move |c| {
@@ -113,7 +113,7 @@ async fn get_all_random_infixes(
         })
         .await?
         .into_iter()
-        .map(|ri| RandomInfix::try_from(ri))
+        .map(RandomInfix::try_from)
         .collect::<Result<Vec<_>, _>>()
         .map_err(|_| SettingsError::bigdecimal_error())?;
 
@@ -137,7 +137,7 @@ async fn set_random_infixes(
 ) -> Result<(), SettingsError> {
     check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId(guild_id)).await?;
 
-    let gid = BigDecimal::from_u64(guild_id).ok_or(SettingsError::bigdecimal_error())?;
+    let gid = BigDecimal::from_u64(guild_id).ok_or_else(SettingsError::bigdecimal_error)?;
     let random_infixes = params
         .into_inner()
         .into_iter()
@@ -185,7 +185,7 @@ async fn get_guild_settings(
     let guild_id = GuildId(guild_id);
     check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
 
-    let gid = BigDecimal::from_u64(guild_id.0).ok_or(SettingsError::bigdecimal_error())?;
+    let gid = BigDecimal::from_u64(guild_id.0).ok_or_else(SettingsError::bigdecimal_error)?;
     let guild_settings = db
         .run(move |c| {
             use crate::db::schema::guildsettings::dsl::*;
@@ -202,14 +202,14 @@ async fn get_guild_settings(
 
     let user_role_id = guild_settings
         .user_role_id
-        .map(|role_id| role_id.to_u64().ok_or(SettingsError::bigdecimal_error()))
+        .map(|role_id| role_id.to_u64().ok_or_else(SettingsError::bigdecimal_error))
         .map_or(Ok(None), |r| r.map(Some))?
-        .map(|rid| Snowflake(rid));
+        .map(Snowflake);
     let moderator_role_id = guild_settings
         .moderator_role_id
-        .map(|role_id| role_id.to_u64().ok_or(SettingsError::bigdecimal_error()))
+        .map(|role_id| role_id.to_u64().ok_or_else(SettingsError::bigdecimal_error))
         .map_or(Ok(None), |r| r.map(Some))?
-        .map(|rid| Snowflake(rid));
+        .map(Snowflake);
 
     let roles = guild_id
         .to_partial_guild(&cache_http.inner().http)
@@ -224,7 +224,7 @@ async fn get_guild_settings(
         moderator_role_id,
         target_max_volume: guild_settings.target_max_volume,
         target_mean_volume: guild_settings.target_mean_volume,
-        roles: roles,
+        roles,
     }))
 }
 
@@ -250,7 +250,7 @@ async fn set_guild_settings(
     let guild_id = GuildId(guild_id);
     check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
 
-    let gid = BigDecimal::from_u64(guild_id.0).ok_or(SettingsError::bigdecimal_error())?;
+    let gid = BigDecimal::from_u64(guild_id.0).ok_or_else(SettingsError::bigdecimal_error)?;
     let params = params.into_inner();
 
     // We assume that the data is already present in the database at that point (queried at least once)
@@ -260,7 +260,7 @@ async fn set_guild_settings(
 
         if let Some(user_role_id) = params.user_role_id {
             let role_id = user_role_id
-                .map(|rid| BigDecimal::from_u64(rid.0).ok_or(SettingsError::bigdecimal_error()))
+                .map(|rid| BigDecimal::from_u64(rid.0).ok_or_else(SettingsError::bigdecimal_error))
                 .map_or(Ok(None), |r| r.map(Some))?;
 
             diesel::update(guildsettings::table)
@@ -271,7 +271,7 @@ async fn set_guild_settings(
 
         if let Some(moderator_role_id) = params.moderator_role_id {
             let role_id = moderator_role_id
-                .map(|rid| BigDecimal::from_u64(rid.0).ok_or(SettingsError::bigdecimal_error()))
+                .map(|rid| BigDecimal::from_u64(rid.0).ok_or_else(SettingsError::bigdecimal_error))
                 .map_or(Ok(None), |r| r.map(Some))?;
 
             diesel::update(guildsettings::table)

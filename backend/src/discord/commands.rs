@@ -14,6 +14,7 @@ use serenity::model::prelude::ReactionType;
 use serenity::prelude::*;
 use serenity::Result as SerenityResult;
 use std::convert::TryFrom;
+use std::fmt::Write;
 
 /// Creates the framework used by the discord client
 pub fn create_framework() -> StandardFramework {
@@ -190,7 +191,7 @@ async fn info(ctx: &Context, msg: &Message) -> CommandResult {
         BASE_URL.clone()
     );
     if let (Some(bid), Some(bt)) = (BUILD_ID, BUILD_TIMESTAMP) {
-        resp += &format!("\n\nbuild {}, timestamp {}", bid, bt);
+        write!(resp, "\n\nbuild {}, timestamp {}", bid, bt)?;
     }
     check_msg(msg.channel_id.say(&ctx.http, &resp).await);
 

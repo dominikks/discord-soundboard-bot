@@ -100,7 +100,10 @@ impl EventData {
     fn new(member: &Member) -> Self {
         Self {
             guild_id: Snowflake(member.guild_id.0),
-            user_name: member.nick.clone().unwrap_or(member.user.name.clone()),
+            user_name: member
+                .nick
+                .clone()
+                .unwrap_or_else(|| member.user.name.clone()),
             user_avatar_url: member.avatar_url_or_default(),
             timestamp: SystemTime::now(),
         }
@@ -118,7 +121,7 @@ async fn events(
 ) -> Result<EventStream![], Status> {
     // Only users may get events from this guild
     let serenity_user = user.into();
-    check_guild_user(&cache_http.inner(), &db, serenity_user, GuildId(guild_id))
+    check_guild_user(cache_http.inner(), &db, serenity_user, GuildId(guild_id))
         .await
         .map_err(|_| Status::Forbidden)?;
 

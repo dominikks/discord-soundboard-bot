@@ -139,7 +139,7 @@ impl Recorder {
             relevant_users = users
                 .iter()
                 .filter(|(_, user)| user.guild_id == guild_id)
-                .map(|(ssrc, user)| (ssrc.clone(), user.user_id.clone()))
+                .map(|(ssrc, user)| (*ssrc, user.user_id))
                 .collect();
         }
         info!("Saving recordings of {} users", relevant_users.len());
@@ -211,9 +211,7 @@ impl Recorder {
         }
 
         for join_handle in tasks {
-            join_handle
-                .await
-                .map_err(|err| std::io::Error::from(err))??;
+            join_handle.await.map_err(std::io::Error::from)??;
         }
 
         Ok(())
@@ -262,7 +260,7 @@ impl Recorder {
             .member(cache_and_http, uid)
             .await
             .map(|member| member.user.name)
-            .unwrap_or(uid.to_string());
+            .unwrap_or_else(|_| uid.to_string());
 
         let file = folder.join(sanitize_filename::sanitize(format!("{}.mp3", name)));
         let args = [
@@ -331,7 +329,7 @@ impl VoiceEventHandler for RecorderHandler {
                             *ssrc,
                             UserData {
                                 guild_id: self.guild_id,
-                                user_id: user_id.clone(),
+                                user_id: *user_id,
                                 last_voice_activity: SystemTime::now(),
                             },
                         );
@@ -340,7 +338,7 @@ impl VoiceEventHandler for RecorderHandler {
                     // Delete the user if no voice activity in the last hour
                     if overwritten_user.is_none() {
                         let recorder = self.recorder.clone();
-                        let ssrc = ssrc.clone();
+                        let ssrc = *ssrc;
                         let span = span!(Level::INFO, "user_gc");
                         tokio::spawn(
                             async move {
@@ -419,13 +417,13 @@ impl VoiceEventHandler for RecorderHandler {
                         {
                             let mut archive = self.recorder.archive.lock().await;
                             let archive_entry =
-                                archive.entry(*ssrc).or_insert_with(|| Default::default());
+                                archive.entry(*ssrc).or_insert_with(Default::default);
                             archive_entry.insert(start_time, recording);
                         }
 
                         // Automatically remove the key after 60 secs
                         let recorder = self.recorder.clone();
-                        let ssrc = ssrc.clone();
+                        let ssrc = *ssrc;
                         let span = span!(Level::INFO, "recording_gc");
                         tokio::spawn(
                             async move {

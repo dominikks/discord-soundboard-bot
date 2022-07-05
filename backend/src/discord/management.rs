@@ -126,7 +126,7 @@ pub async fn get_permission_level(
             .to_u64()
             .ok_or(PermissionError::BigDecimalError)?;
 
-        if let Some(_) = member.roles.iter().find(|role| role.0 == rid) {
+        if member.roles.iter().any(|role| role.0 == rid) {
             return Ok(PermissionResponse {
                 member,
                 permission: UserPermission::Moderator,
@@ -139,7 +139,7 @@ pub async fn get_permission_level(
             .to_u64()
             .ok_or(PermissionError::BigDecimalError)?;
 
-        if let Some(_) = member.roles.iter().find(|role| role.0 == rid) {
+        if member.roles.iter().any(|role| role.0 == rid) {
             return Ok(PermissionResponse {
                 member,
                 permission: UserPermission::User,
@@ -158,7 +158,7 @@ pub async fn get_guilds_for_user(
 ) -> Result<Vec<(Guild, UserPermission)>, serenity::Error> {
     let mut response = vec![];
     for guild_id in cache_http.cache.guilds().await {
-        if let Ok(perm) = get_permission_level(&cache_http, db, user_id, guild_id).await {
+        if let Ok(perm) = get_permission_level(cache_http, db, user_id, guild_id).await {
             if let Some(guild) = guild_id.to_guild_cached(&cache_http.cache).await {
                 response.push((guild, perm.permission));
             }

@@ -82,7 +82,7 @@ async fn stop(
     user: TokenUserId,
 ) -> Result<String, CommandError> {
     let guild_id = GuildId(guild_id);
-    let permission = check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
+    let permission = check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     if client.stop(guild_id).await {
         event_bus.inner().playback_stopped(&permission.member);
@@ -107,7 +107,7 @@ async fn play(
     // Check permission to play on this guild
     let serenity_user = user.into();
     let permission =
-        check_guild_user(&cache_http.inner(), &db, serenity_user, GuildId(guild_id)).await?;
+        check_guild_user(cache_http.inner(), &db, serenity_user, GuildId(guild_id)).await?;
 
     let (sound, soundfile) = db
         .run(move |c| {
@@ -125,10 +125,10 @@ async fn play(
     let sound_gid = sound
         .guild_id
         .to_u64()
-        .ok_or(CommandError::bigdecimal_error())?;
-    check_guild_user(&cache_http.inner(), &db, serenity_user, GuildId(sound_gid)).await?;
+        .ok_or_else(CommandError::bigdecimal_error)?;
+    check_guild_user(cache_http.inner(), &db, serenity_user, GuildId(sound_gid)).await?;
 
-    let gid = BigDecimal::from_u64(guild_id).ok_or(CommandError::bigdecimal_error())?;
+    let gid = BigDecimal::from_u64(guild_id).ok_or_else(CommandError::bigdecimal_error)?;
     let guild_settings = db
         .run(move |c| {
             use crate::db::schema::guildsettings::dsl::*;
@@ -182,11 +182,11 @@ async fn record(
     user: TokenUserId,
 ) -> Result<String, CommandError> {
     let guild_id = GuildId(guild_id);
-    let permission = check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
+    let permission = check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     match client
         .recorder
-        .save_recording(guild_id, &cache_http.inner())
+        .save_recording(guild_id, cache_http.inner())
         .await
     {
         Ok(_) => {

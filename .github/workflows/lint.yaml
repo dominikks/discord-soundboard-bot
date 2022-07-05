@@ -1,0 +1,52 @@
+name: Lint app
+
+on: [push, pull_request]
+
+jobs:
+  frontend-lint:
+    name: Lint frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Run linter
+        run: npm run lint
+        working-directory: frontend
+
+      - name: Run prettier
+        run: npm run format:check
+        working-directory: frontend
+
+  backend-lint:
+    name: Lint backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Run formatter
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --manifest-path backend/Cargo.toml --check
+
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --manifest-path backend/Cargo.toml

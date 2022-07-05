@@ -30,7 +30,7 @@ lazy_static! {
   static ref BASE_URL: String = env::var("BASE_URL").expect("BASE_URL must be supplied in env");
 }
 
-pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const BUILD_ID: Option<&'static str> = option_env!("BUILD_ID");
 pub const BUILD_TIMESTAMP: Option<&'static str> = option_env!("BUILD_TIMESTAMP");
 

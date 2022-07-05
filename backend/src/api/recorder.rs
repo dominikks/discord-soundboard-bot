@@ -15,7 +15,6 @@ use rocket::response::Responder;
 use rocket::serde::json::Json;
 use rocket::Route;
 use rocket::State;
-use sanitize_filename;
 use serde::Deserialize;
 use serde::Serialize;
 use serenity::model::id::GuildId;
@@ -149,10 +148,7 @@ async fn get_recordings(
     for (guild, _) in guilds.iter() {
         results.append(&mut file_handling::get_recordings_for_guild(guild.id.0).await?);
     }
-    let results: Result<Vec<_>, _> = results
-        .into_iter()
-        .map(|s| Recording::try_from(s))
-        .collect();
+    let results: Result<Vec<_>, _> = results.into_iter().map(Recording::try_from).collect();
     Ok(Json(results?))
 }
 
@@ -188,10 +184,10 @@ async fn mix_recording(
     user: UserId,
 ) -> Result<Json<MixingResult>, RecorderError> {
     let guild_id = GuildId(guild_id);
-    check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
+    check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     let params = params.0;
-    if params.user_ids.len() == 0 {
+    if params.user_ids.is_empty() {
         return Err(RecorderError::RequestError(String::from(
             "At least one user must be specified",
         )));
@@ -282,7 +278,7 @@ async fn delete_recording(
     user: UserId,
 ) -> Result<(), RecorderError> {
     let guild_id = GuildId(guild_id);
-    check_guild_user(&cache_http.inner(), &db, user.into(), guild_id).await?;
+    check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     let folder = (*RECORDINGS_FOLDER)
         .join(guild_id.to_string())
@@ -305,7 +301,7 @@ async fn get_recording(
     user: UserId,
 ) -> Option<CachedFile> {
     let guild_id = GuildId(guild_id);
-    check_guild_user(&cache_http.inner(), &db, user.into(), guild_id)
+    check_guild_user(cache_http.inner(), &db, user.into(), guild_id)
         .await
         .ok()?;
 
@@ -328,7 +324,7 @@ async fn get_mix(
     user: UserId,
 ) -> Option<CachedFile> {
     let guild_id = GuildId(guild_id);
-    check_guild_user(&cache_http.inner(), &db, user.into(), guild_id)
+    check_guild_user(cache_http.inner(), &db, user.into(), guild_id)
         .await
         .ok()?;
 

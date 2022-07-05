@@ -54,11 +54,11 @@ impl Connector {
             .await
             .expect("Error creating client");
 
-        return Self {
+        Self {
             cache_http: CacheHttp::from(&serenity_client.cache_and_http),
             serenity_client,
             client,
-        };
+        }
     }
 
     #[instrument(skip(self))]

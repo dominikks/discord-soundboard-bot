@@ -72,6 +72,6 @@ impl AvatarOrDefault for SerenityMember {
     fn avatar_url_or_default(&self) -> String {
         self.avatar
             .clone()
-            .unwrap_or(self.user.avatar_url_or_default())
+            .unwrap_or_else(|| self.user.avatar_url_or_default())
     }
 }

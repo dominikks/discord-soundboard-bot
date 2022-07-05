@@ -147,7 +147,7 @@ pub trait ClientInit {
 impl ClientInit for ClientBuilder<'_> {
     fn register_client(self, client: &Client) -> Self {
         self.type_map_insert::<ClientKey>(client.clone())
-            .register_songbird_with(client.songbird.clone().into())
+            .register_songbird_with(client.songbird.clone())
     }
 }
 

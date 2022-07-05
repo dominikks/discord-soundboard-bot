@@ -165,13 +165,7 @@ impl<'r> FromRequest<'r> for TokenUserId {
         let header = request
             .headers()
             .get_one("Authorization")
-            .and_then(|header_val| {
-                if header_val.starts_with(TOKEN_PREFIX) {
-                    Some(String::from(&header_val[TOKEN_PREFIX.len()..]))
-                } else {
-                    None
-                }
-            });
+            .and_then(|header_val| header_val.strip_prefix(TOKEN_PREFIX).map(String::from));
 
         if let Some(auth_token) = header {
             let res = db
@@ -198,7 +192,7 @@ impl<'r> FromRequest<'r> for TokenUserId {
                     }
                 })
                 .and_then(|auth_token| auth_token.user_id.to_u64())
-                .map(|user_id| TokenUserId(user_id));
+                .map(TokenUserId);
 
             if let Some(uid) = res {
                 return Outcome::Success(uid);
@@ -366,9 +360,7 @@ async fn login_post(
     let login_cookie = cookies
         .get_private(LOGIN_COOKIE)
         .and_then(|cookie| serde_json::from_str::<LoginInfo>(cookie.value()).ok())
-        .ok_or(AuthError::MissingLoginCookie(String::from(
-            "Unknown login session",
-        )))?;
+        .ok_or_else(|| AuthError::MissingLoginCookie(String::from("Unknown login session")))?;
     cookies.remove_private(Cookie::named(LOGIN_COOKIE));
 
     if state != login_cookie.csrf_state {
@@ -398,7 +390,7 @@ async fn login_post(
             id: uid,
             last_login: SystemTime::now(),
         })
-        .ok_or(AuthError::bigdecimal_error())?;
+        .ok_or_else(AuthError::bigdecimal_error)?;
     db.run(move |c| {
         use crate::db::schema::users::dsl::*;
 
@@ -467,7 +459,7 @@ fn logout(cookies: &CookieJar<'_>) -> String {
 /// Beware: this replaces the current auth token by a new one. The old one becomes invalid.
 #[post("/auth/gettoken")]
 async fn get_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
-    let uid = BigDecimal::from_u64(user.0).ok_or(AuthError::bigdecimal_error())?;
+    let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
     let auth_token: String = iter::repeat(())
         .map(|_| OsRng.sample(Alphanumeric))
         .map(char::from)
