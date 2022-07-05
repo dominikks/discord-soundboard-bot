@@ -3,11 +3,13 @@ import { clamp, sample, uniq, sortBy } from 'lodash-es';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
 import { BehaviorSubject, combineLatest, EMPTY, Subject } from 'rxjs';
-import { filter, map, share, shareReplay, switchMap, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { filter, map, shareReplay, switchMap, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
 import { SettingsService } from '../services/settings.service';
 import { ApiService, RandomInfix } from '../services/api.service';
 import { Sound, SoundsService } from '../services/sounds.service';
 import { EventsService } from '../services/events.service';
+import { EventLogDialogComponent } from './event-log-dialog/event-log-dialog.component';
 
 // false means local playback, string is the guildid
 type Target = false | string;
@@ -63,7 +65,7 @@ export class SoundboardComponent implements OnInit, OnDestroy {
 
   events$ = this.target$.pipe(
     switchMap(target => (target ? this.eventsService.getEventStream(target) : EMPTY)),
-    share()
+    shareReplay(100)
   );
 
   constructor(
@@ -71,7 +73,8 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     private soundsService: SoundsService,
     private settingsService: SettingsService,
     private eventsService: EventsService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -178,5 +181,9 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     }
 
     return item.id;
+  }
+
+  openEventLog() {
+    this.dialog.open(EventLogDialogComponent, { data: this.events$ });
   }
 }

@@ -61,7 +61,9 @@
 
     <mat-toolbar *ngIf="(settings.soundTarget$ | async) === 'discord'" class="events-toolbar">
       <div class="toolbar-content-wrapper">
-        <mat-icon matTooltip="Latest soundboard activity on the selected Discord server">history</mat-icon>
+        <button mat-stroked-button (click)="openEventLog()" matTooltip="Latest soundboard activity on the selected Discord server"
+          ><mat-icon>history</mat-icon></button
+        >
         <ng-container *ngIf="events$ | async as event; else noEvents">
           {{ event.timestamp * 1000 | date: 'mediumTime' }}: {{ event.userName }}
           <ng-container *ngIf="event.type === 'PlaybackStarted'">played the sound '{{ event.soundName }}'</ng-container>

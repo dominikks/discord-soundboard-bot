@@ -51,6 +51,8 @@ import { GuildNamePipe } from './guild-name.pipe';
 import { SoundboardComponent } from './soundboard/soundboard.component';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
+import { EventLogDialogComponent } from './soundboard/event-log-dialog/event-log-dialog.component';
+import { ScrollIntoViewDirective } from './common/scroll-into-view.directive';
 
 @NgModule({
   declarations: [
@@ -74,6 +76,8 @@ import { AppRoutingModule } from './app-routing.module';
     SoundDetailsComponent,
     SoundDeleteConfirmComponent,
     GuildNamePipe,
+    EventLogDialogComponent,
+    ScrollIntoViewDirective,
   ],
   imports: [
     // Angular
