@@ -34,7 +34,7 @@ pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub const BUILD_ID: Option<&'static str> = option_env!("BUILD_ID");
 pub const BUILD_TIMESTAMP: Option<&'static str> = option_env!("BUILD_TIMESTAMP");
 
-#[tokio::main]
+#[rocket::main]
 async fn main() {
     // Load .env file
     dotenv().ok();
