@@ -60,6 +60,11 @@ services:
       - POSTGRES_PASSWORD=<dbpassword>
     volumes:
       - db:/var/lib/postgresql/data
+
+volumes:
+  sounds:
+  recordings:
+  db:
 ```
 
 The values from the Discord Developer Portal need to be passed to the bot via environment variables.
