@@ -36,6 +36,14 @@ struct PlaybackStartedData {
     sound_name: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct ChannelJoinedData {
+    #[serde(flatten)]
+    target_data: EventData,
+    channel_name: String,
+}
+
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -53,6 +61,8 @@ enum EventMessage {
     PlaybackStarted(PlaybackStartedData),
     PlaybackStopped(EventData),
     RecordingSaved(EventData),
+    ChannelJoined(ChannelJoinedData),
+    ChannelLeft(EventData),
 }
 
 pub struct EventBus {
@@ -88,6 +98,23 @@ impl EventBus {
         let _ = self.sender.send((
             member.guild_id,
             EventMessage::RecordingSaved(EventData::new(member)),
+        ));
+    }
+
+    pub fn channel_joined(&self, member: &Member, channel_name: String) {
+        let _ = self.sender.send((
+            member.guild_id,
+            EventMessage::ChannelJoined(ChannelJoinedData {
+                target_data: EventData::new(member),
+                channel_name,
+            }),
+        ));
+    }
+
+    pub fn channel_left(&self, member: &Member) {
+        let _ = self.sender.send((
+            member.guild_id,
+            EventMessage::ChannelLeft(EventData::new(member)),
         ));
     }
 

@@ -144,7 +144,7 @@ impl<'r> FromRequest<'r> for UserId {
 
 /// This represents a user that has authenticated using an auth token. Currently, there are is only one type of token
 /// that has limited permissions. This struct is used to distinguish it from regular cookie authentication.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct TokenUserId(u64);
 
 impl From<TokenUserId> for SerenityUserId {

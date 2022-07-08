@@ -64,7 +64,7 @@ impl Connector {
     #[instrument(skip(self))]
     pub async fn run(&mut self) {
         if let Err(why) = self.serenity_client.start().await {
-            info!("Discord client ended: {:?}", why);
+            error!("Discord client ended: {:?}", why);
         }
     }
 }

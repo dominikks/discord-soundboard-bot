@@ -30,44 +30,26 @@ struct General;
 #[command]
 #[only_in(guilds)]
 async fn join(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guild_id = guild.id;
-
-    let connect_to = match guild
-        .voice_states
-        .get(&msg.author.id)
-        .and_then(|voice_state| voice_state.channel_id)
-    {
-        Some(channel) => channel,
-        None => {
-            check_msg(msg.reply(&ctx, ":x: Not in a voice channel").await);
-
-            return Ok(());
-        }
-    };
+    let guild_id = msg.guild_id.unwrap();
 
     let client = client::get(ctx)
         .await
-        .expect("Recorder placed in at initialization");
+        .expect("Discord client placed in at initialization");
 
-    let result = client.join_channel(guild_id, connect_to).await;
-
-    if result.is_ok() {
-        check_msg(
+    match client.join_user(guild_id, msg.author.id, &ctx.into()).await {
+        Ok((channel_id, _)) => check_msg(
             msg.channel_id
                 .say(
                     &ctx.http,
-                    &format!(":white_check_mark: Joined {}", connect_to.mention()),
+                    &format!(":white_check_mark: Joined {}", channel_id.mention()),
                 )
                 .await,
-        );
-    } else {
-        check_msg(
-            msg.channel_id
-                .say(&ctx.http, ":x: Error joining the channel")
-                .await,
-        );
-    }
+        ),
+        Err(client::ClientError::UserNotFound) => {
+            check_msg(msg.reply(&ctx, ":x: Not in a voice channel").await)
+        }
+        _ => check_msg(msg.reply(&ctx, ":x: Connection error").await),
+    };
 
     Ok(())
 }
@@ -75,25 +57,18 @@ async fn join(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 #[only_in(guilds)]
 async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild_id = msg.guild(&ctx.cache).await.unwrap().id;
+    let guild_id = msg.guild_id.unwrap();
 
-    let manager = songbird::get(ctx)
+    let client = client::get(ctx)
         .await
-        .expect("Songbird Voice client placed in at initialisation.")
-        .clone();
+        .expect("Discord client placed in at initialization");
 
-    if manager.get(guild_id).is_some() {
-        if let Err(e) = manager.remove(guild_id).await {
-            check_msg(
-                msg.channel_id
-                    .say(&ctx.http, format!("Failed: {:?}", e))
-                    .await,
-            );
+    match client.leave(guild_id).await {
+        Ok(_) => check_msg(msg.channel_id.say(&ctx.http, "Left voice channel").await),
+        Err(client::ClientError::NotInAChannel) => {
+            check_msg(msg.reply(&ctx, ":x: Not in a voice channel").await)
         }
-
-        check_msg(msg.channel_id.say(&ctx.http, "Left voice channel").await);
-    } else {
-        check_msg(msg.reply(&ctx, ":x: Not in a voice channel").await);
+        _ => check_msg(msg.reply(&ctx, ":x: Connection error").await),
     }
 
     Ok(())
@@ -108,20 +83,20 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 #[only_in(guilds)]
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild_id = msg.guild(&ctx.cache).await.unwrap().id;
+    let guild_id = msg.guild_id.unwrap();
 
     let client = client::get(ctx)
         .await
-        .expect("Songbird Voice client placed in at initialisation.");
+        .expect("Discord client placed in at initialisation.");
 
-    if client.stop(guild_id).await {
-        check_msg(msg.channel_id.say(&ctx.http, ":stop_button: Stopped").await);
-    } else {
-        check_msg(
+    match client.stop(guild_id).await {
+        Ok(_) => check_msg(msg.channel_id.say(&ctx.http, ":stop_button: Stopped").await),
+        Err(client::ClientError::NotInAChannel) => check_msg(
             msg.channel_id
                 .say(&ctx.http, ":x: Not in a voice channel to play in")
                 .await,
-        );
+        ),
+        _ => unreachable!(),
     }
 
     Ok(())
@@ -134,7 +109,7 @@ async fn record(ctx: &Context, msg: &Message) -> CommandResult {
         .react(&ctx.http, ReactionType::try_from("⏬").unwrap())
         .await;
 
-    let guild_id = msg.guild(&ctx.cache).await.unwrap().id;
+    let guild_id = msg.guild_id.unwrap();
     let client = client::get(ctx)
         .await
         .expect("Recorder placed in at initialization");

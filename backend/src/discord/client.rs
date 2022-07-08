@@ -2,11 +2,12 @@ use crate::discord::recorder::Recorder;
 use crate::discord::CacheHttp;
 use serenity::client::ClientBuilder;
 use serenity::client::Context;
-use serenity::model::channel::ChannelType;
 use serenity::model::id::ChannelId;
 use serenity::model::id::GuildId;
+use serenity::model::id::UserId;
 use serenity::prelude::TypeMapKey;
 use songbird::driver::DecodeMode;
+use songbird::error::JoinError;
 use songbird::Config as DriverConfig;
 use songbird::SerenityInit;
 use songbird::Songbird;
@@ -15,9 +16,12 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Debug)]
-pub enum PlayError {
-    FailedToJoinChannel,
-    Decoding(songbird::input::error::Error),
+pub enum ClientError {
+    NotInAChannel,
+    UserNotFound,
+    DecodingError(songbird::input::error::Error),
+    ConnectionError,
+    GuildNotFound,
 }
 
 #[derive(Clone)]
@@ -43,9 +47,9 @@ impl Client {
         &self,
         guild_id: GuildId,
         channel_id: ChannelId,
-    ) -> Result<Arc<Mutex<songbird::Call>>, ()> {
+    ) -> Result<Arc<Mutex<songbird::Call>>, ClientError> {
         let (call_lock, result) = self.songbird.join(guild_id, channel_id).await;
-        result.map_err(|_| ())?;
+        result.map_err(|_| ClientError::ConnectionError)?;
 
         self.recorder
             .register_with_call(guild_id, call_lock.clone())
@@ -55,50 +59,54 @@ impl Client {
     }
 
     #[instrument(skip(self, cache_and_http))]
+    pub async fn join_user(
+        &self,
+        guild_id: GuildId,
+        user_id: UserId,
+        cache_and_http: &CacheHttp,
+    ) -> Result<(ChannelId, Arc<Mutex<songbird::Call>>), ClientError> {
+        let guild = guild_id
+            .to_guild_cached(cache_and_http)
+            .await
+            .ok_or(ClientError::GuildNotFound)?;
+
+        let channel_id = guild
+            .voice_states
+            .get(&user_id)
+            .and_then(|voice_state| voice_state.channel_id)
+            .ok_or(ClientError::UserNotFound)?;
+
+        self.join_channel(guild_id, channel_id)
+            .await
+            .map(|call| (channel_id, call))
+    }
+
+    #[instrument(skip(self))]
+    pub async fn leave(&self, guild_id: GuildId) -> Result<(), ClientError> {
+        self.songbird
+            .remove(guild_id)
+            .await
+            .map_err(|err| match err {
+                JoinError::NoCall => ClientError::NotInAChannel,
+                _ => ClientError::ConnectionError,
+            })
+    }
+
+    #[instrument(skip(self))]
     pub async fn play(
         &self,
         sound_path: &PathBuf,
         volume_adjustment: f32,
         guild_id: GuildId,
-        cache_and_http: &CacheHttp,
-    ) -> Result<(), PlayError> {
-        let handler_lock = match self.songbird.get(guild_id) {
-            Some(handler_lock) => handler_lock,
-            None => {
-                // Try to join the voice channel with the most users in it
-                let channels = guild_id
-                    .channels(&cache_and_http.http)
-                    .await
-                    .map_err(|_e| PlayError::FailedToJoinChannel)?;
-                let mut candidates = Vec::new();
-                for (channel_id, channel) in channels
-                    .iter()
-                    .filter(|(_, channel)| channel.kind == ChannelType::Voice)
-                {
-                    if let Ok(number) = channel
-                        .members(&cache_and_http.cache)
-                        .await
-                        .map(|members| members.len())
-                    {
-                        candidates.push((*channel_id, number));
-                    }
-                }
-                trace!(?candidates, "Trying to auto-join");
-                let (channel_id, _) = candidates
-                    .iter()
-                    .max_by_key(|(_, number)| number)
-                    .ok_or(PlayError::FailedToJoinChannel)?;
-
-                debug!(?channel_id, "Auto-joining channel");
-                self.join_channel(guild_id, *channel_id)
-                    .await
-                    .map_err(|_| PlayError::FailedToJoinChannel)?
-            }
-        };
-        let mut handler = handler_lock.lock().await;
+    ) -> Result<(), ClientError> {
+        let call_lock = self
+            .songbird
+            .get(guild_id)
+            .ok_or(ClientError::NotInAChannel)?;
+        let mut call = call_lock.lock().await;
 
         let volume_adjustment_string = format!("volume={}dB", volume_adjustment);
-        let source = match songbird::input::ffmpeg_optioned(
+        let source = songbird::input::ffmpeg_optioned(
             sound_path,
             &[],
             &[
@@ -114,27 +122,26 @@ impl Client {
             ],
         )
         .await
-        {
-            Ok(source) => source,
-            Err(why) => {
-                warn!("Err starting source: {:?}", why);
-                return Err(PlayError::Decoding(why));
-            }
-        };
+        .map_err(|why| {
+            warn!("Err starting source: {:?}", why);
+            ClientError::DecodingError(why)
+        })?;
 
-        handler.play_only_source(source);
+        call.play_only_source(source);
         Ok(())
     }
 
     #[instrument(skip(self))]
-    pub async fn stop(&self, guild_id: GuildId) -> bool {
-        if let Some(handler_lock) = self.songbird.get(guild_id) {
-            let mut handler = handler_lock.lock().await;
-            handler.stop();
-            true
-        } else {
-            false
-        }
+    pub async fn stop(&self, guild_id: GuildId) -> Result<(), ClientError> {
+        let handler_lock = self
+            .songbird
+            .get(guild_id)
+            .ok_or(ClientError::NotInAChannel)?;
+
+        let mut handler = handler_lock.lock().await;
+        handler.stop();
+
+        Ok(())
     }
 }
 
