@@ -48,12 +48,15 @@ mat-toolbar.controls-toolbar {
   }
 }
 
-mat-toolbar.events-toolbar {
+mat-toolbar.discord-toolbar {
   height: auto;
   min-height: 48px;
 
   font-size: 14px;
-  color: lightgray;
+
+  .event-text {
+    color: lightgray;
+  }
 
   .toolbar-content-wrapper {
     @extend .max-width;
@@ -61,6 +64,10 @@ mat-toolbar.events-toolbar {
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  .filler {
+    flex: 1;
   }
 }
 

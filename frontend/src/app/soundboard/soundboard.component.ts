@@ -3,8 +3,9 @@ import { clamp, sample, uniq, sortBy } from 'lodash-es';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
 import { BehaviorSubject, combineLatest, EMPTY, Subject } from 'rxjs';
-import { filter, map, shareReplay, switchMap, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { catchError, filter, map, shareReplay, switchMap, takeUntil, withLatestFrom } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { SettingsService } from '../services/settings.service';
 import { ApiService, RandomInfix } from '../services/api.service';
 import { Sound, SoundsService } from '../services/sounds.service';
@@ -32,6 +33,8 @@ export class SoundboardComponent implements OnInit, OnDestroy {
   playFirstMatch$ = new Subject<void>();
   stopSound$ = new Subject<void>();
   stopLocalSound$ = new Subject<void>();
+  joinChannel$ = new Subject<void>();
+  leaveChannel$ = new Subject<void>();
   soundSearchFilter$ = new BehaviorSubject('');
 
   user$ = this.apiService.user$;
@@ -80,10 +83,13 @@ export class SoundboardComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Play a sound
     this.playSound$
-      .pipe(takeUntil(this.onDestroy$), withLatestFrom(this.settings.soundTarget$, this.settings.guildId$, this.settings.debug$))
-      .subscribe(([sound, soundTarget, guildId, debug]) => {
+      .pipe(
+        takeUntil(this.onDestroy$),
+        withLatestFrom(this.settings.soundTarget$, this.settings.guildId$, this.settings.debug$, this.settings.autoJoin$)
+      )
+      .subscribe(([sound, soundTarget, guildId, debug, autojoin]) => {
         if (soundTarget === 'discord') {
-          this.soundsService.playSound(sound, guildId).subscribe(
+          this.soundsService.playSound(sound, guildId, autojoin).subscribe(
             () => {
               if (debug) {
                 let volString =
@@ -94,13 +100,14 @@ export class SoundboardComponent implements OnInit, OnDestroy {
                 this.snackBar.open(volString, 'Ok');
               }
             },
-            error => {
-              if (error.status === 503) {
-                this.snackBar.open('Failed to join voice channel!', 'Damn');
+            (error: HttpErrorResponse) => {
+              if (error.status === 400) {
+                this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?', 'Damn');
+              } else if (error.status === 503) {
+                this.snackBar.open('The bot is currently not in a voice channel!', 'Damn');
               } else if (error.status === 404) {
                 this.snackBar.open('Sound not found. It might have been deleted or renamed.', 'Damn');
               } else if (error.status >= 300) {
-                console.error(error);
                 this.snackBar.open('Unknown error playing the sound file.', 'Damn');
               }
             }
@@ -149,6 +156,46 @@ export class SoundboardComponent implements OnInit, OnDestroy {
         this.currentAudio$.next(null);
       }
     });
+
+    // Manage discord channel
+    this.joinChannel$
+      .pipe(
+        takeUntil(this.onDestroy$),
+        withLatestFrom(this.settings.soundTarget$, this.settings.guildId$),
+        filter(([, soundTarget]) => soundTarget === 'discord'),
+        switchMap(([, , guildId]) =>
+          this.apiService.joinCurrentChannel(guildId).pipe(
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === 400) {
+                this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?', 'Damn');
+              } else {
+                this.snackBar.open('Unknown error joining a voice channel.', 'Damn');
+              }
+              return EMPTY;
+            })
+          )
+        )
+      )
+      .subscribe(() => this.snackBar.open('Joined channel!', undefined, { duration: 2000 }));
+    this.leaveChannel$
+      .pipe(
+        takeUntil(this.onDestroy$),
+        withLatestFrom(this.settings.soundTarget$, this.settings.guildId$),
+        filter(([, soundTarget]) => soundTarget === 'discord'),
+        switchMap(([, , guildId]) =>
+          this.apiService.leaveChannel(guildId).pipe(
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === 503) {
+                this.snackBar.open('The bot is not in a voice channel.', undefined, { duration: 2000 });
+              } else {
+                this.snackBar.open('Unknown error leaving a voice channel.', 'Damn');
+              }
+              return EMPTY;
+            })
+          )
+        )
+      )
+      .subscribe(() => this.snackBar.open('Left channel!', undefined, { duration: 2000 }));
 
     // Update volume of HTMLAudioElement
     combineLatest([this.settings.localVolume$, this.currentAudio$])

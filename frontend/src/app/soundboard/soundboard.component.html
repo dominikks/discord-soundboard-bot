@@ -59,18 +59,26 @@
       </div>
     </mat-toolbar>
 
-    <mat-toolbar *ngIf="(settings.soundTarget$ | async) === 'discord'" class="events-toolbar">
+    <mat-toolbar *ngIf="(settings.soundTarget$ | async) === 'discord'" class="discord-toolbar">
       <div class="toolbar-content-wrapper">
         <button mat-stroked-button (click)="openEventLog()" matTooltip="Latest soundboard activity on the selected Discord server"
           ><mat-icon>history</mat-icon></button
         >
-        <ng-container *ngIf="events$ | async as event; else noEvents">
-          {{ event.timestamp * 1000 | date: 'mediumTime' }}: {{ event.userName }}
-          <ng-container *ngIf="event.type === 'PlaybackStarted'">played the sound '{{ event.soundName }}'</ng-container>
-          <ng-container *ngIf="event.type === 'PlaybackStopped'">stopped the playback</ng-container>
-          <ng-container *ngIf="event.type === 'RecordingSaved'">saved a recording</ng-container>
-        </ng-container>
-        <ng-template #noEvents>No event to display</ng-template>
+        <div class="event-text">
+          <ng-container *ngIf="events$ | async as event; else noEvents">
+            {{ event.timestamp * 1000 | date: 'mediumTime' }}: {{ event.userName }} {{ event | eventDescription }}
+          </ng-container>
+          <ng-template #noEvents>No event to display</ng-template>
+        </div>
+
+        <div class="filler"></div>
+
+        <button mat-button matTooltip="Join discord channel I am connected to" matTooltipShowDelay="500" (click)="joinChannel$.next()">
+          <mat-icon>login</mat-icon>
+        </button>
+        <button mat-button matTooltip="Leave discord channel" matTooltipShowDelay="500" (click)="leaveChannel$.next()">
+          <mat-icon>logout</mat-icon>
+        </button>
       </div>
     </mat-toolbar>
 

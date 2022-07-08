@@ -61,8 +61,8 @@ enum EventMessage {
     PlaybackStarted(PlaybackStartedData),
     PlaybackStopped(EventData),
     RecordingSaved(EventData),
-    ChannelJoined(ChannelJoinedData),
-    ChannelLeft(EventData),
+    JoinedChannel(ChannelJoinedData),
+    LeftChannel(EventData),
 }
 
 pub struct EventBus {
@@ -104,7 +104,7 @@ impl EventBus {
     pub fn channel_joined(&self, member: &Member, channel_name: String) {
         let _ = self.sender.send((
             member.guild_id,
-            EventMessage::ChannelJoined(ChannelJoinedData {
+            EventMessage::JoinedChannel(ChannelJoinedData {
                 target_data: EventData::new(member),
                 channel_name,
             }),
@@ -114,7 +114,7 @@ impl EventBus {
     pub fn channel_left(&self, member: &Member) {
         let _ = self.sender.send((
             member.guild_id,
-            EventMessage::ChannelLeft(EventData::new(member)),
+            EventMessage::LeftChannel(EventData::new(member)),
         ));
     }
 

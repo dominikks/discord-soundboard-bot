@@ -2,6 +2,12 @@
   <h1>User Settings</h1>
   <mat-checkbox
     color="primary"
+    [ngModel]="settingsService.settings.autoJoin$ | async"
+    (ngModelChange)="settingsService.settings.autoJoin$.next($event)"
+    >Automatically join the channel I am in when playing a sound.</mat-checkbox
+  >
+  <mat-checkbox
+    color="primary"
     [ngModel]="settingsService.settings.debug$ | async"
     (ngModelChange)="settingsService.settings.debug$.next($event)"
     >Show debug information when playing sounds.</mat-checkbox

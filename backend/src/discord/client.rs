@@ -76,6 +76,8 @@ impl Client {
             .and_then(|voice_state| voice_state.channel_id)
             .ok_or(ClientError::UserNotFound)?;
 
+        debug!(?channel_id, "Joining user in channel");
+
         self.join_channel(guild_id, channel_id)
             .await
             .map(|call| (channel_id, call))

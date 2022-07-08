@@ -87,4 +87,12 @@ export class ApiService {
   updateGuildSettings(guildId: string, guildSettings: Partial<GuildSettings>) {
     return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/settings`, guildSettings, { responseType: 'text' });
   }
+
+  joinCurrentChannel(guildId: string) {
+    return this.http.post(`/api/guilds/${encodeURIComponent(guildId)}/join`, {}, { responseType: 'text' });
+  }
+
+  leaveChannel(guildId: string) {
+    return this.http.post(`/api/guilds/${encodeURIComponent(guildId)}/leave`, {}, { responseType: 'text' });
+  }
 }

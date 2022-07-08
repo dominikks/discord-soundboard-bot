@@ -83,8 +83,8 @@ export class SoundsService implements OnDestroy {
       .subscribe(sounds => this._sounds$.next(sounds));
   }
 
-  playSound(sound: Sound, guild: Guild | string) {
-    return this.http.post(sound.getPlayUrl(guild), {});
+  playSound(sound: Sound, guild: Guild | string, autojoin: boolean) {
+    return this.http.post(sound.getPlayUrl(guild), {}, { params: { autojoin } });
   }
 
   stopSound(guild: Guild | string) {

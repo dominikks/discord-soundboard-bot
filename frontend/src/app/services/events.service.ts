@@ -3,7 +3,13 @@ import { Observable } from 'rxjs';
 
 type BaseEventData = { guildId: string; userName: string; userAvatarUrl: string; timestamp: number };
 
-export type Event = ({ type: 'PlaybackStarted'; soundName: string } | { type: 'PlaybackStopped' } | { type: 'RecordingSaved' }) &
+export type Event = (
+  | { type: 'PlaybackStarted'; soundName: string }
+  | { type: 'PlaybackStopped' }
+  | { type: 'RecordingSaved' }
+  | { type: 'JoinedChannel'; channelName: string }
+  | { type: 'LeftChannel' }
+) &
   BaseEventData;
 
 @Injectable({

@@ -11,6 +11,7 @@ export interface SoundboardSettings {
   guildId$: BehaviorSubject<string>;
   soundCategories$: BehaviorSubject<string[]>;
   debug$: BehaviorSubject<boolean>;
+  autoJoin$: BehaviorSubject<boolean>;
 }
 
 const STORAGE_KEY = 'soundboard-settings';
@@ -27,6 +28,7 @@ export class SettingsService implements OnDestroy {
     localVolume$: new BehaviorSubject(100),
     soundCategories$: new BehaviorSubject([]),
     debug$: new BehaviorSubject(false),
+    autoJoin$: new BehaviorSubject(true),
   };
 
   get settings() {

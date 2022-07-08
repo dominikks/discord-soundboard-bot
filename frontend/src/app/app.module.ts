@@ -53,6 +53,7 @@ import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { EventLogDialogComponent } from './soundboard/event-log-dialog/event-log-dialog.component';
 import { ScrollIntoViewDirective } from './common/scroll-into-view.directive';
+import { EventDescriptionPipe } from './event-description.pipe';
 
 @NgModule({
   declarations: [
@@ -78,6 +79,7 @@ import { ScrollIntoViewDirective } from './common/scroll-into-view.directive';
     GuildNamePipe,
     EventLogDialogComponent,
     ScrollIntoViewDirective,
+    EventDescriptionPipe,
   ],
   imports: [
     // Angular
