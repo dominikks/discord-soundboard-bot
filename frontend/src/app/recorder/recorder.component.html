@@ -1,4 +1,4 @@
-<app-header pageTitle="Sound Recorder"></app-header>
+<app-header pageTitle="Recorder"></app-header>
 
 <ng-container *ngIf="{ user: user$ | async, recordings: shownRecordings$ | async } as data">
   <ng-container *ngIf="data.user && data.recordings; else loading">

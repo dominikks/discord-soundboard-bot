@@ -21,12 +21,15 @@
 
     <mat-menu #userMenu="matMenu">
       <a mat-menu-item routerLink="/settings"><mat-icon>settings</mat-icon> Settings</a>
+      <a mat-menu-item routerLink="/keybind-generator"><mat-icon>keyboard</mat-icon> Keybinds</a>
+      <mat-divider></mat-divider>
       <a
         mat-menu-item
         [href]="'https://discordapp.com/oauth2/authorize?client_id=' + appInfo.discordClientId + '&scope=bot&permissions=3147776'"
         target="_blank"
         ><mat-icon>add</mat-icon> Add Bot to Server</a
       >
+      <mat-divider></mat-divider>
       <button mat-menu-item (click)="logout()"><mat-icon>exit_to_app</mat-icon> Logout</button>
     </mat-menu>
   </mat-toolbar-row>
@@ -40,6 +43,5 @@
     <mat-icon>speaker</mat-icon>
     Soundboard
   </a>
-  <a mat-button routerLink="/keybind-generator" routerLinkActive="active"><mat-icon>keyboard</mat-icon> Keybind Generator</a>
-  <a mat-button routerLink="/recorder" routerLinkActive="active"><mat-icon>voicemail</mat-icon> Sound Recorder</a>
+  <a mat-button routerLink="/recorder" routerLinkActive="active"><mat-icon>voicemail</mat-icon> Recorder</a>
 </ng-template>

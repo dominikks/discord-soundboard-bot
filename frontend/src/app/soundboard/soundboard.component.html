@@ -61,9 +61,9 @@
 
     <mat-toolbar *ngIf="(settings.soundTarget$ | async) === 'discord'" class="discord-toolbar">
       <div class="toolbar-content-wrapper">
-        <button mat-stroked-button (click)="openEventLog()" matTooltip="Latest soundboard activity on the selected Discord server"
-          ><mat-icon>history</mat-icon></button
-        >
+        <button mat-icon-button (click)="openEventLog()" matTooltip="Latest soundboard activity on the selected Discord server">
+          <mat-icon>history</mat-icon>
+        </button>
         <div class="event-text">
           <ng-container *ngIf="events$ | async as event; else noEvents">
             {{ event.timestamp * 1000 | date: 'mediumTime' }}: {{ event.userName }} {{ event | eventDescription }}
@@ -73,10 +73,10 @@
 
         <div class="filler"></div>
 
-        <button mat-button matTooltip="Join discord channel I am connected to" matTooltipShowDelay="500" (click)="joinChannel$.next()">
+        <button mat-icon-button matTooltip="Join discord channel I am connected to" matTooltipShowDelay="500" (click)="joinChannel$.next()">
           <mat-icon>login</mat-icon>
         </button>
-        <button mat-button matTooltip="Leave discord channel" matTooltipShowDelay="500" (click)="leaveChannel$.next()">
+        <button mat-icon-button matTooltip="Leave discord channel" matTooltipShowDelay="500" (click)="leaveChannel$.next()">
           <mat-icon>logout</mat-icon>
         </button>
       </div>

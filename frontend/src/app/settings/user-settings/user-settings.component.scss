@@ -6,6 +6,11 @@
   padding: 15px;
 }
 
+:host ::ng-deep .mat-checkbox-layout {
+  white-space: normal;
+}
+
 mat-checkbox {
   display: block;
+  margin-bottom: 8px;
 }

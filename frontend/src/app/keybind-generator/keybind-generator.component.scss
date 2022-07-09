@@ -40,8 +40,9 @@ mat-toolbar {
   }
 }
 
-mat-table {
+.table-wrapper {
   margin-bottom: 16px;
+  overflow-x: auto;
 }
 
 app-searchable-sound-select,
@@ -68,8 +69,8 @@ mat-select {
   flex: 0 0 200px;
 }
 
-.mat-column-sound {
-  flex: 1;
+.mat-column-command {
+  flex: 1 0 100px;
 }
 
 .mat-column-actions {

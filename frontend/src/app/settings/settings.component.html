@@ -7,7 +7,7 @@
       [opened]="!mobileQuery.matches"
       [disableClose]="!mobileQuery.matches"
       [fixedInViewport]="mobileQuery.matches"
-      [fixedTopGap]="toolbarBreakpointQuery.matches ? 56 : 64"
+      [fixedTopGap]="toolbarBreakpointQuery.matches ? 92 : 100"
     >
       <mat-nav-list class="sidenav-list">
         <mat-list-item routerLink="/settings/user" routerLinkActive="active-nav-link" *ngIf="user$ | async as user">

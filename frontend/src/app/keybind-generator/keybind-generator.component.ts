@@ -58,7 +58,7 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
         // We ensure the same instances are used.
         keybinds = keybinds.slice();
         for (const keybind of keybinds) {
-          const sound = sounds.find(s => typeof keybind.command === 'object' && s.id === keybind.command.id);
+          const sound = sounds.find(s => keybind.command && typeof keybind.command === 'object' && s.id === keybind.command.id);
           if (sound != null) {
             keybind.command = sound;
           }

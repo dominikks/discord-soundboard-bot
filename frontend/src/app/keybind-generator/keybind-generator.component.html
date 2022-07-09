@@ -8,81 +8,73 @@
   </div>
 </mat-toolbar>
 
-<div class="max-width">
-  <ng-container *ngIf="keybinds$ | async as keybinds; else loading">
-    <main>
-      <p
-        >This tool generates a script that can be used with <a href="https://www.autohotkey.com/" target="_blank">AutoHotkey</a> to
-        automatically play sounds when a key combination on your computer is pressed.</p
-      >
-      <p
-        >The generated script contains a personal auth token for your account. Do not share it with others. It expires after a week, at
-        which point you will have to redownload the AutoHotkey script.</p
-      >
-      <mat-table
-        [dataSource]="keybinds"
-        cdkDropList
-        [cdkDropListData]="keybinds"
-        (cdkDropListDropped)="onDrop($event)"
-        class="mat-elevation-z8"
-      >
-        <ng-container matColumnDef="dragDrop">
-          <mat-header-cell *matHeaderCellDef></mat-header-cell>
-          <mat-cell *matCellDef="let element"><mat-icon class="drag-handle" cdkDragHandle>drag_handle</mat-icon></mat-cell>
-        </ng-container>
+<div class="max-width" *ngIf="keybinds$ | async as keybinds; else loading">
+  <p
+    >This tool generates a script that can be used with <a href="https://www.autohotkey.com/" target="_blank">AutoHotkey</a> to
+    automatically play sounds when a key combination on your computer is pressed.</p
+  >
+  <p
+    >The generated script contains a personal auth token for your account. Do not share it with others. It expires after a week, at which
+    point you will have to redownload the AutoHotkey script.</p
+  >
+  <div class="table-wrapper mat-elevation-z8" *ngIf="user$ | async as user">
+    <mat-table [dataSource]="keybinds" cdkDropList [cdkDropListData]="keybinds" (cdkDropListDropped)="onDrop($event)">
+      <ng-container matColumnDef="dragDrop">
+        <mat-header-cell *matHeaderCellDef></mat-header-cell>
+        <mat-cell *matCellDef="let element"><mat-icon class="drag-handle" cdkDragHandle>drag_handle</mat-icon></mat-cell>
+      </ng-container>
 
-        <ng-container matColumnDef="keyCombination">
-          <mat-header-cell *matHeaderCellDef>Key combination</mat-header-cell>
-          <mat-cell *matCellDef="let element"
-            ><app-keycombination-input
-              [keycombination]="element.keyCombination"
-              (keycombinationChange)="saveKeybinds$.next()"
-            ></app-keycombination-input
-          ></mat-cell>
-        </ng-container>
+      <ng-container matColumnDef="keyCombination">
+        <mat-header-cell *matHeaderCellDef>Key combination</mat-header-cell>
+        <mat-cell *matCellDef="let element"
+          ><app-keycombination-input
+            [keycombination]="element.keyCombination"
+            (keycombinationChange)="saveKeybinds$.next()"
+          ></app-keycombination-input
+        ></mat-cell>
+      </ng-container>
 
-        <ng-container matColumnDef="discordServer">
-          <mat-header-cell *matHeaderCellDef>Play on Server</mat-header-cell>
-          <mat-cell *matCellDef="let element">
-            <mat-select [(ngModel)]="element.guildId" (ngModelChange)="saveKeybinds$.next()">
-              <mat-option *ngFor="let guild of (user$ | async).guilds" [value]="guild.id">{{ guild.name || guild.id }}</mat-option>
-            </mat-select>
-          </mat-cell>
-        </ng-container>
+      <ng-container matColumnDef="discordServer">
+        <mat-header-cell *matHeaderCellDef>Play on Server</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <mat-select [(ngModel)]="element.guildId" (ngModelChange)="saveKeybinds$.next()">
+            <mat-option *ngFor="let guild of user.guilds" [value]="guild.id">{{ guild.name || guild.id }}</mat-option>
+          </mat-select>
+        </mat-cell>
+      </ng-container>
 
-        <ng-container matColumnDef="command">
-          <mat-header-cell *matHeaderCellDef>Command</mat-header-cell>
-          <mat-cell *matCellDef="let element">
-            <app-searchable-sound-select
-              [sounds]="sounds$ | async"
-              [(selectedCommand)]="element.command"
-              (selectedCommandChange)="saveKeybinds$.next()"
-            ></app-searchable-sound-select>
-          </mat-cell>
-        </ng-container>
+      <ng-container matColumnDef="command">
+        <mat-header-cell *matHeaderCellDef>Command</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <app-searchable-sound-select
+            [sounds]="sounds$ | async"
+            [(selectedCommand)]="element.command"
+            (selectedCommandChange)="saveKeybinds$.next()"
+          ></app-searchable-sound-select>
+        </mat-cell>
+      </ng-container>
 
-        <ng-container matColumnDef="actions">
-          <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-          <mat-cell *matCellDef="let element"
-            ><button mat-icon-button (click)="deleteKeybind$.next(element)"><mat-icon>delete</mat-icon></button></mat-cell
-          >
-        </ng-container>
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let element"
+          ><button mat-icon-button (click)="deleteKeybind$.next(element)"><mat-icon>delete</mat-icon></button></mat-cell
+        >
+      </ng-container>
 
-        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-        <mat-row *matRowDef="let row; columns: displayedColumns" cdkDrag cdkDragLockAxis="y" [cdkDragData]="row"></mat-row>
-      </mat-table>
-    </main>
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns" cdkDrag cdkDragLockAxis="y" [cdkDragData]="row"></mat-row>
+    </mat-table>
+  </div>
 
-    <div class="button-row">
-      <button mat-raised-button (click)="addKeybind$.next()"><mat-icon>add</mat-icon> Add keybind</button>
-      <button mat-raised-button color="primary" (click)="generateAutohotkey$.next()" class="mat-elevation-z4"
-        ><mat-icon>get_app</mat-icon> Generate AutoHotkey script</button
-      >
-    </div>
-  </ng-container>
-
-  <app-footer></app-footer>
+  <div class="button-row">
+    <button mat-raised-button (click)="addKeybind$.next()"><mat-icon>add</mat-icon> Add keybind</button>
+    <button mat-raised-button color="primary" (click)="generateAutohotkey$.next()" class="mat-elevation-z4"
+      ><mat-icon>get_app</mat-icon> Generate AutoHotkey script</button
+    >
+  </div>
 </div>
+
+<app-footer></app-footer>
 
 <ng-template #loading>
   <div class="loading-wrapper">
