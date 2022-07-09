@@ -8,8 +8,6 @@ use crate::BUILD_TIMESTAMP;
 use crate::VERSION;
 use rocket::error::Error as RocketError;
 use rocket::fairing::AdHoc;
-use rocket::fs::relative;
-use rocket::fs::FileServer;
 use rocket::serde::json::Json;
 use rocket::Ignite;
 use rocket::Rocket;
@@ -19,6 +17,8 @@ use serde_with::serde_as;
 use serde_with::skip_serializing_none;
 use serde_with::DisplayFromStr;
 use std::env::var;
+use std::path::Path;
+use std::path::PathBuf;
 use utils::CachedFile;
 
 mod auth;
@@ -50,8 +50,7 @@ pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>
             "Database Migrations",
             db::run_db_migrations,
         ))
-        .mount("/", routes![info])
-        .mount("/", FileServer::from(relative!("static")).rank(100))
+        .mount("/", routes![frontend, info])
         .mount("/api", auth::get_routes())
         .mount("/api/guilds", commands::get_routes())
         .mount("/api/sounds", sounds::get_routes())
@@ -65,6 +64,15 @@ pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>
         .manage(EventBus::new())
         .launch()
         .await
+}
+
+#[get("/<path..>", rank = 100)]
+async fn frontend(path: PathBuf) -> Option<CachedFile> {
+    let mut file = Path::new("static").join(path);
+    if !file.is_file() {
+        file = Path::new("static").join("index.html");
+    }
+    CachedFile::open(file).await.ok()
 }
 
 #[skip_serializing_none]
