@@ -12,6 +12,12 @@ A soundboard for discord!
   - Sounds can be played via the website or auto-generated [AutoHotkey](https://www.autohotkey.com/) scripts
 - ⏹ Record the last 60 seconds of voice activity (like Shadowplay, but for Discord)
 
+## Screenshots
+
+<img src="https://i.postimg.cc/NFnqbYdj/Screenshot-2022-07-09-at-11-09-18-Soundboard.png" width="600" />
+
+<img src="https://i.postimg.cc/qBDTpXpH/Screenshot-2022-07-09-at-11-05-50-Soundboard.png" width="400" /> <img src="https://i.postimg.cc/hPJqvzGz/Screenshot-2022-07-09-at-11-06-55-Soundboard.png" width="400" />
+
 ## Installation
 
 The app is deployed via Docker.
@@ -72,7 +78,6 @@ The secret key should be randomly generated, for example with `openssl rand -bas
 It is used to encrypt cookies stored on the client.
 You can set the database password yourself.
 For details on the other values, see the table below.
-By default, the app runs with UID 1000, so make sure that if you mount folders, they are owned by a user with that UID (e.g. `chown 1000 ./sounds && chown 1000 ./recordings`).
 
 Run the app via `docker-compose up -d`.
 Stop via `docker-compose down`.
@@ -98,6 +103,8 @@ The website should now be up, so that you can add the bot to your Discord server
 | -------------------- | ------------------------------------------------------- |
 | `/app/data/sounds`   | Sounds are saved here.                                  |
 | `/app/data/recorder` | Contains recordings made by the sound-recorder feature. |
+
+By default, the app runs with UID 1000, so make sure that if you mount folders, they are owned by a user with that UID (e.g. `chown 1000 <folder>`).
 
 ## Usage
 
