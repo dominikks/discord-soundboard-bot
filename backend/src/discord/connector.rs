@@ -22,7 +22,7 @@ impl EventHandler for Handler {
 
     #[instrument(skip(self, _ctx))]
     async fn cache_ready(&self, _ctx: Context, _guilds: Vec<GuildId>) {
-        info!("Cache is ready");
+        debug!("Cache is ready");
     }
 }
 
