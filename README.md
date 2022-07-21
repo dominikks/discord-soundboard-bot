@@ -43,7 +43,7 @@ To deploy, you need to create an application in the [Discord Developer Portal](h
 To run the app, create a docker-compose file:
 
 ```
-version: "3.8"
+version: "3"
 services:
   soundboard:
     image: ghcr.io/dominikks/discord-soundboard-bot
@@ -93,7 +93,6 @@ The website should now be up, so that you can add the bot to your Discord server
 | DISCORD_CLIENT_SECRET | **Required.** Can be obtained in the Discord developer portal. Should be kept private.                                                                                       | `ABCDE...dg`                   |
 | BASE_URL              | **Required.** The URL under which the app is reachable. Must not end with a slash.                                                                                           | `https://soundboard.domain`    |
 | ROCKET_SECRET_KEY     | **Required.** A random key with which private cookies are encrypted that are placed on the client. Can be generated with `openssl rand -base64 32`.                          | `hdjskfhs...dfkij=`            |
-| APP_TITLE             | Set a custom app title for the webapp. Is displayed before the page title. Defaults to the empty string.                                                                     | `My Soundboard`                |
 | RECORDING_LENGTH      | The length in seconds for a recording using the built-in discord recorder. Defaults to 60.                                                                                   | `30`                           |
 | RUST_LOG              | Configure logging for the application. Defaults to `info`. For more details, see [here](https://docs.rs/tracing-subscriber/0.2.15/tracing_subscriber/struct.EnvFilter.html). | `discord_soundboard_bot=debug` |
 

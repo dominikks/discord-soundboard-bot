@@ -1,7 +1,7 @@
 <mat-toolbar *ngIf="apiService.appInfo$ | async as appInfo" color="primary">
   <mat-toolbar-row>
     <button *ngIf="showSidenavToggle" mat-icon-button (click)="toggleSidenav.emit()"><mat-icon>menu</mat-icon></button>
-    <a class="app-title" routerLink="/">📢 {{ appInfo.title }} {{ pageTitle }}</a>
+    <a class="app-title" routerLink="/">📢 {{ pageTitle }}</a>
     <div class="spacer"></div>
 
     <div class="first-row-navigation">

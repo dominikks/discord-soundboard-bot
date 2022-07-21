@@ -9,7 +9,6 @@ export interface AppInfo {
   version: string;
   buildId?: string;
   buildTimestamp?: number;
-  title?: string;
   discordClientId: string;
 }
 
@@ -51,14 +50,7 @@ export interface GuildData extends GuildSettings {
   providedIn: 'root',
 })
 export class ApiService {
-  appInfo$ = this.http.get<AppInfo>('/api/info').pipe(
-    retry(5),
-    this.errorService.showError('Failed to fetch Server info'),
-    tap(info => {
-      info.title = info.title ?? '';
-    }),
-    shareReplay()
-  );
+  appInfo$ = this.http.get<AppInfo>('/api/info').pipe(retry(5), this.errorService.showError('Failed to fetch Server info'), shareReplay());
   user$ = this.http.get<User>('/api/user').pipe(retry(5), this.errorService.showError('Failed to fetch user data'), shareReplay());
 
   private loadRandomInfixes$ = new BehaviorSubject<void>(null);

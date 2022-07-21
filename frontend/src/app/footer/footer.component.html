@@ -1,13 +1,12 @@
 <footer *ngIf="apiService.appInfo$ | async as info">
-  discord-soundboard-bot {{ info.version }}
-  <ng-container *ngIf="info.buildId">
-    &mdash;
-    {{ info.buildId }}
-  </ng-container>
-  <ng-container *ngIf="info.buildTimestamp">
-    &mdash;
-    {{ info.buildTimestamp * 1000 | date: 'medium' }}
-  </ng-container>
+  <span
+    matTooltip="Build id: {{ info.buildId }} &mdash; Build date: {{ info.buildTimestamp * 1000 | date: 'medium' }}"
+    [matTooltipDisabled]="!info.buildId || !info.buildTimestamp"
+  >
+    discord-soundboard-bot {{ info.version }}
+  </span>
+  &mdash;
+  <a href="3rdpartylicenses.txt" target="_blank" rel="noopener">Licenses</a>
   &mdash;
   <a href="https://github.com/dominikks/discord-soundboard-bot" target="_blank" rel="noopener">GitHub</a>
 </footer>
