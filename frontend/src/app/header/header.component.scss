@@ -2,6 +2,8 @@
 
 :host {
   @include mat.elevation(8);
+  // make sure the shadow is rendered
+  z-index: 2;
 }
 
 .app-title {
