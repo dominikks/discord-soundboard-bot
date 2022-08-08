@@ -10,6 +10,7 @@ export interface AppInfo {
   buildId?: string;
   buildTimestamp?: number;
   discordClientId: string;
+  legalUrl?: string;
 }
 
 export type UserRole = 'admin' | 'moderator' | 'user';

@@ -36,6 +36,8 @@ mod utils;
 struct Snowflake(#[serde_as(as = "DisplayFromStr")] pub u64);
 
 lazy_static! {
+  // Settings for frontend
+  static ref LEGAL_URL: Option<String> = var("LEGAL_URL").ok();
   // Discord data found in env
   static ref DISCORD_CLIENT_ID: String = var("DISCORD_CLIENT_ID").expect("Expected DISCORD_CLIENT_ID as env");
   static ref DISCORD_CLIENT_SECRET: String = var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env");
@@ -81,6 +83,7 @@ struct InfoResponse {
     build_id: Option<String>,
     build_timestamp: Option<u64>,
     discord_client_id: String,
+    legal_url: Option<String>,
 }
 
 #[get("/api/info")]
@@ -90,5 +93,6 @@ async fn info() -> Json<InfoResponse> {
         build_id: BUILD_ID.map(|s| s.to_string()),
         build_timestamp: BUILD_TIMESTAMP.and_then(|s| s.parse::<u64>().ok()),
         discord_client_id: DISCORD_CLIENT_ID.clone(),
+        legal_url: LEGAL_URL.clone(),
     })
 }
