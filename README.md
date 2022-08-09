@@ -5,6 +5,7 @@
 # discord-soundboard-bot
 
 A soundboard for discord!
+Try it out at [floomer.app](https://floomer.app).
 
 ## Features
 
@@ -18,7 +19,19 @@ A soundboard for discord!
 
 <img src="https://i.postimg.cc/qBDTpXpH/Screenshot-2022-07-09-at-11-05-50-Soundboard.png" width="400" /> <img src="https://i.postimg.cc/hPJqvzGz/Screenshot-2022-07-09-at-11-06-55-Soundboard.png" width="400" />
 
-## Installation
+## Usage
+
+You can control the bot via the web page.
+Also, the following chat commands are available.
+
+- `~join`: The bot joins the voice channel you are currently in.
+- `~leave`
+- `~stop`: Stops playback.
+- `~info`: Prints information about the app (version, link to webpage, ...).
+- `~record`: Records the last 60 seconds of voice activity and saves them in the recordings folder.
+- `~guildid`: Prints the id of your discord server.
+
+## Self-hosting
 
 The app is deployed via Docker.
 The Docker container can be configured using environment variables.
@@ -105,18 +118,6 @@ The website should now be up, so that you can add the bot to your Discord server
 | `/app/data/recorder` | Contains recordings made by the sound-recorder feature. |
 
 By default, the app runs with UID 1000, so make sure that if you mount folders, they are owned by a user with that UID (e.g. `chown 1000 <folder>`).
-
-## Usage
-
-You can control the bot via the exposed web page.
-Also, the following chat commands are available.
-
-- `~join`: The bot joins the voice channel you are currently in.
-- `~leave`
-- `~stop`: Stops playback.
-- `~info`: Prints information about the app (version, link to webpage, ...).
-- `~record`: Records the last 60 seconds of voice activity and saves them in the recordings folder.
-- `~guildid`: Prints the id of your discord server.
 
 ## Development
 
