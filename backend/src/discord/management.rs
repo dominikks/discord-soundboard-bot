@@ -73,7 +73,6 @@ pub async fn check_guild_admin(
 
     member
         .permissions(cache_http)
-        .await
         .ok()
         .and_then(|perms| {
             if perms.administrator() {
@@ -98,7 +97,6 @@ pub async fn get_permission_level(
 
     if member
         .permissions(cache_http)
-        .await
         .map(|perms| perms.administrator())
         .unwrap_or(false)
     {
@@ -157,9 +155,9 @@ pub async fn get_guilds_for_user(
     user_id: UserId,
 ) -> Result<Vec<(Guild, UserPermission)>, serenity::Error> {
     let mut response = vec![];
-    for guild_id in cache_http.cache.guilds().await {
+    for guild_id in cache_http.cache.guilds() {
         if let Ok(perm) = get_permission_level(cache_http, db, user_id, guild_id).await {
-            if let Some(guild) = guild_id.to_guild_cached(&cache_http.cache).await {
+            if let Some(guild) = guild_id.to_guild_cached(&cache_http.cache) {
                 response.push((guild, perm.permission));
             }
         }

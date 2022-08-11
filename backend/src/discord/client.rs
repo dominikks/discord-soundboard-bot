@@ -67,7 +67,6 @@ impl Client {
     ) -> Result<(ChannelId, Arc<Mutex<songbird::Call>>), ClientError> {
         let guild = guild_id
             .to_guild_cached(cache_and_http)
-            .await
             .ok_or(ClientError::GuildNotFound)?;
 
         let channel_id = guild
@@ -153,7 +152,7 @@ pub trait ClientInit {
     fn register_client(self, client: &Client) -> Self;
 }
 
-impl ClientInit for ClientBuilder<'_> {
+impl ClientInit for ClientBuilder {
     fn register_client(self, client: &Client) -> Self {
         self.type_map_insert::<ClientKey>(client.clone())
             .register_songbird_with(client.songbird.clone())

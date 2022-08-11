@@ -3,10 +3,10 @@ use crate::discord::client::ClientInit;
 use crate::discord::commands;
 use crate::CacheHttp;
 use serenity::async_trait;
-use serenity::client::bridge::gateway::GatewayIntents;
 use serenity::client::Client as SerenityClient;
 use serenity::client::Context;
 use serenity::client::EventHandler;
+use serenity::model::gateway::GatewayIntents;
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use std::env;
@@ -40,15 +40,15 @@ impl Connector {
         let framework = commands::create_framework();
         let client = Client::new();
 
-        let serenity_client = SerenityClient::builder(&token)
+        // Those intents also update the Serenity cache
+        let intents = GatewayIntents::GUILDS
+            | GatewayIntents::GUILD_MEMBERS
+            | GatewayIntents::GUILD_VOICE_STATES
+            | GatewayIntents::GUILD_MESSAGES
+            | GatewayIntents::MESSAGE_CONTENT;
+
+        let serenity_client = SerenityClient::builder(&token, intents)
             .event_handler(Handler)
-            .intents(
-                // Those intents also update the Serenity cache
-                GatewayIntents::GUILDS
-                    | GatewayIntents::GUILD_MEMBERS
-                    | GatewayIntents::GUILD_VOICE_STATES
-                    | GatewayIntents::GUILD_MESSAGES,
-            )
             .framework(framework)
             .register_client(&client)
             .await
