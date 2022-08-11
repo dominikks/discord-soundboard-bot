@@ -3,6 +3,11 @@
 FROM clux/muslrust:stable as builder
 WORKDIR /app
 
+# Install CMAKE for audiopus_sys
+RUN apt-get update && \
+  apt-get install -y cmake --no-install-recommends && \
+  rm -rf /var/lib/apt/lists/*
+
 # Statically link libopus
 ARG LIBOPUS_STATIC=1
 
