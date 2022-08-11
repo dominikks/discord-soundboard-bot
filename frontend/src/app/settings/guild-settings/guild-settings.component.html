@@ -1,8 +1,8 @@
 <ng-container *ngIf="{ guild: guild$ | async, guildSettings: guildSettings$ | async, randomInfixes: randomInfixes$ | async } as data">
   <ng-container *ngIf="data.guild && data.guildSettings && data.randomInfixes; else loading">
     <mat-toolbar
-      ><div
-        >Settings for <span class="guild-name">{{ data.guild.name }}</span></div
+      ><div class="title"
+        >Settings for <span class="guild-name" [matTooltip]="data.guild.name" [matTooltipShowDelay]="500">{{ data.guild.name }}</span></div
       ></mat-toolbar
     >
 

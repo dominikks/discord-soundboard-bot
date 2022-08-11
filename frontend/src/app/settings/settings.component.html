@@ -20,7 +20,7 @@
             <img *ngIf="guild.iconUrl; else discordIcon" mat-list-icon [src]="guild.iconUrl" />
             <div mat-line>{{ guild.name }}</div>
             <div mat-line>{{ guild.role === 'admin' ? 'Admin' : 'Moderator' }}</div>
-            <mat-icon>expand_more</mat-icon>
+            <mat-icon class="expand-icon">expand_more</mat-icon>
 
             <ng-template #discordIcon>
               <svg mat-list-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 245 240">

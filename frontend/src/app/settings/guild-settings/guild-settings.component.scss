@@ -14,8 +14,17 @@
   padding: 16px;
 }
 
-.guild-name {
-  font-style: italic;
+.title {
+  // Needed for italic text to not be cut off
+  padding: 0 4px;
+  margin: 0 -4px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .guild-name {
+    font-style: italic;
+  }
 }
 
 .section-title {

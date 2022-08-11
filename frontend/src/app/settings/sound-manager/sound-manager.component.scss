@@ -15,15 +15,26 @@
 mat-toolbar {
   height: auto;
   min-height: 64px;
-  flex-wrap: wrap;
   margin-bottom: 16px;
+
+  flex-wrap: wrap;
+  column-gap: 16px;
 
   @media screen and (max-width: 599px) {
     min-height: 56px;
   }
 
   .title {
-    margin: 8px 16px 8px 0;
+    // Padding and margin are used to make italic text not be cut off
+    padding: 8px 4px;
+    margin: 0 -4px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    .guild-name {
+      font-style: italic;
+    }
   }
 
   .processing-spinner {
@@ -51,10 +62,6 @@ mat-toolbar {
   .invisible {
     visibility: hidden;
   }
-}
-
-.guild-name {
-  font-style: italic;
 }
 
 .sound-list {

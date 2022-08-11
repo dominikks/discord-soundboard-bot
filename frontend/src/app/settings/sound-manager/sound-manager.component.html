@@ -2,7 +2,14 @@
   <ng-container *ngIf="data.guildId && data.sounds; else loading">
     <mat-toolbar>
       <div class="title"
-        >Sounds on <span class="guild-name">{{ data.guildId | guildName | async }}</span></div
+        >Sounds on
+        <span
+          *ngIf="data.guildId | guildName | async as guildName"
+          class="guild-name"
+          [matTooltip]="guildName"
+          [matTooltipShowDelay]="500"
+          >{{ guildName }}</span
+        ></div
       >
       <mat-spinner
         *ngIf="(isUploading$ | async) || (isProcessing$ | async)"
