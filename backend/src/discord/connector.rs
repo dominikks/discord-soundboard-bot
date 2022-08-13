@@ -6,6 +6,7 @@ use serenity::async_trait;
 use serenity::client::Client as SerenityClient;
 use serenity::client::Context;
 use serenity::client::EventHandler;
+use serenity::http::Http;
 use serenity::model::gateway::GatewayIntents;
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
@@ -37,15 +38,22 @@ impl Connector {
     pub async fn new() -> Self {
         let token = env::var("DISCORD_TOKEN").expect("Expected DISCORD_TOKEN in env");
 
-        let framework = commands::create_framework();
+        // Get the Bot ID
+        let http = Http::new(&token);
+        let bot_id = http
+            .get_current_user()
+            .await
+            .map(|user| user.id)
+            .expect("Failed to access bot id");
+
+        let framework = commands::create_framework(bot_id);
         let client = Client::new();
 
         // Those intents also update the Serenity cache
         let intents = GatewayIntents::GUILDS
             | GatewayIntents::GUILD_MEMBERS
             | GatewayIntents::GUILD_VOICE_STATES
-            | GatewayIntents::GUILD_MESSAGES
-            | GatewayIntents::MESSAGE_CONTENT;
+            | GatewayIntents::GUILD_MESSAGES;
 
         let serenity_client = SerenityClient::builder(&token, intents)
             .event_handler(Handler)

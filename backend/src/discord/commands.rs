@@ -11,15 +11,16 @@ use serenity::framework::standard::CommandResult;
 use serenity::framework::StandardFramework;
 use serenity::model::channel::Message;
 use serenity::model::prelude::ReactionType;
+use serenity::model::prelude::UserId;
 use serenity::prelude::*;
 use serenity::Result as SerenityResult;
 use std::convert::TryFrom;
 use std::fmt::Write;
 
 /// Creates the framework used by the discord client
-pub fn create_framework() -> StandardFramework {
+pub fn create_framework(bot_id: UserId) -> StandardFramework {
     StandardFramework::new()
-        .configure(|c| c.prefix("~"))
+        .configure(|c| c.on_mention(Some(bot_id)).prefix("~"))
         .group(&GENERAL_GROUP)
 }
 

@@ -31,6 +31,8 @@ Also, the following chat commands are available.
 - `~record`: Records the last 60 seconds of voice activity and saves them in the recordings folder.
 - `~guildid`: Prints the id of your discord server.
 
+To issue a command, you must mention the bot in the message (e.g. `~join @my_bot_name`).
+
 ## Self-hosting
 
 The app is deployed via Docker.
@@ -49,7 +51,7 @@ To deploy, you need to create an application in the [Discord Developer Portal](h
    Here, you can also set the username and profile picture of your bot.
 2. Save the Client ID and Client Secret from the "General Information" tab for later.
 3. Go to OAuth2 and add a URL of the following form: `https://soundboard.domain/api/auth/login` where `soundboard.domain` is the hostname under which your server should run.
-4. Go to Bot, create a Bot and save the Bot token. Also check the boxes "Server Members Intent" and "Message Content Intent" under "Privileged Gateway Intents".
+4. Go to Bot, create a Bot and save the Bot token. Also check the box "Server Members Intent" under "Privileged Gateway Intents". This is required to validate user permissions.
 
 ### Deploying
 
