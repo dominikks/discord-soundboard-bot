@@ -123,8 +123,10 @@ By default, the app runs with UID 1000, so make sure that if you mount folders, 
 
 ## Development
 
-You need to have the latest Rust nightly toolchain, Node, Docker and Docker Compose installed.
-I recommend to create a `.env` file in the main project folder:
+You need to have the latest Rust toolchain, Node, Docker and Docker Compose installed.
+Furthermore, `ffmpeg`, `libpq-dev`, `cmake`, `pkg-config` and `libssl-dev` need to be installed.
+
+Then, create a `.env` file in the main project folder:
 
 ```
 cat > .env <<'EOF'
@@ -133,15 +135,15 @@ DISCORD_CLIENT_ID=<clientid>
 DISCORD_CLIENT_SECRET=<clientsecret>
 BASE_URL=http://localhost:4200
 RUST_LOG=discord_soundboard_bot=TRACE
-POSTGRES_PASSWORD=<randompassword>
-ROCKET_DATABASES={postgres_database={url=postgres://postgres:$POSTGRES_PASSWORD@localhost/postgres}}
+POSTGRES_PASSWORD=<postgrespassword>
+ROCKET_DATABASES={postgres_database={url=postgres://postgres:<postgrespassword>@localhost/postgres}}
 EOF
 ```
 
-There, you have to set the env variables `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` and `BASE_URL` as above.
-Then, you can start the service locally as follows:
+Set the env variables `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` and `BASE_URL` as described under [Configuration](#configuration).
+Finally, you can start the service locally as follows:
 
-- Start the dev sandbox using `docker-compose up -d`.
+- Start the dev sandbox using `docker compose up -d`.
 - Start the backend using `cargo run` in `backend/`.
 - Start the frontend using `npm start` in `frontend/`. The proxy will pass api requests data to the backend (see `proxy.config.js`).
 - Access the frontend server under [http://localhost:4200](http://localhost:4200).
