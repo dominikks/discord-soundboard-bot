@@ -78,7 +78,7 @@ mat-toolbar {
 }
 
 // Fix mat-expansion-panel styling with components in between
-::ng-deep .sound-list app-sound-details {
+:host ::ng-deep .sound-list app-sound-details {
   &:not(:first-of-type) .mat-expansion-panel:not(.mat-expanded) {
     border-top-right-radius: 0 !important;
     border-top-left-radius: 0 !important;
@@ -89,6 +89,6 @@ mat-toolbar {
   }
 }
 
-::ng-deep .cdk-virtual-scroll-content-wrapper {
+:host ::ng-deep .cdk-virtual-scroll-content-wrapper {
   max-width: 100%;
 }

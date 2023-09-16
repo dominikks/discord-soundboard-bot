@@ -15,7 +15,7 @@
           view and play sounds as well as create, view and delete recordings on your server.</p
         >
         <div class="setting-input-wrapper">
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>User role</mat-label>
             <mat-select [ngModel]="data.guildSettings.userRoleId" (ngModelChange)="setUserRoleId($event, data.guild.id)">
               <mat-option [value]="null">-- Disable users --</mat-option>
@@ -31,7 +31,7 @@
           buttons and sounds within your server.</p
         >
         <div class="setting-input-wrapper">
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Moderator role</mat-label>
             <mat-select [ngModel]="data.guildSettings.moderatorRoleId" (ngModelChange)="setModeratorRoleId($event, data.guild.id)">
               <mat-option [value]="null">-- Disable moderators --</mat-option>
@@ -46,7 +46,7 @@
           boosted can be defined below. Those settings can also be overriden manually for each sound.</p
         >
         <div class="setting-input-wrapper">
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Target mean volume</mat-label>
             <input
               matInput
@@ -64,7 +64,7 @@
           <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: meanVolumeIsSaving$ | async }"></ng-container>
         </div>
         <div class="setting-input-wrapper">
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Target max volume</mat-label>
             <input
               matInput

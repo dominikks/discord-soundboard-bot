@@ -43,6 +43,6 @@ mat-sidenav-content {
   flex-direction: column;
 }
 
-.expand-icon {
-  min-width: 24px;
+img[matListItemIcon] {
+  border-radius: 50%;
 }

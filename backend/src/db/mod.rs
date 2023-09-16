@@ -1,5 +1,4 @@
 use diesel::PgConnection;
-use diesel_migrations::embed_migrations;
 use rocket::Build;
 use rocket::Rocket;
 use rocket_sync_db_pools::database;
@@ -10,18 +9,19 @@ pub mod schema;
 #[database("postgres_database")]
 pub struct DbConn(PgConnection);
 
-embed_migrations!();
+pub async fn run_db_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
-pub async fn run_db_migrations(rocket: Rocket<Build>) -> Result<Rocket<Build>, Rocket<Build>> {
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
     DbConn::get_one(&rocket)
         .await
-        .expect("database connection")
-        .run(|c| match embedded_migrations::run(c) {
-            Ok(()) => Ok(rocket),
-            Err(e) => {
-                error!("Failed to run database migrations: {:?}", e);
-                Err(rocket)
-            }
+        .expect("Database connection")
+        .run(|c| {
+            c.run_pending_migrations(MIGRATIONS)
+                .expect("Diesel migrations");
         })
-        .await
+        .await;
+
+    rocket
 }

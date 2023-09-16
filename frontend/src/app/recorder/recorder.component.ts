@@ -151,4 +151,8 @@ export class RecorderComponent implements OnInit, OnDestroy {
         }
       );
   }
+
+  formatTrimSlider(value: number) {
+    return `${value.toFixed(1)}s`;
+  }
 }

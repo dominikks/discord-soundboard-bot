@@ -9,25 +9,25 @@
 
   <ng-template matExpansionPanelContent>
     <div>
-      <mat-form-field appearance="outline">
+      <mat-form-field>
         <mat-label>Name</mat-label>
         <input matInput [(ngModel)]="sound.name" (ngModelChange)="soundEntry.checkChanges$.next()" maxlength="64" />
       </mat-form-field>
-      <mat-form-field appearance="outline">
+      <mat-form-field>
         <mat-label>Category</mat-label>
         <input matInput [(ngModel)]="sound.category" (ngModelChange)="soundEntry.checkChanges$.next()" maxlength="64" />
       </mat-form-field>
     </div>
 
     <div>
-      <mat-form-field appearance="outline">
+      <mat-form-field>
         <mat-label>Volume adjustment</mat-label>
         <mat-select [(ngModel)]="volumeAdjustmentMode" (ngModelChange)="soundEntry.checkChanges$.next()">
           <mat-option value="auto">Automatic</mat-option>
           <mat-option value="manual">Manual</mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="outline">
+      <mat-form-field>
         <mat-label>Adjustment value</mat-label>
         <input
           matInput
@@ -38,7 +38,7 @@
           [ngModelOptions]="{ updateOn: 'blur' }"
           [disabled]="volumeAdjustmentMode === 'auto'"
         />
-        <span matSuffix>dB</span>
+        <span matTextSuffix>dB</span>
       </mat-form-field>
     </div>
 
@@ -79,8 +79,7 @@
   <mat-action-row>
     <input class="hidden" type="file" accept=".mp3" (change)="onImportFileChange($event)" #fileImport />
     <button mat-stroked-button (click)="playClick.emit()">
-      <ng-container *ngIf="!isPlaying; else stopButton"><mat-icon>play_arrow</mat-icon> Play</ng-container>
-      <ng-template #stopButton><mat-icon>pause</mat-icon> Stop</ng-template>
+      <mat-icon>{{ isPlaying ? 'pause' : 'play_arrow' }}</mat-icon> {{ isPlaying ? 'Stop' : 'Play' }}
     </button>
     <div class="spinner-button-container">
       <button mat-stroked-button [disabled]="isBusy" (click)="!isBusy && fileImport.click()"

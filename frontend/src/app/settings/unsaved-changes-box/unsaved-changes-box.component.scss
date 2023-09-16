@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 :host {
   position: fixed;
   bottom: 0;
@@ -6,12 +8,20 @@
 
 .wrapper {
   padding: 16px;
+
+  mat-card {
+    @include mat.elevation(16);
+  }
 }
 
-.mat-card {
-  display: flex;
-  align-items: baseline;
+mat-card {
   height: 64px;
+}
+
+mat-card-content {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
 
   .flex-filler {
     flex: 1;
@@ -19,6 +29,10 @@
 
   .text-wrapper {
     margin-right: 2em;
+  }
+
+  .mat-h3 {
+    margin-bottom: 0;
   }
 }
 

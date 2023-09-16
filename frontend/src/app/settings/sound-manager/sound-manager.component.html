@@ -20,7 +20,7 @@
 
       <div class="controls-wrapper">
         <div class="control">
-          <mat-form-field appearance="outline">
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>Filter by name</mat-label>
             <input matInput [ngModel]="soundFilterString$ | async" (ngModelChange)="soundFilterString$.next($event)" />
             <button mat-icon-button matSuffix (click)="soundFilterString$.next('')" [class.invisible]="(soundFilterString$ | async) === ''"
@@ -28,25 +28,15 @@
             >
           </mat-form-field>
         </div>
-        <div class="control">
-          <mat-icon>volume_up</mat-icon>
-          <mat-slider
-            [value]="settings.localVolume$ | async"
-            (change)="settings.localVolume$.next($event.value)"
-            color="primary"
-            min="0"
-            max="100"
-            thumbLabel
-          ></mat-slider>
-          <input
-            type="file"
-            accept=".mp3"
-            [disabled]="isUploading$ | async"
-            (change)="onImportFileChange($event, data.guildId)"
-            multiple
-            #fileImport
-          />
-        </div>
+        <app-volume-slider class="control"></app-volume-slider>
+        <input
+          type="file"
+          accept=".mp3"
+          [disabled]="isUploading$ | async"
+          (change)="onImportFileChange($event, data.guildId)"
+          multiple
+          #fileImport
+        />
         <div class="control">
           <button mat-button [disabled]="isUploading$ | async" (click)="fileImport.click()" matTooltip="Upload new sound"
             ><mat-icon>add</mat-icon> Add Sounds</button

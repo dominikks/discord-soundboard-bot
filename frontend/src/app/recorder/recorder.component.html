@@ -4,23 +4,13 @@
   <ng-container *ngIf="data.user && data.recordings; else loading">
     <mat-toolbar>
       <div class="toolbar-content">
-        <mat-form-field appearance="outline">
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>Discord Server</mat-label>
           <mat-select [ngModel]="settings.guildId$ | async" (ngModelChange)="settings.guildId$.next($event)">
             <mat-option *ngFor="let guild of data.user.guilds" [value]="guild.id">{{ guild.name || guild.id }}</mat-option>
           </mat-select>
         </mat-form-field>
-        <div class="slider-container">
-          <mat-icon>volume_up</mat-icon>
-          <mat-slider
-            [value]="settings.localVolume$ | async"
-            (valueChange)="settings.localVolume$.next($event)"
-            color="primary"
-            min="0"
-            max="100"
-            thumbLabel
-          ></mat-slider>
-        </div>
+        <app-volume-slider></app-volume-slider>
         <button mat-raised-button (click)="record$.next()"><mat-icon>voicemail</mat-icon> Record last 60s</button>
         <button mat-icon-button (click)="reload()" matTooltip="Reload recordings"><mat-icon>refresh</mat-icon></button>
       </div>
@@ -58,13 +48,11 @@
                 >
               </div>
               <div>
-                Trim <span class="text-muted">(in s)</span>
-                <ngx-slider
-                  class="custom-range-slider"
-                  [options]="{ floor: 0, ceil: recording.length, step: 0.1, hideLimitLabels: true }"
-                  [(value)]="recording.start"
-                  [(highValue)]="recording.end"
-                ></ngx-slider>
+                Trim recording
+                <mat-slider min="0" [max]="recording.length" step="0.1" discrete [displayWith]="formatTrimSlider">
+                  <input [(ngModel)]="recording.start" matSliderStartThumb />
+                  <input [(ngModel)]="recording.end" matSliderEndThumb />
+                </mat-slider>
               </div>
               <mat-divider></mat-divider>
               <div class="button-row">

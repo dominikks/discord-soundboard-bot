@@ -14,7 +14,6 @@
 mat-card {
   min-width: 300px;
   padding: 0;
-  border-radius: 5px;
   overflow: hidden; // force rounded corners onto children
 }
 
@@ -34,6 +33,12 @@ mat-card {
 .login-button {
   width: 100%;
   margin-bottom: 10px;
+
+  .button-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
   svg {
     height: 2em;

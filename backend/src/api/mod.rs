@@ -46,8 +46,8 @@ lazy_static! {
 pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>, RocketError> {
     rocket::build()
         .attach(db::DbConn::fairing())
-        .attach(AdHoc::try_on_ignite(
-            "Database Migrations",
+        .attach(AdHoc::on_ignite(
+            "Database migrations",
             db::run_db_migrations,
         ))
         .mount("/", routes![frontend, info])

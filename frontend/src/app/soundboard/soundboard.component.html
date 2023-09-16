@@ -12,7 +12,7 @@
   <ng-container *ngIf="data.soundCategories && data.user && data.allSounds && data.filteredSounds && data.randomInfixes; else loading">
     <mat-toolbar class="controls-toolbar">
       <div class="toolbar-content-wrapper">
-        <mat-form-field class="search-field" appearance="outline">
+        <mat-form-field class="search-field" subscriptSizing="dynamic">
           <mat-label>Search sounds...</mat-label>
           <input
             matInput
@@ -26,13 +26,13 @@
           >
         </mat-form-field>
 
-        <mat-form-field appearance="outline" matTooltip="Which category of sounds to display" matTooltipShowDelay="500">
+        <mat-form-field matTooltip="Which category of sounds to display" matTooltipShowDelay="500" subscriptSizing="dynamic">
           <mat-label>Filter by category</mat-label>
           <mat-select [ngModel]="settings.soundCategories$ | async" (ngModelChange)="settings.soundCategories$.next($event)" multiple>
             <mat-option *ngFor="let category of data.soundCategories" [value]="category">{{ category || '-- No category --' }}</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline" matTooltip="Where to play the sounds" matTooltipShowDelay="500">
+        <mat-form-field matTooltip="Where to play the sounds" matTooltipShowDelay="500" subscriptSizing="dynamic">
           <mat-label>Playback Target</mat-label>
           <mat-select [ngModel]="target$ | async" (ngModelChange)="setTarget($event)">
             <mat-option [value]="false" selected>This device</mat-option>
@@ -44,17 +44,7 @@
           </mat-select>
         </mat-form-field>
 
-        <div *ngIf="(settings.soundTarget$ | async) === 'local'" class="volume-slider-wrapper">
-          <mat-icon>volume_up</mat-icon>
-          <mat-slider
-            [value]="settings.localVolume$ | async"
-            (change)="settings.localVolume$.next($event.value)"
-            color="primary"
-            min="0"
-            max="100"
-            thumbLabel
-          ></mat-slider>
-        </div>
+        <app-volume-slider *ngIf="(settings.soundTarget$ | async) === 'local'"></app-volume-slider>
         <button mat-button (click)="stopSound$.next()"><mat-icon>stop</mat-icon> Stop</button>
       </div>
     </mat-toolbar>

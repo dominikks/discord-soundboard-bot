@@ -9,7 +9,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import {
+  MatSnackBarModule,
+  MAT_SNACK_BAR_DEFAULT_OPTIONS,
+} from '@angular/material/snack-bar';
 import { MatRippleModule } from '@angular/material/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
@@ -27,7 +30,6 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { TimeagoModule } from 'ngx-timeago';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { WebAudioModule } from '@ng-web-apis/audio';
-import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { SoundboardButtonComponent } from './soundboard/soundboard-button/soundboard-button.component';
 import { KeybindGeneratorComponent } from './keybind-generator/keybind-generator.component';
@@ -54,6 +56,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { EventLogDialogComponent } from './soundboard/event-log-dialog/event-log-dialog.component';
 import { ScrollIntoViewDirective } from './common/scroll-into-view.directive';
 import { EventDescriptionPipe } from './event-description.pipe';
+import { VolumeSliderComponent } from './volume-slider/volume-slider.component';
 
 @NgModule({
   declarations: [
@@ -80,6 +83,7 @@ import { EventDescriptionPipe } from './event-description.pipe';
     EventLogDialogComponent,
     ScrollIntoViewDirective,
     EventDescriptionPipe,
+    VolumeSliderComponent,
   ],
   imports: [
     // Angular
@@ -114,7 +118,6 @@ import { EventDescriptionPipe } from './event-description.pipe';
     // Other Dependencies
     TimeagoModule.forRoot(),
     WebAudioModule,
-    NgxSliderModule,
     NgxMatSelectSearchModule,
   ],
   providers: [

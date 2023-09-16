@@ -1,14 +1,24 @@
 {
   "root": true,
-  "ignorePatterns": ["projects/**/*"],
+  "ignorePatterns": [
+    "projects/**/*"
+  ],
   "overrides": [
     {
-      "files": ["*.ts"],
+      "files": [
+        "*.ts"
+      ],
       "parserOptions": {
-        "project": ["tsconfig.json", "e2e/tsconfig.json"],
+        "project": [
+          "tsconfig.json",
+          "e2e/tsconfig.json"
+        ],
         "createDefaultProgram": true
       },
-      "extends": ["plugin:@angular-eslint/recommended", "plugin:@angular-eslint/template/process-inline-templates"],
+      "extends": [
+        "plugin:@angular-eslint/recommended",
+        "plugin:@angular-eslint/template/process-inline-templates"
+      ],
       "rules": {
         "@angular-eslint/component-selector": [
           "error",
@@ -33,7 +43,17 @@
             "accessibility": "explicit"
           }
         ],
-        "@typescript-eslint/member-ordering": ["error", { "default": ["signature", "field", "constructor", "method"] }],
+        "@typescript-eslint/member-ordering": [
+          "error",
+          {
+            "default": [
+              "signature",
+              "field",
+              "constructor",
+              "method"
+            ]
+          }
+        ],
         "@typescript-eslint/no-inferrable-types": [
           "error",
           {
@@ -43,7 +63,12 @@
         "@typescript-eslint/no-non-null-assertion": "error",
         "@typescript-eslint/type-annotation-spacing": "error",
         "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "argsIgnorePattern": "^_"
+          }
+        ],
         "id-blacklist": "off",
         "id-match": "off",
         "import/no-deprecated": "warn",
@@ -88,16 +113,30 @@
           }
         ],
         "no-fallthrough": "error",
-        "no-restricted-imports": ["error", "rxjs/Rx"],
+        "no-restricted-imports": [
+          "error",
+          "rxjs/Rx"
+        ],
         "no-underscore-dangle": "off"
       },
-      "plugins": ["eslint-plugin-import"]
+      "plugins": [
+        "eslint-plugin-import"
+      ]
     },
     {
-      "files": ["*.html"],
-      "extends": ["plugin:@angular-eslint/template/recommended"],
+      "files": [
+        "*.html"
+      ],
+      "extends": [
+        "plugin:@angular-eslint/template/recommended"
+      ],
       "rules": {
-        "@angular-eslint/template/eqeqeq": ["error", { "allowNullOrUndefined": true }]
+        "@angular-eslint/template/eqeqeq": [
+          "error",
+          {
+            "allowNullOrUndefined": true
+          }
+        ]
       }
     }
   ]

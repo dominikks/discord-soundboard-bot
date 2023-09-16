@@ -11,19 +11,18 @@
     >
       <mat-nav-list class="sidenav-list">
         <mat-list-item routerLink="/settings/user" routerLinkActive="active-nav-link" *ngIf="user$ | async as user">
-          <img mat-list-icon [src]="user.avatarUrl" />
-          <div mat-line>User settings</div>
+          <img matListItemIcon [src]="user.avatarUrl" />
+          <div>User settings</div>
         </mat-list-item>
 
         <ng-container *ngFor="let guild of guilds$ | async">
           <mat-list-item [routerLink]="'/settings/guilds/' + guild.id">
-            <img *ngIf="guild.iconUrl; else discordIcon" mat-list-icon [src]="guild.iconUrl" />
-            <div mat-line>{{ guild.name }}</div>
-            <div mat-line>{{ guild.role === 'admin' ? 'Admin' : 'Moderator' }}</div>
-            <mat-icon class="expand-icon">expand_more</mat-icon>
+            <img *ngIf="guild.iconUrl; else discordIcon" matListItemIcon [src]="guild.iconUrl" />
+            <div matListItemTitle>{{ guild.name }}</div>
+            <div matListItemLine>{{ guild.role === 'admin' ? 'Admin' : 'Moderator' }}</div>
 
             <ng-template #discordIcon>
-              <svg mat-list-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 245 240">
+              <svg matListItemIcon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 245 240">
                 <style>
                   .st0 {
                     fill: #ffffff;

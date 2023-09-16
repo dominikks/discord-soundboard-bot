@@ -1,6 +1,6 @@
 <ng-container *ngIf="errors$ | async as errors">
   <div class="wrapper" *ngIf="errors.length > 0" @enterLeave>
-    <mat-card class="mat-elevation-z12">
+    <mat-card appearance="outlined" class="mat-elevation-z12">
       <mat-card-header>
         <mat-icon mat-card-avatar>error</mat-icon>
         <mat-card-title>Error</mat-card-title>

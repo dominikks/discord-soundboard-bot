@@ -1,0 +1,9 @@
+:host {
+  display: flex;
+  align-items: center;
+}
+
+mat-slider {
+  // Make sure the thumb label appears over the toolbar
+  z-index: 3;
+}

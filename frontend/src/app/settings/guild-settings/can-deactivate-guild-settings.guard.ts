@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { CanDeactivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { GuildSettingsComponent } from './guild-settings.component';
@@ -8,7 +8,7 @@ import { GuildSettingsComponent } from './guild-settings.component';
 @Injectable({
   providedIn: 'root',
 })
-export class CanDeactivateGuildSettingsGuard implements CanDeactivate<GuildSettingsComponent> {
+export class CanDeactivateGuildSettingsGuard  {
   constructor(private snackBar: MatSnackBar) {}
 
   canDeactivate(

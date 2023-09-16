@@ -16,7 +16,7 @@
   flex: 1;
 }
 
-a.mat-button {
+a.mat-mdc-button {
   &.active,
   &:hover {
     background-color: rgba(0, 0, 0, 0.07);
@@ -30,7 +30,7 @@ a.mat-button {
   padding: 0;
   overflow-y: auto;
 
-  .mat-button {
+  .mat-mdc-button {
     flex: 1;
     min-width: 150px;
   }

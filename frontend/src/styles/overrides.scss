@@ -17,13 +17,3 @@ input[type='number'] {
 .mat-expansion-panel-header-description {
   flex-basis: 0;
 }
-
-// https://github.com/angular/components/issues/4892
-.mat-tooltip-trigger {
-  touch-action: auto !important;
-}
-
-// Form fields in toolbar have no bottom padding
-mat-toolbar .mat-form-field-appearance-outline .mat-form-field-wrapper {
-  padding-bottom: 0;
-}

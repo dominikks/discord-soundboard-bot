@@ -94,8 +94,8 @@ It is used to encrypt cookies stored on the client.
 You can set the database password yourself.
 For details on the other values, see the table below.
 
-Run the app via `docker-compose up -d`.
-Stop via `docker-compose down`.
+Run the app via `docker compose up -d`.
+Stop via `docker compose down`.
 
 The website should now be up, so that you can add the bot to your Discord server.
 

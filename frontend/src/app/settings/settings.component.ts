@@ -18,7 +18,7 @@ export class SettingsComponent implements OnDestroy, AfterViewInit {
   toolbarBreakpointQuery: MediaQueryList;
   private _mediaQueryListener: () => void;
 
-  private onDestroy$ = new Subject();
+  private onDestroy$ = new Subject<void>();
   user$ = this.apiService.user$;
   guilds$ = this.apiService.user$.pipe(map(user => user.guilds.filter(guild => guild.role !== 'user')));
 

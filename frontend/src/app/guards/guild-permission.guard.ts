@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { ApiService } from '../services/api.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class GuildPermissionGuard implements CanActivate {
+export class GuildPermissionGuard  {
   constructor(private apiService: ApiService, private router: Router) {}
 
   canActivate(route: ActivatedRouteSnapshot, _state: RouterStateSnapshot) {

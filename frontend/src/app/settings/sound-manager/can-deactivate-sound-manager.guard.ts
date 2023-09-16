@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { CanDeactivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { combineLatest, Observable } from 'rxjs';
 import { first, map } from 'rxjs/operators';
 import { SoundManagerComponent } from './sound-manager.component';
@@ -8,7 +8,7 @@ import { SoundManagerComponent } from './sound-manager.component';
 @Injectable({
   providedIn: 'root',
 })
-export class CanDeactivateSoundManagerGuard implements CanDeactivate<SoundManagerComponent> {
+export class CanDeactivateSoundManagerGuard  {
   constructor(private snackBar: MatSnackBar) {}
 
   canDeactivate(
