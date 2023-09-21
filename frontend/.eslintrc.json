@@ -1,21 +1,15 @@
 {
   "root": true,
-  "ignorePatterns": [
-    "projects/**/*"
-  ],
+  "ignorePatterns": ["projects/**/*"],
   "overrides": [
     {
-      "files": [
-        "*.ts"
-      ],
+      "files": ["*.ts"],
       "parserOptions": {
-        "project": [
-          "tsconfig.json",
-          "e2e/tsconfig.json"
-        ],
+        "project": ["tsconfig.json", "e2e/tsconfig.json"],
         "createDefaultProgram": true
       },
       "extends": [
+        "plugin:@typescript-eslint/recommended",
         "plugin:@angular-eslint/recommended",
         "plugin:@angular-eslint/template/process-inline-templates"
       ],
@@ -46,12 +40,7 @@
         "@typescript-eslint/member-ordering": [
           "error",
           {
-            "default": [
-              "signature",
-              "field",
-              "constructor",
-              "method"
-            ]
+            "default": ["signature", "field", "constructor", "method"]
           }
         ],
         "@typescript-eslint/no-inferrable-types": [
@@ -113,23 +102,14 @@
           }
         ],
         "no-fallthrough": "error",
-        "no-restricted-imports": [
-          "error",
-          "rxjs/Rx"
-        ],
+        "no-restricted-imports": ["error", "rxjs/Rx"],
         "no-underscore-dangle": "off"
       },
-      "plugins": [
-        "eslint-plugin-import"
-      ]
+      "plugins": ["eslint-plugin-import"]
     },
     {
-      "files": [
-        "*.html"
-      ],
-      "extends": [
-        "plugin:@angular-eslint/template/recommended"
-      ],
+      "files": ["*.html"],
+      "extends": ["plugin:@angular-eslint/template/recommended"],
       "rules": {
         "@angular-eslint/template/eqeqeq": [
           "error",

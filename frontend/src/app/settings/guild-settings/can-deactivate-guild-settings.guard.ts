@@ -8,7 +8,7 @@ import { GuildSettingsComponent } from './guild-settings.component';
 @Injectable({
   providedIn: 'root',
 })
-export class CanDeactivateGuildSettingsGuard  {
+export class CanDeactivateGuildSettingsGuard {
   constructor(private snackBar: MatSnackBar) {}
 
   canDeactivate(

@@ -8,7 +8,7 @@ import { SoundManagerComponent } from './sound-manager.component';
 @Injectable({
   providedIn: 'root',
 })
-export class CanDeactivateSoundManagerGuard  {
+export class CanDeactivateSoundManagerGuard {
   constructor(private snackBar: MatSnackBar) {}
 
   canDeactivate(

@@ -49,24 +49,28 @@
       <div class="statistics-container">
         <div>
           <div>Created</div>
-          <div timeago [date]="sound.createdAt * 1000" [matTooltip]="sound.createdAt * 1000 | date: 'medium'"></div>
+          <div timeago [date]="sound.createdAt * 1000" [matTooltip]="sound.createdAt * 1000 | date : 'medium'"></div>
         </div>
         <ng-container *ngIf="sound.soundfile != null; else noFile">
           <div>
             <div>Max Volume</div>
-            <div>{{ sound.soundfile.maxVolume | number: '1.1-1' }} dB</div>
+            <div>{{ sound.soundfile.maxVolume | number : '1.1-1' }} dB</div>
           </div>
           <div>
             <div>Mean Volume</div>
-            <div>{{ sound.soundfile.meanVolume | number: '1.1-1' }} dB</div>
+            <div>{{ sound.soundfile.meanVolume | number : '1.1-1' }} dB</div>
           </div>
           <div>
             <div>Length</div>
-            <div>{{ sound.soundfile.length | number: '1.3-3' }} s</div>
+            <div>{{ sound.soundfile.length | number : '1.3-3' }} s</div>
           </div>
           <div>
             <div>Uploaded</div>
-            <div timeago [date]="sound.soundfile.uploadedAt * 1000" [matTooltip]="sound.soundfile.uploadedAt * 1000 | date: 'medium'"></div>
+            <div
+              timeago
+              [date]="sound.soundfile.uploadedAt * 1000"
+              [matTooltip]="sound.soundfile.uploadedAt * 1000 | date : 'medium'"
+            ></div>
           </div>
         </ng-container>
         <ng-template #noFile>

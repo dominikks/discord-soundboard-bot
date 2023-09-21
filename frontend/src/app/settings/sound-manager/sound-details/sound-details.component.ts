@@ -33,8 +33,6 @@ export class SoundDetailsComponent {
     return this.soundEntry.sound.volumeAdjustment == null ? 'auto' : 'manual';
   }
 
-  constructor() {}
-
   onImportFileChange(event: Event) {
     const files = (event.target as HTMLInputElement).files;
     if (files.length === 1) {

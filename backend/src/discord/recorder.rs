@@ -73,15 +73,17 @@ impl From<std::io::Error> for RecordingError {
 
 #[derive(Clone)]
 struct VoiceRecording {
+    // The timestamp is the start time of the recording
     timestamp: SystemTime,
     data: Vec<i16>,
 }
 
 struct UserData {
     user_id: UserId,
+    recordings: VecDeque<VoiceRecording>,
     last_voice_activity: SystemTime,
     last_rtp_timestamp: Wrapping<u32>,
-    recordings: VecDeque<VoiceRecording>,
+    last_sequence: Wrapping<u16>,
 }
 
 struct GuildRecorder {
@@ -130,6 +132,7 @@ impl VoiceEventHandler for GuildRecorderArc {
                                     user_id: *user_id,
                                     last_voice_activity: SystemTime::now(),
                                     last_rtp_timestamp: Wrapping(0),
+                                    last_sequence: Wrapping(0),
                                     recordings: Default::default(),
                                 })),
                             );
@@ -165,10 +168,10 @@ impl VoiceEventHandler for GuildRecorderArc {
                 if let Some(audio) = audio {
                     trace!(
                         ssrc = packet.ssrc,
-                        "Audio packet sequence {:05} has {:04} bytes (decompressed from {})",
+                        timestamp = packet.timestamp.0,
+                        "Audio packet sequence {:05} has {:04} bytes",
                         packet.sequence.0,
                         audio.len() * std::mem::size_of::<i16>(),
-                        packet.payload.len(),
                     );
 
                     let user_lock;
@@ -179,7 +182,10 @@ impl VoiceEventHandler for GuildRecorderArc {
 
                     let mut user = user_lock.lock().await;
 
-                    if usize::try_from((packet.timestamp.0 - user.last_rtp_timestamp).0).ok()?
+                    if user.last_sequence == packet.sequence.0 {
+                        trace!("Received duplicate audio packet, ignoring");
+                    } else if usize::try_from((packet.timestamp.0 - user.last_rtp_timestamp).0)
+                        .ok()?
                         * std::mem::size_of::<i16>()
                         == audio.len()
                         && !user.recordings.is_empty()
@@ -193,22 +199,23 @@ impl VoiceEventHandler for GuildRecorderArc {
 
                         trace!(
                             total_len = recording.data.len(),
-                            "Extended existing recording"
+                            "Extending existing recording"
                         );
                     } else {
                         // If it is a new recording, we create a new entry
                         user.recordings.push_back(VoiceRecording {
-                            timestamp: SystemTime::now(),
+                            timestamp: SystemTime::now() - samples_to_duration(audio.len()),
                             data: audio.clone(),
                         });
                         trace!(
                             recording_count = user.recordings.len(),
                             len = audio.len(),
-                            "Added new recording"
+                            "Adding new recording"
                         );
                     }
                     user.last_voice_activity = SystemTime::now();
                     user.last_rtp_timestamp = packet.timestamp.0;
+                    user.last_sequence = packet.sequence.0;
                 } else {
                     error!("RTP packet, but no audio. Driver may not be configured to decode.");
                 }
@@ -369,7 +376,7 @@ impl GuildRecorderArc {
         Ok(())
     }
 
-    #[instrument(skip(cache_and_http, rec, folder))]
+    #[instrument(skip(cache_and_http, rec, folder, first_start_time, last_end_time))]
     async fn save_user_recording(
         cache_and_http: CacheHttp,
         guild_id: GuildId,
@@ -389,7 +396,12 @@ impl GuildRecorderArc {
         let mut data = Vec::new();
         let mut previous_end = first_start_time;
 
-        trace!(recording_count = rec.len(), "Saving recording of user");
+        trace!(
+            recording_count = rec.len(),
+            ?first_start_time,
+            ?last_end_time,
+            "Saving recording of user"
+        );
 
         for mut r in rec.into_iter() {
             // Fill in possible gap. If there is overlap (raises SystemTimeError), we just append and ignore.

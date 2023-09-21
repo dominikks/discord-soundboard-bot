@@ -29,10 +29,10 @@
               <mat-panel-title
                 timeago
                 [date]="recording.timestamp * 1000"
-                [matTooltip]="recording.timestamp * 1000 | date: 'medium'"
+                [matTooltip]="recording.timestamp * 1000 | date : 'medium'"
               ></mat-panel-title>
               <mat-panel-description>
-                {{ getUsernames(recording.users) }}, Duration {{ recording.length | number: '1.0-0' }}s
+                {{ getUsernames(recording.users) }}, Duration {{ recording.length | number : '1.0-0' }}s
               </mat-panel-description>
             </mat-expansion-panel-header>
 

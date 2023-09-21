@@ -6,7 +6,7 @@ import { ApiService } from '../services/api.service';
 @Injectable({
   providedIn: 'root',
 })
-export class GuildPermissionGuard  {
+export class GuildPermissionGuard {
   constructor(private apiService: ApiService, private router: Router) {}
 
   canActivate(route: ActivatedRouteSnapshot, _state: RouterStateSnapshot) {

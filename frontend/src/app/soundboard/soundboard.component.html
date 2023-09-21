@@ -56,7 +56,7 @@
         </button>
         <div class="event-text">
           <ng-container *ngIf="events$ | async as event; else noEvents">
-            {{ event.timestamp * 1000 | date: 'mediumTime' }}: {{ event.userName }} {{ event | eventDescription }}
+            {{ event.timestamp * 1000 | date : 'mediumTime' }}: {{ event.userName }} {{ event | eventDescription }}
           </ng-container>
           <ng-template #noEvents>No event to display</ng-template>
         </div>
