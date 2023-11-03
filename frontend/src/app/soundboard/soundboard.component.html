@@ -33,23 +33,19 @@
           </mat-select>
         </mat-form-field>
         <mat-form-field matTooltip="Where to play the sounds" matTooltipShowDelay="500" subscriptSizing="dynamic">
-          <mat-label>Playback Target</mat-label>
+          <mat-label>Discord Server</mat-label>
           <mat-select [ngModel]="target$ | async" (ngModelChange)="setTarget($event)">
-            <mat-option [value]="false" selected>This device</mat-option>
-            <mat-optgroup label="Discord Servers">
-              <mat-option *ngFor="let guild of data.user.guilds" [value]="guild.id">
-                {{ guild.name ?? guild.id }}
-              </mat-option>
-            </mat-optgroup>
+            <mat-option *ngFor="let guild of data.user.guilds" [value]="guild.id">
+              {{ guild.name ?? guild.id }}
+            </mat-option>
           </mat-select>
         </mat-form-field>
 
-        <app-volume-slider *ngIf="(settings.soundTarget$ | async) === 'local'"></app-volume-slider>
-        <button mat-button (click)="stopSound$.next()"><mat-icon>stop</mat-icon> Stop</button>
+        <app-volume-slider></app-volume-slider>
       </div>
     </mat-toolbar>
 
-    <mat-toolbar *ngIf="(settings.soundTarget$ | async) === 'discord'" class="discord-toolbar">
+    <mat-toolbar class="discord-toolbar">
       <div class="toolbar-content-wrapper">
         <button mat-icon-button (click)="openEventLog()" matTooltip="Latest soundboard activity on the selected Discord server">
           <mat-icon>history</mat-icon>
@@ -63,6 +59,7 @@
 
         <div class="filler"></div>
 
+        <button mat-button (click)="stopSound$.next()"><mat-icon>stop</mat-icon> Stop</button>
         <button mat-icon-button matTooltip="Join discord channel I am connected to" matTooltipShowDelay="500" (click)="joinChannel$.next()">
           <mat-icon>login</mat-icon>
         </button>
@@ -81,7 +78,10 @@
         </ng-container>
         <app-soundboard-button
           *ngFor="let sound of data.filteredSounds; trackBy: trackById"
-          (click)="playSound$.next(sound)"
+          (playRemote)="playSound$.next(sound)"
+          (playLocal)="playLocalSound(sound)"
+          (stopLocal)="stopLocalSound$.next()"
+          [isLocallyPlaying]="(currentLocalSound$ | async) === sound"
           [category]="sound.category"
           [guildId]="sound.guildId"
           >{{ sound.name }}</app-soundboard-button

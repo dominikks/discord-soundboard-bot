@@ -6,7 +6,6 @@ import { ApiService } from './api.service';
 export type SoundTarget = 'discord' | 'local';
 
 export interface SoundboardSettings {
-  soundTarget$: BehaviorSubject<SoundTarget>;
   localVolume$: BehaviorSubject<number>;
   guildId$: BehaviorSubject<string>;
   soundCategories$: BehaviorSubject<string[]>;
@@ -23,7 +22,6 @@ export class SettingsService implements OnDestroy {
   private onDestroy$ = new Subject<void>();
 
   private _settings: SoundboardSettings = {
-    soundTarget$: new BehaviorSubject('discord'),
     guildId$: new BehaviorSubject(null),
     localVolume$: new BehaviorSubject(100),
     soundCategories$: new BehaviorSubject([]),
@@ -54,13 +52,7 @@ export class SettingsService implements OnDestroy {
       }
     });
 
-    combineLatest([
-      this.settings.soundTarget$,
-      this.settings.guildId$,
-      this.settings.localVolume$,
-      this.settings.soundCategories$,
-      this.settings.debug$,
-    ])
+    combineLatest([this.settings.guildId$, this.settings.localVolume$, this.settings.soundCategories$, this.settings.debug$])
       .pipe(takeUntil(this.onDestroy$))
       .subscribe(_ => this.save());
   }
