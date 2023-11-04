@@ -128,7 +128,7 @@ impl Client {
             ClientError::DecodingError(why)
         })?;
 
-        call.play_only_source(source);
+        call.play_source(source);
         Ok(())
     }
 
