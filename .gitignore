@@ -1,3 +1,4 @@
 /backend/target
 /backend/data
 .env
+.volumes
