@@ -6,7 +6,9 @@
   height: 100%;
   width: 100%;
 
-  padding-right: 56px;
+  &:not(:only-child) {
+    padding-right: 56px;
+  }
 
   ::ng-deep .mdc-button__label {
     display: flex;

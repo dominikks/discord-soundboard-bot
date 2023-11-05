@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-soundboard-button',
@@ -10,6 +10,7 @@ export class SoundboardButtonComponent {
   @Input({ required: true }) guildId: string;
   @Input() category?: string;
   @Input() isLocallyPlaying = false;
+  @Input() canPlayLocally = true;
   @Output() playRemote = new EventEmitter<void>();
   @Output() playLocal = new EventEmitter<void>();
   @Output() stopLocal = new EventEmitter<void>();

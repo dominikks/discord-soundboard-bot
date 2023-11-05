@@ -6,6 +6,12 @@
     <ng-container *ngIf="category != null && category.length > 0">{{ category }}</ng-container>
   </div>
 </button>
-<button mat-icon-button [color]="isLocallyPlaying && 'warn'" class="preview-button" (click)="this.handleLocalSound()">
+<button
+  mat-icon-button
+  *ngIf="canPlayLocally"
+  [color]="isLocallyPlaying && 'warn'"
+  class="preview-button"
+  (click)="this.handleLocalSound()"
+>
   <mat-icon>{{ isLocallyPlaying ? 'stop' : 'volume_up' }}</mat-icon>
 </button>

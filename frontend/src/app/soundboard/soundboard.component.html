@@ -4,7 +4,7 @@
   <mat-toolbar class="controls-toolbar">
     <div class="toolbar-content-wrapper">
       <mat-form-field class="search-field" subscriptSizing="dynamic">
-        <mat-label>Search sounds...</mat-label>
+        <mat-label>Search sounds…</mat-label>
         <input
           matInput
           [ngModel]="soundSearchFilter()"
@@ -24,7 +24,7 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field matTooltip="Where to play the sounds" matTooltipShowDelay="500" subscriptSizing="dynamic">
-        <mat-label>Discord Server</mat-label>
+        <mat-label>Discord server</mat-label>
         <mat-select [ngModel]="target()" (ngModelChange)="target.set($event)">
           <mat-option *ngFor="let guild of user.guilds" [value]="guild.id">
             {{ guild.name ?? guild.id }}
@@ -63,7 +63,11 @@
   <main *ngIf="user.guilds.length > 0 && sounds()[0].length > 0; else noData" class="max-width">
     <div class="button-container">
       <ng-container *ngIf="soundSearchFilter().length === 0">
-        <app-soundboard-button *ngFor="let infix of randomInfixes()" (click)="playInfix(infix)" [guildId]="infix.guildId"
+        <app-soundboard-button
+          *ngFor="let infix of randomInfixes()"
+          (click)="playInfix(infix)"
+          [guildId]="infix.guildId"
+          [canPlayLocally]="false"
           ><mat-icon>shuffle</mat-icon> {{ infix.displayName | uppercase }}</app-soundboard-button
         >
       </ng-container>

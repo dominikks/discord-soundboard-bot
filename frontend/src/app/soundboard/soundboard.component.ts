@@ -119,11 +119,13 @@ export class SoundboardComponent {
 
   playInfix(infix: RandomInfix) {
     // Play random sound
-    const matchingSounds = this.filteredSounds().filter(
+    const matchingSounds = this.sounds()[0].filter(
       sound => sound.name.toLowerCase().includes(infix.infix) && sound.guildId === infix.guildId
     );
     if (matchingSounds.length > 0) {
       this.playSound(sample(matchingSounds));
+    } else {
+      this.snackBar.open('No matching sounds for this random button.');
     }
   }
 
