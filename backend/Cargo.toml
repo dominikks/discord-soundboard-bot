@@ -1,6 +1,6 @@
 [package]
 name = "discord-soundboard-bot"
-version = "0.3.3"
+version = "0.4.0-dev"
 authors = ["Dominik Kus <dominik@kus.software>"]
 edition = "2021"
 
