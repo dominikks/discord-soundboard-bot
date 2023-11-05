@@ -3,7 +3,7 @@ import { clamp, sample, sortBy, uniq } from 'lodash-es';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
 import { EMPTY, forkJoin } from 'rxjs';
-import { catchError, shareReplay } from 'rxjs/operators';
+import { shareReplay } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AppSettingsService } from '../services/app-settings.service';
@@ -80,6 +80,7 @@ export class SoundboardComponent {
   }
 
   playSound(sound: Sound) {
+    this.stopLocalSound();
     this.soundsService.playSound(sound, this.settings.guildId(), this.settings.autoJoin()).subscribe({
       next: () => {
         if (this.settings.debug()) {
@@ -93,13 +94,13 @@ export class SoundboardComponent {
       },
       error: (error: HttpErrorResponse) => {
         if (error.status === 400) {
-          this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?', 'Damn');
+          this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?');
         } else if (error.status === 503) {
-          this.snackBar.open('The bot is currently not in a voice channel!', 'Damn');
+          this.snackBar.open('The bot is currently not in a voice channel!');
         } else if (error.status === 404) {
-          this.snackBar.open('Sound not found. It might have been deleted or renamed.', 'Damn');
+          this.snackBar.open('Sound not found. It might have been deleted or renamed.');
         } else if (error.status >= 300) {
-          this.snackBar.open('Unknown error playing the sound file.', 'Damn');
+          this.snackBar.open('Unknown error playing the sound file.');
         }
       },
     });
@@ -135,9 +136,7 @@ export class SoundboardComponent {
   }
 
   stopSound() {
-    this.soundsService
-      .stopSound(this.settings.guildId())
-      .subscribe({ error: () => this.snackBar.open('Failed to stop playback.', 'Damn') });
+    this.soundsService.stopSound(this.settings.guildId()).subscribe({ error: () => this.snackBar.open('Failed to stop playback.') });
   }
 
   stopLocalSound() {
@@ -151,41 +150,29 @@ export class SoundboardComponent {
   }
 
   joinChannel() {
-    this.apiService
-      .joinCurrentChannel(this.settings.guildId())
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          if (error.status === 400) {
-            this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?', 'Damn');
-          } else {
-            this.snackBar.open('Unknown error joining a voice channel.', 'Damn');
-          }
-          return EMPTY;
-        })
-      )
-      .subscribe({
-        next: () => this.snackBar.open('Joined channel!', undefined, { duration: 2000 }),
-        error: () => this.snackBar.open('Failed to join channel.', 'Damn'),
-      });
+    this.apiService.joinCurrentChannel(this.settings.guildId()).subscribe({
+      next: () => this.snackBar.open('Joined channel!', undefined, { duration: 2000 }),
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 400) {
+          this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?');
+        } else {
+          this.snackBar.open('Unknown error joining the voice channel.');
+        }
+      },
+    });
   }
 
   leaveChannel() {
-    this.apiService
-      .leaveChannel(this.settings.guildId())
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          if (error.status === 503) {
-            this.snackBar.open('The bot is not in a voice channel.', undefined, { duration: 2000 });
-          } else {
-            this.snackBar.open('Unknown error leaving a voice channel.', 'Damn');
-          }
-          return EMPTY;
-        })
-      )
-      .subscribe({
-        next: () => this.snackBar.open('Left channel!', undefined, { duration: 2000 }),
-        error: () => this.snackBar.open('Failed to leave channel.', 'Damn'),
-      });
+    this.apiService.leaveChannel(this.settings.guildId()).subscribe({
+      next: () => this.snackBar.open('Left channel!', undefined, { duration: 2000 }),
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 503) {
+          this.snackBar.open('The bot is not in a voice channel.');
+        } else {
+          this.snackBar.open('Unknown error leaving the voice channel.');
+        }
+      },
+    });
   }
 
   trackById(_position: number, item: Sound) {

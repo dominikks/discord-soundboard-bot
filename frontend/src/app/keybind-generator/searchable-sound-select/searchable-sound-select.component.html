@@ -1,4 +1,4 @@
-<mat-select [ngModel]="selectedCommand" (ngModelChange)="selectedCommandChange.emit($event)">
+<mat-select [ngModel]="selectedCommand" (ngModelChange)="selectedCommandChange.emit($event)" panelClass="mat-primary">
   <mat-option>
     <ngx-mat-select-search [(ngModel)]="soundSearchFilter" (ngModelChange)="updateFilter()"></ngx-mat-select-search>
   </mat-option>

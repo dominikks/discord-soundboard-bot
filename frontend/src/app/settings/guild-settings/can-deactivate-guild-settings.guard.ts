@@ -14,6 +14,7 @@ export class CanDeactivateGuildSettingsGuard implements CanDeactivate<GuildSetti
       this.snackBar.open('You have unsaved changes. Please save or discard them before leaving this component.');
       return false;
     }
+
     if (
       component.userIsSaving() === 'saving' ||
       component.moderatorIsSaving() === 'saving' ||

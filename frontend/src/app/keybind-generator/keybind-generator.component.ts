@@ -98,7 +98,7 @@ export class KeybindGeneratorComponent {
       },
       error: error => {
         console.error(error);
-        this.snackBar.open('Failed to fetch the auth token.', 'Damn');
+        this.snackBar.open('Failed to fetch the auth token.', 'Damn', { duration: undefined });
       },
     });
   }
@@ -120,7 +120,7 @@ export class KeybindGeneratorComponent {
     };
     fileReader.onerror = error => {
       console.error(error);
-      this.snackBar.open('Import failed.', 'Damn');
+      this.snackBar.open('Import failed.', 'Damn', { duration: undefined });
     };
   }
 

@@ -59,7 +59,7 @@ export class GuildSettingsComponent {
       .subscribe({
         error: err => {
           console.error(err);
-          this.snackBar.open('Failed to save random buttons.', 'Damn');
+          this.snackBar.open('Failed to save random buttons.', 'Damn', { duration: undefined });
         },
       });
   }

@@ -82,7 +82,7 @@ export class SoundManagerComponent {
         finalize(() => this.isSaving.set(false))
       )
       .subscribe({
-        error: () => this.snackBar.open('Failed to save changes to sounds.', 'Damn'),
+        error: () => this.snackBar.open('Failed to save changes to sounds.', 'Damn', { duration: undefined }),
       });
   }
 
@@ -138,7 +138,7 @@ export class SoundManagerComponent {
           this.sounds.mutate(sounds => sounds.push(...sortBy(newEntries, entry => entry.sound.name.toLowerCase())));
           this.snackBar.open('Upload successful!');
         },
-        error: () => this.snackBar.open('Upload of sounds failed!', 'Damn'),
+        error: () => this.snackBar.open('Upload of sounds failed!', 'Damn', { duration: undefined }),
       });
   }
 
@@ -158,7 +158,7 @@ export class SoundManagerComponent {
               finalize(() => this.isProcessing.set(false))
             )
             .subscribe({
-              error: () => this.snackBar.open('Failed to delete sound.', 'Damn'),
+              error: () => this.snackBar.open('Failed to delete sound.', 'Damn', { duration: undefined }),
             });
         }
       });
@@ -173,7 +173,7 @@ export class SoundManagerComponent {
         finalize(() => this.isProcessing.set(false))
       )
       .subscribe({
-        error: () => this.snackBar.open('Failed to upload sound file.', 'Damn'),
+        error: () => this.snackBar.open('Failed to upload sound file.', 'Damn', { duration: undefined }),
       });
   }
 
