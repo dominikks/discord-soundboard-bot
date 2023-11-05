@@ -1,9 +1,8 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { map, takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../services/api.service';
 
 @Component({
@@ -11,16 +10,15 @@ import { ApiService } from '../services/api.service';
   styleUrls: ['./settings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SettingsComponent implements OnDestroy, AfterViewInit {
-  @ViewChild(MatSidenav) snav: MatSidenav;
+export class SettingsComponent implements OnDestroy {
+  @ViewChild(MatSidenav) sidenav: MatSidenav;
 
-  mobileQuery: MediaQueryList;
-  toolbarBreakpointQuery: MediaQueryList;
-  private _mediaQueryListener: () => void;
+  readonly mobileQuery: MediaQueryList;
+  readonly toolbarBreakpointQuery: MediaQueryList;
+  private readonly _mediaQueryListener: () => void;
 
-  private onDestroy$ = new Subject<void>();
-  user$ = this.apiService.user$;
-  guilds$ = this.apiService.user$.pipe(map(user => user.guilds.filter(guild => guild.role !== 'user')));
+  readonly user = this.apiService.user();
+  readonly guilds = this.user.guilds.filter(guild => guild.role !== 'user');
 
   constructor(private apiService: ApiService, private router: Router, changeDetectorRef: ChangeDetectorRef, media: MediaMatcher) {
     this.mobileQuery = media.matchMedia('(max-width: 750px)');
@@ -28,12 +26,10 @@ export class SettingsComponent implements OnDestroy, AfterViewInit {
     this._mediaQueryListener = () => changeDetectorRef.detectChanges();
     this.mobileQuery.addEventListener('change', this._mediaQueryListener);
     this.toolbarBreakpointQuery.addEventListener('change', this._mediaQueryListener);
-  }
 
-  ngAfterViewInit() {
-    this.router.events.pipe(takeUntil(this.onDestroy$)).subscribe(() => {
+    this.router.events.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.mobileQuery.matches) {
-        this.snav.close();
+        this.sidenav?.close();
       }
     });
   }
@@ -41,7 +37,5 @@ export class SettingsComponent implements OnDestroy, AfterViewInit {
   ngOnDestroy() {
     this.toolbarBreakpointQuery.removeEventListener('change', this._mediaQueryListener);
     this.mobileQuery.removeEventListener('change', this._mediaQueryListener);
-    this.onDestroy$.next();
-    this.onDestroy$.complete();
   }
 }

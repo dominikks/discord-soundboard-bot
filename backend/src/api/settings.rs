@@ -1,16 +1,9 @@
-use crate::api::Snowflake;
-use crate::api::UserId;
-use crate::db::models;
-use crate::db::DbConn;
-use crate::discord::management::check_guild_admin;
-use crate::discord::management::check_guild_moderator;
-use crate::discord::management::get_guilds_for_user;
-use crate::discord::management::PermissionError;
-use crate::CacheHttp;
+use core::convert::TryFrom;
+use std::collections::HashMap;
+
 use bigdecimal::BigDecimal;
 use bigdecimal::FromPrimitive;
 use bigdecimal::ToPrimitive;
-use core::convert::TryFrom;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use rocket::serde::json::Json;
@@ -19,7 +12,14 @@ use rocket::State;
 use serde::Deserialize;
 use serde::Serialize;
 use serenity::model::id::GuildId;
-use std::collections::HashMap;
+
+use crate::api::Snowflake;
+use crate::api::UserId;
+use crate::db::models;
+use crate::db::DbConn;
+use crate::discord::management::PermissionError;
+use crate::discord::management::{check_guild_admin, check_guild_moderator, get_guilds_for_user};
+use crate::CacheHttp;
 
 pub fn get_routes() -> Vec<Route> {
     routes![
@@ -90,7 +90,7 @@ impl TryFrom<models::RandomInfix> for RandomInfix {
     }
 }
 
-#[get("/randominfixes")]
+#[get("/random-infixes")]
 async fn get_all_random_infixes(
     user: UserId,
     db: DbConn,
@@ -127,7 +127,11 @@ struct RandomInfixParameter {
     display_name: String,
 }
 
-#[put("/guilds/<guild_id>/randominfixes", format = "json", data = "<params>")]
+#[put(
+    "/guilds/<guild_id>/random-infixes",
+    format = "json",
+    data = "<params>"
+)]
 async fn set_random_infixes(
     guild_id: u64,
     user: UserId,

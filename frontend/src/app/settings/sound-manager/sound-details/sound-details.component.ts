@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, EventEmitter, Input, Output } from '@angular/core';
 import { SoundEntry } from '../sound-manager.component';
 
 type VolumeAdjustmentMode = 'auto' | 'manual';
@@ -10,33 +10,32 @@ type VolumeAdjustmentMode = 'auto' | 'manual';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SoundDetailsComponent {
-  @Input() soundEntry: SoundEntry;
-  @Input() isBusy: boolean;
-  @Input() isPlaying: boolean;
+  @Input({ required: true }) soundEntry: SoundEntry;
+  @Input({ required: true }) isBusy: boolean;
+  @Input({ required: true }) isPlaying: boolean;
 
   @Output() playClick = new EventEmitter<void>();
   @Output() deleteClick = new EventEmitter<void>();
-  @Output() replaceSoundfile = new EventEmitter<File>();
+  @Output() replaceSoundFile = new EventEmitter<File>();
 
   get sound() {
     return this.soundEntry.sound;
   }
 
-  set volumeAdjustmentMode(mode: VolumeAdjustmentMode) {
+  readonly volumeAdjustmentMode = computed(() => (this.soundEntry.sound().volumeAdjustment == null ? 'auto' : 'manual'));
+
+  updateVolumeAdjustmentMode(mode: VolumeAdjustmentMode) {
     if (mode === 'auto') {
-      this.soundEntry.sound.volumeAdjustment = null;
+      this.soundEntry.mutateSound({ volumeAdjustment: null });
     } else {
-      this.soundEntry.sound.volumeAdjustment = 0;
+      this.soundEntry.mutateSound({ volumeAdjustment: 0 });
     }
-  }
-  get volumeAdjustmentMode() {
-    return this.soundEntry.sound.volumeAdjustment == null ? 'auto' : 'manual';
   }
 
   onImportFileChange(event: Event) {
     const files = (event.target as HTMLInputElement).files;
     if (files.length === 1) {
-      this.replaceSoundfile.emit(files[0]);
+      this.replaceSoundFile.emit(files[0]);
     }
   }
 }

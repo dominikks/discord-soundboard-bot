@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map, retry } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { Guild } from './api.service';
-import { ErrorService } from './error.service';
 
 interface ApiRecording {
   guildId: string;
@@ -41,17 +40,15 @@ export interface MixingResult {
   providedIn: 'root',
 })
 export class RecorderService {
-  constructor(private http: HttpClient, private errorService: ErrorService) {}
+  constructor(private http: HttpClient) {}
 
   record(guild: Guild | string) {
-    const guildid = typeof guild === 'string' ? guild : guild.id;
-    return this.http.post(`/api/guilds/${guildid}/record`, {}, { responseType: 'text' });
+    const guildId = typeof guild === 'string' ? guild : guild.id;
+    return this.http.post(`/api/guilds/${guildId}/record`, {}, { responseType: 'text' });
   }
 
   loadRecordings(): Observable<Recording[]> {
     return this.http.get<ApiRecording[]>('/api/recordings').pipe(
-      retry(5),
-      this.errorService.showError('Failed to load recordings'),
       map(data =>
         data.map(recording => ({
           ...recording,

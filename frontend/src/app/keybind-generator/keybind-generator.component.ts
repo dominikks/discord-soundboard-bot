@@ -1,14 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, signal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { pull } from 'lodash-es';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { combineLatest, EMPTY, Subject } from 'rxjs';
-import { catchError, mergeMap, shareReplay, takeUntil, withLatestFrom } from 'rxjs/operators';
-import { SettingsService } from '../services/settings.service';
+import { Subject } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppSettingsService } from '../services/app-settings.service';
 import { ApiService } from '../services/api.service';
 import { Sound, SoundsService } from '../services/sounds.service';
-import { LoginService } from '../services/login.service';
-import { KeyCombination } from './keycombination-input/keycombination-input.component';
+import { KeyCombination } from './keycombination-input/key-combination-input.component';
 
 export type KeyCommand = Sound | 'stop' | 'record';
 
@@ -25,100 +24,24 @@ const STORAGE_KEY = 'keybinds';
   styleUrls: ['./keybind-generator.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class KeybindGeneratorComponent implements OnInit, OnDestroy {
+export class KeybindGeneratorComponent {
   displayedColumns = ['dragDrop', 'keyCombination', 'discordServer', 'command', 'actions'];
 
-  user$ = this.apiService.user$;
-  sounds$ = this.soundsService.sounds$;
-  private _keybinds$ = new Subject<Keybind[]>();
-  keybinds$ = this._keybinds$.asObservable().pipe(shareReplay());
+  readonly user = this.apiService.user();
 
-  private onDestroy$ = new Subject<void>();
-  loadKeybinds$ = new Subject<Keybind[]>();
-  saveKeybinds$ = new Subject<void>();
-  addKeybind$ = new Subject<void>();
-  deleteKeybind$ = new Subject<Keybind>();
-  moveKeybind$ = new Subject<{ from: number; to: number }>();
-  downloadKeybinds$ = new Subject<void>();
-  generateAutohotkey$ = new Subject<void>();
+  readonly data$ = this.soundsService.loadSounds();
+  readonly dataLoaded$ = new Subject<Sound[]>();
+
+  readonly sounds = signal<Sound[]>(null);
+  keybinds: Keybind[];
 
   constructor(
     private apiService: ApiService,
     private soundsService: SoundsService,
-    private loginService: LoginService,
-    private settingsService: SettingsService,
-    private snackBar: MatSnackBar
-  ) {}
-
-  ngOnInit() {
-    combineLatest([this.loadKeybinds$, this.sounds$])
-      .pipe(takeUntil(this.onDestroy$))
-      .subscribe(([keybinds, sounds]) => {
-        // The keybind objects might have different instances of the sound objects with the same content.
-        // We ensure the same instances are used.
-        keybinds = keybinds.slice();
-        for (const keybind of keybinds) {
-          const sound = sounds.find(s => keybind.command && typeof keybind.command === 'object' && s.id === keybind.command.id);
-          if (sound != null) {
-            keybind.command = sound;
-          }
-        }
-        this._keybinds$.next(keybinds);
-      });
-
-    this.saveKeybinds$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(keybinds));
-    });
-
-    this.addKeybind$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
-      // Recreate the array
-      this._keybinds$.next([
-        ...keybinds,
-        {
-          keyCombination: { key: '', isControl: false, isAlt: false },
-          command: null,
-          guildId: this.settingsService.settings.guildId$.value,
-        },
-      ]);
-    });
-
-    this.deleteKeybind$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([toDelete, keybinds]) => {
-      keybinds = keybinds.slice();
-      pull(keybinds, toDelete);
-      this._keybinds$.next(keybinds);
-    });
-
-    this.moveKeybind$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([move, keybinds]) => {
-      keybinds = keybinds.slice();
-      moveItemInArray(keybinds, move.from, move.to);
-      this._keybinds$.next(keybinds);
-    });
-
-    this.downloadKeybinds$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.keybinds$)).subscribe(([, keybinds]) => {
-      this.downloadText(JSON.stringify(keybinds), 'keybinds.json');
-    });
-
-    this.generateAutohotkey$
-      .pipe(
-        takeUntil(this.onDestroy$),
-        mergeMap(() =>
-          this.loginService.getAuthToken().pipe(
-            catchError(error => {
-              console.error(error);
-              this.snackBar.open('Failed to fetch auth token', 'Damn');
-              return EMPTY;
-            })
-          )
-        ),
-        withLatestFrom(this.keybinds$)
-      )
-      .subscribe(([authtoken, keybinds]) => {
-        this.generateAutohotkey(authtoken, keybinds);
-      });
-
-    // Save every time the keybinds change
-    this.keybinds$.pipe(takeUntil(this.onDestroy$)).subscribe(_ => this.saveKeybinds$.next());
-
+    private settingsService: AppSettingsService,
+    private snackBar: MatSnackBar,
+    private cdRef: ChangeDetectorRef
+  ) {
     const saved = localStorage.getItem(STORAGE_KEY);
     let initialKeybinds = [];
     if (saved) {
@@ -126,32 +49,82 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
         initialKeybinds = JSON.parse(saved);
       } catch {}
     }
-    this.loadKeybinds$.next(initialKeybinds);
+    this.keybinds = initialKeybinds;
+
+    this.dataLoaded$.pipe(takeUntilDestroyed()).subscribe(sounds => {
+      this.cleanupKeybinds(this.keybinds, sounds);
+      this.sounds.set(sounds);
+    });
   }
 
-  ngOnDestroy() {
-    this.onDestroy$.next();
-    this.onDestroy$.complete();
+  private cleanupKeybinds(keybinds: Keybind[], sounds: Sound[]) {
+    // The keybind objects might have different instances of the sound objects with the same content.
+    // We ensure the same instances are used.
+    for (const keybind of keybinds) {
+      const sound = sounds.find(s => keybind.command && typeof keybind.command === 'object' && s.id === keybind.command.id);
+      if (sound != null) {
+        keybind.command = sound;
+      }
+    }
+  }
+
+  saveKeybinds() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.keybinds));
+  }
+
+  addKeybind() {
+    this.keybinds.push({
+      keyCombination: { key: '', isControl: false, isAlt: false },
+      command: null,
+      guildId: this.settingsService.settings.guildId(),
+    });
+    this.keybinds = this.keybinds.slice();
+  }
+
+  deleteKeybind(keybind: Keybind) {
+    pull(this.keybinds, keybind);
+    this.keybinds = this.keybinds.slice();
+  }
+
+  downloadKeybinds() {
+    this.downloadText(JSON.stringify(this.keybinds), 'keybinds.json');
+  }
+
+  generateAutohotkey() {
+    this.apiService.getAuthToken().subscribe({
+      next: authtoken => {
+        const script = this.generateAutohotkeyScript(authtoken, this.keybinds);
+        this.downloadText(script, 'soundboard.ahk');
+      },
+      error: error => {
+        console.error(error);
+        this.snackBar.open('Failed to fetch the auth token.', 'Damn');
+      },
+    });
   }
 
   onDrop(event: CdkDragDrop<Keybind[]>) {
-    this.moveKeybind$.next({ from: event.previousIndex, to: event.currentIndex });
+    moveItemInArray(this.keybinds, event.previousIndex, event.currentIndex);
+    this.keybinds = this.keybinds.slice();
   }
 
   onImportFileChange(event: Event) {
     const fileReader = new FileReader();
     fileReader.readAsText((event.target as HTMLInputElement).files[0], 'UTF-8');
     fileReader.onload = () => {
-      this.loadKeybinds$.next(JSON.parse(fileReader.result as string));
-      this.snackBar.open('Import successful', undefined, { duration: 1000 });
+      const keybinds = JSON.parse(fileReader.result as string);
+      this.cleanupKeybinds(keybinds, this.sounds());
+      this.keybinds = keybinds;
+      this.snackBar.open('Import successful!', undefined, { duration: 1000 });
+      this.cdRef.markForCheck();
     };
     fileReader.onerror = error => {
       console.error(error);
-      this.snackBar.open('Import failed');
+      this.snackBar.open('Import failed.', 'Damn');
     };
   }
 
-  private generateAutohotkey(authtoken: string, keybinds: Keybind[]) {
+  private generateAutohotkeyScript(authtoken: string, keybinds: Keybind[]) {
     let script = 'PlaySound(server, id) {\n';
     script += `command := "curl -X POST -H ""Authorization: Bearer ${authtoken}"" `;
     // eslint-disable-next-line max-len
@@ -183,7 +156,7 @@ export class KeybindGeneratorComponent implements OnInit, OnDestroy {
       script += 'return\n';
     }
 
-    this.downloadText(script, 'soundboard.ahk');
+    return script;
   }
 
   private downloadText(text: string, filename: string) {

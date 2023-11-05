@@ -110,7 +110,7 @@ struct SessionInfo {
 impl<'r> FromRequest<'r> for UserId {
     type Error = ();
 
-    /// Protected api endpoints can inject `User`.
+    /// Protected api endpoints can inject `UserId`.
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let cookies = request.cookies();
         cookies
@@ -157,7 +157,7 @@ impl From<TokenUserId> for SerenityUserId {
 impl<'r> FromRequest<'r> for TokenUserId {
     type Error = ();
 
-    /// Protected api endpoints can inject `User`.
+    /// Protected api endpoints can inject `TokenUserId` to be accessible via auth token or session.
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         const TOKEN_PREFIX: &str = "Bearer ";
         let db = try_outcome!(request.guard::<DbConn>().await);
@@ -199,6 +199,7 @@ impl<'r> FromRequest<'r> for TokenUserId {
             }
         }
 
+        // If there is no auth token, we try to parse a normal UserId from a session
         request
             .guard::<UserId>()
             .await
@@ -456,7 +457,7 @@ fn logout(cookies: &CookieJar<'_>) -> String {
     String::from("User logged out")
 }
 
-/// Beware: this replaces the current auth token by a new one. The old one becomes invalid.
+/// Beware: this replaces the current auth token with a new one. The old one becomes invalid.
 #[post("/auth/gettoken")]
 async fn get_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
     let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;

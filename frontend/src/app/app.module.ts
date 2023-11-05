@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { LOCALE_ID, NgModule } from '@angular/core';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -9,7 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBarModule, MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatRippleModule } from '@angular/material/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
@@ -30,7 +30,7 @@ import { WebAudioModule } from '@ng-web-apis/audio';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { SoundboardButtonComponent } from './soundboard/soundboard-button/soundboard-button.component';
 import { KeybindGeneratorComponent } from './keybind-generator/keybind-generator.component';
-import { KeycombinationInputComponent } from './keybind-generator/keycombination-input/keycombination-input.component';
+import { KeyCombinationInputComponent } from './keybind-generator/keycombination-input/key-combination-input.component';
 import { SearchableSoundSelectComponent } from './keybind-generator/searchable-sound-select/searchable-sound-select.component';
 import { RecorderComponent } from './recorder/recorder.component';
 import { FooterComponent } from './footer/footer.component';
@@ -42,7 +42,6 @@ import { UserSettingsComponent } from './settings/user-settings/user-settings.co
 import { GuildSettingsComponent } from './settings/guild-settings/guild-settings.component';
 import { RandomInfixesComponent } from './settings/random-infixes/random-infixes.component';
 import { UnsavedChangesBoxComponent } from './settings/unsaved-changes-box/unsaved-changes-box.component';
-import { ErrorBoxComponent } from './error-box/error-box.component';
 import { SoundManagerComponent } from './settings/sound-manager/sound-manager.component';
 import { SoundDetailsComponent } from './settings/sound-manager/sound-details/sound-details.component';
 import { SoundDeleteConfirmComponent } from './settings/sound-manager/sound-delete-confirm/sound-delete-confirm.component';
@@ -54,6 +53,8 @@ import { EventLogDialogComponent } from './soundboard/event-log-dialog/event-log
 import { ScrollIntoViewDirective } from './common/scroll-into-view.directive';
 import { EventDescriptionPipe } from './event-description.pipe';
 import { VolumeSliderComponent } from './volume-slider/volume-slider.component';
+import { DataLoadDirective } from './data-load/data-load.directive';
+import { DataLoadErrorComponent } from './data-load/data-load-error.component';
 
 @NgModule({
   declarations: [
@@ -61,7 +62,7 @@ import { VolumeSliderComponent } from './volume-slider/volume-slider.component';
     SoundboardComponent,
     SoundboardButtonComponent,
     KeybindGeneratorComponent,
-    KeycombinationInputComponent,
+    KeyCombinationInputComponent,
     SearchableSoundSelectComponent,
     RecorderComponent,
     FooterComponent,
@@ -72,7 +73,6 @@ import { VolumeSliderComponent } from './volume-slider/volume-slider.component';
     GuildSettingsComponent,
     RandomInfixesComponent,
     UnsavedChangesBoxComponent,
-    ErrorBoxComponent,
     SoundManagerComponent,
     SoundDetailsComponent,
     SoundDeleteConfirmComponent,
@@ -81,6 +81,8 @@ import { VolumeSliderComponent } from './volume-slider/volume-slider.component';
     ScrollIntoViewDirective,
     EventDescriptionPipe,
     VolumeSliderComponent,
+    DataLoadDirective,
+    DataLoadErrorComponent,
   ],
   imports: [
     // Angular

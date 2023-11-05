@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { GuildPermissionGuard } from './guards/guild-permission.guard';
 import { KeybindGeneratorComponent } from './keybind-generator/keybind-generator.component';
 import { RecorderComponent } from './recorder/recorder.component';
@@ -67,7 +67,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, { useHash: false })],
+  imports: [RouterModule.forRoot(routes, { useHash: false, bindToComponentInputs: true })],
   exports: [RouterModule],
 })
 export class AppRoutingModule {}

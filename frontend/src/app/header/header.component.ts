@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { catchError } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
 import { ApiService } from '../services/api.service';
-import { LoginService } from '../services/login.service';
 
 @Component({
   selector: 'app-header',
@@ -8,14 +9,17 @@ import { LoginService } from '../services/login.service';
   styleUrls: ['./header.component.scss'],
 })
 export class HeaderComponent {
-  @Input() pageTitle: string;
+  @Input({ required: true }) pageTitle: string;
   @Input() showSidenavToggle = false;
 
   @Output() toggleSidenav = new EventEmitter<void>();
 
-  constructor(public apiService: ApiService, private loginService: LoginService) {}
+  constructor(protected apiService: ApiService) {}
 
   logout() {
-    this.loginService.logout().subscribe();
+    this.apiService
+      .logout()
+      .pipe(catchError(() => EMPTY))
+      .subscribe();
   }
 }

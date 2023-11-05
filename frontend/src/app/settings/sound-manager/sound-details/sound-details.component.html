@@ -1,28 +1,30 @@
 <mat-expansion-panel>
   <mat-expansion-panel-header>
     <mat-panel-title>
-      {{ sound.name }}{{ (soundEntry.hasChanges$ | async) ? '*' : '' }}
-      <mat-icon *ngIf="sound.soundfile == null" matTooltip="No soundfile uploaded. Click the upload button below.">error_outline</mat-icon>
+      {{ sound().name }}{{ soundEntry.hasChanges() ? '*' : '' }}
+      <mat-icon *ngIf="sound().soundfile == null" matTooltip="No soundfile uploaded. Click the upload button below."
+        >error_outline</mat-icon
+      >
     </mat-panel-title>
-    <mat-panel-description>{{ sound.category }}</mat-panel-description>
+    <mat-panel-description>{{ sound().category }}</mat-panel-description>
   </mat-expansion-panel-header>
 
   <ng-template matExpansionPanelContent>
     <div>
       <mat-form-field>
         <mat-label>Name</mat-label>
-        <input matInput [(ngModel)]="sound.name" (ngModelChange)="soundEntry.checkChanges$.next()" maxlength="64" />
+        <input matInput [ngModel]="sound().name" (ngModelChange)="soundEntry.mutateSound({ name: $event })" maxlength="64" />
       </mat-form-field>
       <mat-form-field>
         <mat-label>Category</mat-label>
-        <input matInput [(ngModel)]="sound.category" (ngModelChange)="soundEntry.checkChanges$.next()" maxlength="64" />
+        <input matInput [ngModel]="sound().category" (ngModelChange)="soundEntry.mutateSound({ category: $event })" maxlength="64" />
       </mat-form-field>
     </div>
 
     <div>
       <mat-form-field>
         <mat-label>Volume adjustment</mat-label>
-        <mat-select [(ngModel)]="volumeAdjustmentMode" (ngModelChange)="soundEntry.checkChanges$.next()">
+        <mat-select [ngModel]="volumeAdjustmentMode()" (ngModelChange)="updateVolumeAdjustmentMode($event)">
           <mat-option value="auto">Automatic</mat-option>
           <mat-option value="manual">Manual</mat-option>
         </mat-select>
@@ -33,10 +35,10 @@
           matInput
           type="number"
           step="1"
-          [(ngModel)]="sound.volumeAdjustment"
-          (ngModelChange)="soundEntry.checkChanges$.next()"
+          [ngModel]="sound().volumeAdjustment"
+          (ngModelChange)="soundEntry.mutateSound({ volumeAdjustment: $event })"
           [ngModelOptions]="{ updateOn: 'blur' }"
-          [disabled]="volumeAdjustmentMode === 'auto'"
+          [disabled]="volumeAdjustmentMode() === 'auto'"
         />
         <span matTextSuffix>dB</span>
       </mat-form-field>
@@ -49,27 +51,27 @@
       <div class="statistics-container">
         <div>
           <div>Created</div>
-          <div timeago [date]="sound.createdAt * 1000" [matTooltip]="sound.createdAt * 1000 | date : 'medium'"></div>
+          <div timeago [date]="sound().createdAt * 1000" [matTooltip]="sound().createdAt * 1000 | date : 'medium'"></div>
         </div>
-        <ng-container *ngIf="sound.soundfile != null; else noFile">
+        <ng-container *ngIf="sound().soundfile != null; else noFile">
           <div>
             <div>Max Volume</div>
-            <div>{{ sound.soundfile.maxVolume | number : '1.1-1' }} dB</div>
+            <div>{{ sound().soundfile.maxVolume | number : '1.1-1' }} dB</div>
           </div>
           <div>
             <div>Mean Volume</div>
-            <div>{{ sound.soundfile.meanVolume | number : '1.1-1' }} dB</div>
+            <div>{{ sound().soundfile.meanVolume | number : '1.1-1' }} dB</div>
           </div>
           <div>
             <div>Length</div>
-            <div>{{ sound.soundfile.length | number : '1.3-3' }} s</div>
+            <div>{{ sound().soundfile.length | number : '1.3-3' }} s</div>
           </div>
           <div>
             <div>Uploaded</div>
             <div
               timeago
-              [date]="sound.soundfile.uploadedAt * 1000"
-              [matTooltip]="sound.soundfile.uploadedAt * 1000 | date : 'medium'"
+              [date]="sound().soundfile.uploadedAt * 1000"
+              [matTooltip]="sound().soundfile.uploadedAt * 1000 | date : 'medium'"
             ></div>
           </div>
         </ng-container>
@@ -87,7 +89,7 @@
     </button>
     <div class="spinner-button-container">
       <button mat-stroked-button [disabled]="isBusy" (click)="!isBusy && fileImport.click()"
-        ><mat-icon>file_upload</mat-icon> {{ sound.soundfile == null ? 'Upload' : 'Replace' }} sound</button
+        ><mat-icon>file_upload</mat-icon> {{ sound().soundfile == null ? 'Upload' : 'Replace' }} sound</button
       >
       <div class="spinner-container" *ngIf="isBusy">
         <mat-spinner diameter="24"></mat-spinner>

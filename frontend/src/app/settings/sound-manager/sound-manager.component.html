@@ -1,85 +1,59 @@
-<ng-container *ngIf="{ guildId: guildId$ | async, sounds: filteredSounds$ | async } as data">
-  <ng-container *ngIf="data.guildId && data.sounds; else loading">
-    <mat-toolbar>
-      <div class="title"
-        >Sounds on
-        <span
-          *ngIf="data.guildId | guildName | async as guildName"
-          class="guild-name"
-          [matTooltip]="guildName"
-          [matTooltipShowDelay]="500"
-          >{{ guildName }}</span
-        ></div
-      >
-      <mat-spinner
-        *ngIf="(isUploading$ | async) || (isProcessing$ | async)"
-        class="processing-spinner"
-        diameter="24"
-        matTooltip="Processing..."
-      ></mat-spinner>
+<ng-container *appDataLoad="data$; callback: sounds">
+  <mat-toolbar>
+    <div class="title"
+      >Sounds on
+      <span class="guild-name" [matTooltip]="_guildId | guildName" [matTooltipShowDelay]="500">{{ _guildId | guildName }}</span></div
+    >
+    <mat-spinner *ngIf="isUploading() || isProcessing()" class="processing-spinner" diameter="24" matTooltip="Processing..."></mat-spinner>
 
-      <div class="controls-wrapper">
-        <div class="control">
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>Filter by name</mat-label>
-            <input matInput [ngModel]="soundFilterString$ | async" (ngModelChange)="soundFilterString$.next($event)" />
-            <button mat-icon-button matSuffix (click)="soundFilterString$.next('')" [class.invisible]="(soundFilterString$ | async) === ''"
-              ><mat-icon>clear</mat-icon></button
-            >
-          </mat-form-field>
-        </div>
-        <app-volume-slider class="control"></app-volume-slider>
-        <input
-          type="file"
-          accept=".mp3"
-          [disabled]="isUploading$ | async"
-          (change)="onImportFileChange($event, data.guildId)"
-          multiple
-          #fileImport
-        />
-        <div class="control">
-          <button mat-button [disabled]="isUploading$ | async" (click)="fileImport.click()" matTooltip="Upload new sound"
-            ><mat-icon>add</mat-icon> Add Sounds</button
+    <div class="controls-wrapper">
+      <div class="control">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Filter by name</mat-label>
+          <input matInput [ngModel]="soundFilterString()" (ngModelChange)="soundFilterString.set($event)" />
+          <button mat-icon-button matSuffix (click)="soundFilterString.set('')" [class.invisible]="soundFilterString() === ''"
+            ><mat-icon>clear</mat-icon></button
           >
-        </div>
+        </mat-form-field>
       </div>
-    </mat-toolbar>
-
-    <cdk-virtual-scroll-viewport *ngIf="data.sounds.length > 0; else noSounds" class="sound-scroller" itemSize="48">
-      <mat-accordion class="sound-list">
-        <app-sound-details
-          *cdkVirtualFor="let sound of data.sounds; trackBy: trackById"
-          [soundEntry]="sound"
-          [isBusy]="(isProcessing$ | async) || (isSaving$ | async)"
-          [isPlaying]="(currentAudio$ | async) != null"
-          (playClick)="playAudioClick$.next(sound)"
-          (deleteClick)="deleteSound(sound)"
-          (replaceSoundfile)="replaceSoundfile($event, sound)"
-        ></app-sound-details>
-      </mat-accordion>
-    </cdk-virtual-scroll-viewport>
-
-    <ng-template #noSounds>
-      <div class="message-container">
-        <ng-container *ngIf="soundFilterString$ | async">There are no sounds matching your filter.</ng-container>
-        <ng-container *ngIf="(soundFilterString$ | async).length === 0"
-          >There are no sounds on this server. You can add some by pressing the add button above.</ng-container
+      <app-volume-slider class="control"></app-volume-slider>
+      <input type="file" accept=".mp3" [disabled]="isUploading()" (change)="onImportFileChange($event)" multiple #fileImport />
+      <div class="control">
+        <button mat-button [disabled]="isUploading()" (click)="fileImport.click()" matTooltip="Upload new sound"
+          ><mat-icon>add</mat-icon> Add Sounds</button
         >
       </div>
-    </ng-template>
+    </div>
+  </mat-toolbar>
 
-    <app-unsaved-changes-box
-      [hasChanges]="hasChanges$ | async"
-      [disabled]="isProcessing$ | async"
-      [isSaving]="isSaving$ | async"
-      (saveChanges)="saveChanges$.next()"
-      (discardChanges)="discardChanges$.next()"
-    ></app-unsaved-changes-box>
-  </ng-container>
+  <cdk-virtual-scroll-viewport *ngIf="sounds().length > 0; else noSounds" class="sound-scroller" itemSize="48">
+    <mat-accordion class="sound-list">
+      <app-sound-details
+        *cdkVirtualFor="let sound of sounds(); trackBy: trackById"
+        [soundEntry]="sound"
+        [isBusy]="isProcessing() || isSaving()"
+        [isPlaying]="currentAudio() != null"
+        (playClick)="playAudio(sound)"
+        (deleteClick)="deleteSound(sound)"
+        (replaceSoundFile)="replaceSoundfile($event, sound)"
+      ></app-sound-details>
+    </mat-accordion>
+  </cdk-virtual-scroll-viewport>
+
+  <ng-template #noSounds>
+    <div class="message-container">
+      <ng-container *ngIf="soundFilterString()">There are no sounds matching your filter.</ng-container>
+      <ng-container *ngIf="soundFilterString().length === 0"
+        >There are no sounds on this server. You can add some by pressing the add button above.</ng-container
+      >
+    </div>
+  </ng-template>
+
+  <app-unsaved-changes-box
+    [hasChanges]="hasChanges()"
+    [disabled]="isProcessing()"
+    [isSaving]="isSaving()"
+    (saveChanges)="saveChanges()"
+    (discardChanges)="discardChanges()"
+  ></app-unsaved-changes-box>
 </ng-container>
-
-<ng-template #loading>
-  <div class="loading-wrapper">
-    <mat-spinner></mat-spinner>
-  </div>
-</ng-template>

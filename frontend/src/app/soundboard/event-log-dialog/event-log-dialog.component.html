@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>Event Log</h2>
 <mat-dialog-content>
-  <div *ngIf="events.length === 0" class="no-events">No events to display</div>
-  <table mat-table [dataSource]="events">
+  <div *ngIf="events().length === 0" class="no-events">No events to display</div>
+  <table mat-table [dataSource]="events()">
     <ng-container matColumnDef="timestamp">
       <td mat-cell *matCellDef="let event">{{ event.timestamp * 1000 | date : 'mediumTime' }}</td>
     </ng-container>

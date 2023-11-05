@@ -1,4 +1,4 @@
-import { Directive, AfterViewInit, Input, ElementRef } from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, Input } from '@angular/core';
 
 @Directive({
   selector: '[appScrollIntoView]',

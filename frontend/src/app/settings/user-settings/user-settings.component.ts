@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { SettingsService } from 'src/app/services/settings.service';
+import { AppSettingsService } from 'src/app/services/app-settings.service';
 
 @Component({
   templateUrl: './user-settings.component.html',
@@ -7,5 +7,5 @@ import { SettingsService } from 'src/app/services/settings.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserSettingsComponent {
-  constructor(public settingsService: SettingsService) {}
+  constructor(public settingsService: AppSettingsService) {}
 }

@@ -9,7 +9,8 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { tap } from 'rxjs/operators';
-import { ApiService, RandomInfix } from 'src/app/services/api.service';
+import { RandomInfix } from 'src/app/services/api.service';
+import { GuildSettingsService } from '../../services/guild-settings.service';
 
 @Component({
   selector: 'app-random-infixes',
@@ -18,13 +19,13 @@ import { ApiService, RandomInfix } from 'src/app/services/api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RandomInfixesComponent implements OnChanges {
-  @Input() guildId: string;
-  @Input() randomInfixes: RandomInfix[];
+  @Input({ required: true }) guildId: string;
+  @Input({ required: true }) randomInfixes: RandomInfix[];
   @Output() hasChanges = new EventEmitter<boolean>();
 
   infixes: RandomInfix[];
 
-  constructor(private apiService: ApiService, private cdRef: ChangeDetectorRef) {}
+  constructor(private guildSettingsService: GuildSettingsService, private cdRef: ChangeDetectorRef) {}
 
   addRandomInfix() {
     this.infixes.push({ guildId: this.guildId, displayName: '', infix: '' });
@@ -50,7 +51,7 @@ export class RandomInfixesComponent implements OnChanges {
   }
 
   saveChanges() {
-    return this.apiService
+    return this.guildSettingsService
       .updateRandomInfixes(
         this.guildId,
         this.infixes.filter(infix => infix.displayName.length > 0 && infix.infix.length > 0)

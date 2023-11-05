@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SettingsService } from '../services/settings.service';
+import { AppSettingsService } from '../services/app-settings.service';
 
 @Component({
   selector: 'app-volume-slider',
@@ -11,7 +11,7 @@ export class VolumeSliderComponent {
     return this.settingsService.settings;
   }
 
-  constructor(private settingsService: SettingsService) {}
+  constructor(private settingsService: AppSettingsService) {}
 
   formatLabel(value: number): string {
     return `${value.toFixed(0)} %`;

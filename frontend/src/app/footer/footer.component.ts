@@ -8,5 +8,9 @@ import { ApiService } from '../services/api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FooterComponent {
-  constructor(public apiService: ApiService) {}
+  get info() {
+    return this.apiService.appInfo();
+  }
+
+  constructor(private apiService: ApiService) {}
 }

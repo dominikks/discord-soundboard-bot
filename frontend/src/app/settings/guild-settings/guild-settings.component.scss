@@ -3,13 +3,6 @@
   flex: 1;
 }
 
-.loading-wrapper {
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .guild-container {
   padding: 16px;
 }
@@ -41,4 +34,17 @@
   mat-form-field {
     margin-right: 0.5em;
   }
+}
+
+.save-state-idle-icon {
+  @keyframes fadeout {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  animation: fadeout 1s ease-out 1s both;
 }

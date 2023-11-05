@@ -7,14 +7,14 @@ import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter } from 
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SoundboardButtonComponent {
-  @Input() guildId: string;
+  @Input({ required: true }) guildId: string;
   @Input() category?: string;
   @Input() isLocallyPlaying = false;
   @Output() playRemote = new EventEmitter<void>();
   @Output() playLocal = new EventEmitter<void>();
   @Output() stopLocal = new EventEmitter<void>();
 
-  get dispCategory() {
+  get displayedCategory() {
     return this.category == null || this.category === '' ? '' : `/${this.category}`;
   }
 

@@ -40,7 +40,7 @@
         "@typescript-eslint/member-ordering": [
           "error",
           {
-            "default": ["signature", "field", "constructor", "method"]
+            "default": ["static-field", "static-initialization", "static-method", "signature", "field", "constructor", "method"]
           }
         ],
         "@typescript-eslint/no-inferrable-types": [
