@@ -135,7 +135,7 @@ export class SoundManagerComponent {
       )
       .subscribe({
         next: newEntries => {
-          this.sounds.mutate(sounds => sounds.push(...sortBy(newEntries, entry => entry.sound.name.toLowerCase())));
+          this.sounds.update(sounds => [...sounds, ...sortBy(newEntries, entry => entry.sound.name.toLowerCase())]);
           this.snackBar.open('Upload successful!');
         },
         error: () => this.snackBar.open('Upload of sounds failed!', 'Damn', { duration: undefined }),
@@ -164,12 +164,12 @@ export class SoundManagerComponent {
       });
   }
 
-  replaceSoundfile(file: File, entry: SoundEntry) {
+  replaceSoundFile(file: File, entry: SoundEntry) {
     this.isProcessing.set(true);
     this.soundsService
       .uploadSound(entry.sound(), file)
       .pipe(
-        tap(soundfile => entry.replaceSoundFile(soundfile)),
+        tap(soundFile => entry.replaceSoundFile(soundFile)),
         finalize(() => this.isProcessing.set(false))
       )
       .subscribe({
@@ -184,9 +184,9 @@ export class SoundManagerComponent {
 
 export class SoundEntry {
   // This is the sound we started with
-  private internalSound: WritableSignal<Sound>;
+  private readonly internalSound: WritableSignal<Sound>;
   // This sound is edited
-  sound: WritableSignal<Sound>;
+  readonly sound: WritableSignal<Sound>;
 
   hasChanges = computed(() => {
     const sound = this.sound();

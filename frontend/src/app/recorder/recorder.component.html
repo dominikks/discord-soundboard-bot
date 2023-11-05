@@ -4,7 +4,7 @@
   <mat-toolbar>
     <div class="toolbar-content">
       <mat-form-field subscriptSizing="dynamic">
-        <mat-label>Discord Server</mat-label>
+        <mat-label>Discord server</mat-label>
         <mat-select [ngModel]="settings.guildId()" (ngModelChange)="settings.guildId.set($event)">
           <mat-option *ngFor="let guild of user.guilds" [value]="guild.id">{{ guild.name || guild.id }}</mat-option>
         </mat-select>

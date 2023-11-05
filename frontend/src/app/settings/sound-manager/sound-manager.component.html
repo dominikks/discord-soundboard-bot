@@ -20,7 +20,7 @@
       <input type="file" accept=".mp3" [disabled]="isUploading()" (change)="onImportFileChange($event)" multiple #fileImport />
       <div class="control">
         <button mat-button [disabled]="isUploading()" (click)="fileImport.click()" matTooltip="Upload new sound"
-          ><mat-icon>add</mat-icon> Add Sounds</button
+          ><mat-icon>add</mat-icon> Add sounds</button
         >
       </div>
     </div>
@@ -35,7 +35,7 @@
         [isPlaying]="currentAudio() != null"
         (playClick)="playAudio(sound)"
         (deleteClick)="deleteSound(sound)"
-        (replaceSoundFile)="replaceSoundfile($event, sound)"
+        (replaceSoundFile)="replaceSoundFile($event, sound)"
       ></app-sound-details>
     </mat-accordion>
   </cdk-virtual-scroll-viewport>
