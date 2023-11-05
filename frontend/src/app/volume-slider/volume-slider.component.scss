@@ -6,4 +6,5 @@
 mat-slider {
   // Make sure the thumb label appears over the toolbar
   z-index: 3;
+  flex-grow: 1;
 }

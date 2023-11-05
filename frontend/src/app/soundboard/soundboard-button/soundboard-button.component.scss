@@ -1,21 +1,28 @@
-.wrapper {
+:host {
+  position: relative;
+}
+
+.main-button {
   height: 100%;
   width: 100%;
 
-  display: flex;
-  flex-direction: column;
-  text-align: center;
+  padding-right: 56px;
 
-  background-color: #424242;
-  transition: background-color 250ms;
-  border-radius: 5px;
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-self: stretch;
+    flex-direction: column;
+    text-align: center;
 
-  user-select: none;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #393939;
+    z-index: 0; // prevents the label from overlapping the preview button or filters
   }
+}
+
+.preview-button {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .sound-name,

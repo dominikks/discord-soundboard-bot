@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { clamp, sample, uniq, sortBy } from 'lodash-es';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
@@ -11,9 +11,6 @@ import { ApiService, RandomInfix } from '../services/api.service';
 import { Sound, SoundsService } from '../services/sounds.service';
 import { EventsService } from '../services/events.service';
 import { EventLogDialogComponent } from './event-log-dialog/event-log-dialog.component';
-
-// false means local playback, string is the guildid
-type Target = false | string;
 
 @Component({
   templateUrl: './soundboard.component.html',
@@ -28,6 +25,7 @@ export class SoundboardComponent implements OnInit, OnDestroy {
   private onDestroy$ = new Subject<void>();
 
   currentAudio$ = new BehaviorSubject<HTMLAudioElement>(null);
+  currentLocalSound$ = new BehaviorSubject<Sound>(null);
   playSound$ = new Subject<Sound>();
   playInfix$ = new Subject<RandomInfix>();
   playFirstMatch$ = new Subject<void>();
@@ -61,10 +59,7 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     shareReplay(1)
   );
 
-  target$ = combineLatest([this.settings.soundTarget$, this.settings.guildId$]).pipe(
-    map(([soundTarget, guildId]) => (soundTarget === 'local' ? false : guildId) as Target),
-    shareReplay(1)
-  );
+  target$ = this.settings.guildId$;
 
   events$ = this.target$.pipe(
     switchMap(target => (target ? this.eventsService.getEventStream(target) : EMPTY)),
@@ -77,49 +72,39 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     private settingsService: SettingsService,
     private eventsService: EventsService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private ref: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     // Play a sound
     this.playSound$
-      .pipe(
-        takeUntil(this.onDestroy$),
-        withLatestFrom(this.settings.soundTarget$, this.settings.guildId$, this.settings.debug$, this.settings.autoJoin$)
-      )
-      .subscribe(([sound, soundTarget, guildId, debug, autojoin]) => {
-        if (soundTarget === 'discord') {
-          this.soundsService.playSound(sound, guildId, autojoin).subscribe(
-            () => {
-              if (debug) {
-                let volString =
-                  sound.soundfile != null
-                    ? `Volume: Max ${sound.soundfile.maxVolume.toFixed(1)} dB, Average ${sound.soundfile.meanVolume.toFixed(1)} dB, `
-                    : '';
-                volString += sound.volumeAdjustment != null ? `Manual adjustment ${sound.volumeAdjustment} dB` : 'Automatic adjustment';
-                this.snackBar.open(volString, 'Ok');
-              }
-            },
-            (error: HttpErrorResponse) => {
-              if (error.status === 400) {
-                this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?', 'Damn');
-              } else if (error.status === 503) {
-                this.snackBar.open('The bot is currently not in a voice channel!', 'Damn');
-              } else if (error.status === 404) {
-                this.snackBar.open('Sound not found. It might have been deleted or renamed.', 'Damn');
-              } else if (error.status >= 300) {
-                this.snackBar.open('Unknown error playing the sound file.', 'Damn');
-              }
+      .pipe(takeUntil(this.onDestroy$), withLatestFrom(this.settings.guildId$, this.settings.debug$, this.settings.autoJoin$))
+      .subscribe(([sound, guildId, debug, autojoin]) => {
+        this.stopLocalSound$.next();
+        this.soundsService.playSound(sound, guildId, autojoin).subscribe(
+          () => {
+            if (debug) {
+              let volString =
+                sound.soundfile != null
+                  ? `Volume: Max ${sound.soundfile.maxVolume.toFixed(1)} dB, Average ${sound.soundfile.meanVolume.toFixed(1)} dB, `
+                  : '';
+              volString += sound.volumeAdjustment != null ? `Manual adjustment ${sound.volumeAdjustment} dB` : 'Automatic adjustment';
+              this.snackBar.open(volString, 'Ok');
             }
-          );
-        } else {
-          this.stopLocalSound$.next();
-          const audio = new Audio();
-          this.currentAudio$.next(audio);
-          audio.src = sound.getDownloadUrl();
-          audio.load();
-          audio.play();
-        }
+          },
+          (error: HttpErrorResponse) => {
+            if (error.status === 400) {
+              this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?', 'Damn');
+            } else if (error.status === 503) {
+              this.snackBar.open('The bot is currently not in a voice channel!', 'Damn');
+            } else if (error.status === 404) {
+              this.snackBar.open('Sound not found. It might have been deleted or renamed.', 'Damn');
+            } else if (error.status >= 300) {
+              this.snackBar.open('Unknown error playing the sound file.', 'Damn');
+            }
+          }
+        );
       });
 
     // Play random sound
@@ -140,20 +125,16 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     });
 
     // Stop playback
-    this.stopSound$
-      .pipe(takeUntil(this.onDestroy$), withLatestFrom(this.settings.soundTarget$, this.settings.guildId$))
-      .subscribe(([, soundTarget, guildId]) => {
-        if (soundTarget === 'discord') {
-          this.soundsService.stopSound(guildId).subscribe();
-        } else {
-          this.stopLocalSound$.next();
-        }
-      });
+    this.stopSound$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.settings.guildId$)).subscribe(([, guildId]) => {
+      this.soundsService.stopSound(guildId).subscribe();
+    });
+
     this.stopLocalSound$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.currentAudio$)).subscribe(([, currentAudio]) => {
       if (currentAudio != null) {
         currentAudio.pause();
         currentAudio.remove();
         this.currentAudio$.next(null);
+        this.currentLocalSound$.next(null);
       }
     });
 
@@ -161,9 +142,8 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     this.joinChannel$
       .pipe(
         takeUntil(this.onDestroy$),
-        withLatestFrom(this.settings.soundTarget$, this.settings.guildId$),
-        filter(([, soundTarget]) => soundTarget === 'discord'),
-        switchMap(([, , guildId]) =>
+        withLatestFrom(this.settings.guildId$),
+        switchMap(([, guildId]) =>
           this.apiService.joinCurrentChannel(guildId).pipe(
             catchError((error: HttpErrorResponse) => {
               if (error.status === 400) {
@@ -180,9 +160,8 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     this.leaveChannel$
       .pipe(
         takeUntil(this.onDestroy$),
-        withLatestFrom(this.settings.soundTarget$, this.settings.guildId$),
-        filter(([, soundTarget]) => soundTarget === 'discord'),
-        switchMap(([, , guildId]) =>
+        withLatestFrom(this.settings.guildId$),
+        switchMap(([, guildId]) =>
           this.apiService.leaveChannel(guildId).pipe(
             catchError((error: HttpErrorResponse) => {
               if (error.status === 503) {
@@ -213,13 +192,8 @@ export class SoundboardComponent implements OnInit, OnDestroy {
     this.onDestroy$.complete();
   }
 
-  setTarget(guildId: Target) {
-    if (guildId === false) {
-      this.settings.soundTarget$.next('local');
-    } else {
-      this.settings.soundTarget$.next('discord');
-      this.settings.guildId$.next(guildId);
-    }
+  setTarget(guildId: string) {
+    this.settings.guildId$.next(guildId);
   }
 
   trackById(_: number, item: Sound) {
@@ -232,5 +206,18 @@ export class SoundboardComponent implements OnInit, OnDestroy {
 
   openEventLog() {
     this.dialog.open(EventLogDialogComponent, { data: this.events$ });
+  }
+
+  playLocalSound(sound: Sound) {
+    this.stopLocalSound$.next();
+    this.currentLocalSound$.next(sound);
+    const audio = new Audio();
+    this.currentAudio$.next(audio);
+    audio.src = sound.getDownloadUrl();
+    audio.load();
+    audio.addEventListener('ended', _ => {
+      this.stopLocalSound$.next();
+    });
+    audio.play();
   }
 }
