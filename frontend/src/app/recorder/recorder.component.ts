@@ -72,7 +72,7 @@ export class RecorderComponent {
         this.snackBar.open('Recording deleted!', undefined, { duration: 1500 });
       },
       error: () => {
-        this.snackBar.open('Failed to delete recording.', 'Ok');
+        this.snackBar.open('Failed to delete recording.', 'Damn', { duration: undefined });
         this.reload();
       },
     });
@@ -88,9 +88,9 @@ export class RecorderComponent {
       },
       error: error => {
         if (error.status === 404) {
-          this.snackBar.open('No data to be saved. Is the bot in a voice channel?', 'Ok');
+          this.snackBar.open('No data to be saved. Is the bot in a voice channel?');
         } else {
-          this.snackBar.open('Unknown error while saving', 'Ok');
+          this.snackBar.open('Unknown error while saving.', 'Damn', { duration: undefined });
         }
       },
     });
@@ -127,7 +127,7 @@ export class RecorderComponent {
           window.open(data.downloadUrl, '_blank');
         },
         error: () => {
-          this.snackBar.open('Error when mixing', 'Ok');
+          this.snackBar.open('Unknown error when mixing.', 'Damn', { duration: undefined });
         },
       });
   }

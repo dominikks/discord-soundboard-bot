@@ -22,7 +22,7 @@ export class CanDeactivateGuildSettingsGuard implements CanDeactivate<GuildSetti
       component.meanVolumeIsSaving() === 'saving' ||
       component.randomInfixIsSaving()
     ) {
-      this.snackBar.open('You cannot leave this component while saving');
+      this.snackBar.open('You cannot leave this component while saving.');
       return false;
     }
 

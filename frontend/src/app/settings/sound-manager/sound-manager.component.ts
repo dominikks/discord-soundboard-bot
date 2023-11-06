@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, Input, signal, Wr
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { from, Observable } from 'rxjs';
 import { finalize, map, mergeMap, tap, toArray } from 'rxjs/operators';
-import { clamp, cloneDeep, sortBy } from 'lodash-es';
+import { clamp, sortBy } from 'lodash-es';
 import { MatDialog } from '@angular/material/dialog';
 import Fuse from 'fuse.js';
 import { AppSettingsService } from '../../services/app-settings.service';
@@ -205,14 +205,8 @@ export class SoundEntry {
   }
 
   saveChanges() {
-    const sound = cloneDeep(this.sound());
-
-    return this.soundsService.updateSound(sound).pipe(
-      map(() => {
-        this.internalSound.set(sound);
-        return sound;
-      })
-    );
+    const sound = new Sound(this.sound());
+    return this.soundsService.updateSound(sound).pipe(tap(() => this.internalSound.set(sound)));
   }
 
   discardChanges() {

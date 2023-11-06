@@ -2,7 +2,7 @@
   <mat-expansion-panel-header>
     <mat-panel-title>
       {{ sound().name }}{{ soundEntry.hasChanges() ? '*' : '' }}
-      <mat-icon *ngIf="sound().soundfile == null" matTooltip="No soundfile uploaded. Click the upload button below."
+      <mat-icon *ngIf="sound().soundfile == null" matTooltip="No sound file uploaded. Click the upload button below."
         >error_outline</mat-icon
       >
     </mat-panel-title>

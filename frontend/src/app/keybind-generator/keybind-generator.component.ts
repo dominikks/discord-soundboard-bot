@@ -25,7 +25,7 @@ const STORAGE_KEY = 'keybinds';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KeybindGeneratorComponent {
-  displayedColumns = ['dragDrop', 'keyCombination', 'discordServer', 'command', 'actions'];
+  readonly displayedColumns = ['dragDrop', 'keyCombination', 'discordServer', 'command', 'actions'];
 
   readonly user = this.apiService.user();
 

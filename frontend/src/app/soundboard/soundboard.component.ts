@@ -144,6 +144,7 @@ export class SoundboardComponent {
   stopLocalSound() {
     const currentAudio = this.currentAudio();
     if (currentAudio != null) {
+      currentAudio.removeAllListeners();
       currentAudio.pause();
       currentAudio.remove();
       this.currentAudio.set(null);

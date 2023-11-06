@@ -10,7 +10,7 @@ interface ApiSound {
   category: string;
   createdAt: number;
   volumeAdjustment?: number;
-  soundfile?: SoundFile;
+  soundfile?: Readonly<SoundFile>;
 }
 
 export interface SoundFile {
@@ -27,7 +27,7 @@ export class Sound implements ApiSound {
   category: string;
   createdAt: number;
   volumeAdjustment?: number;
-  soundfile?: SoundFile;
+  soundfile?: Readonly<SoundFile>;
 
   constructor(base: ApiSound) {
     this.id = base.id;
