@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-soundboard-button',
@@ -6,7 +6,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
   styleUrls: ['./soundboard-button.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SoundboardButtonComponent {
+export class SoundboardButtonComponent implements AfterViewInit {
   @Input({ required: true }) guildId: string;
   @Input() category?: string;
   @Input() isLocallyPlaying = false;
@@ -15,8 +15,14 @@ export class SoundboardButtonComponent {
   @Output() playLocal = new EventEmitter<void>();
   @Output() stopLocal = new EventEmitter<void>();
 
+  @ViewChild('soundName') nameLabel: ElementRef;
+
   get displayedCategory() {
     return this.category == null || this.category === '' ? '' : `/${this.category}`;
+  }
+
+  ngAfterViewInit() {
+    this.setLabelMinWidthToFitContent();
   }
 
   playSound(local = false) {
@@ -33,5 +39,19 @@ export class SoundboardButtonComponent {
     } else {
       this.playSound(true);
     }
+  }
+
+  setLabelMinWidthToFitContent() {
+    const label = this.nameLabel.nativeElement;
+    label.style.whiteSpace = 'nowrap';
+    const computedStyle = window.getComputedStyle(label);
+    const horizontalPadding = parseFloat(computedStyle.paddingLeft) + parseFloat(computedStyle.paddingRight);
+    const singleLineWidth = label.clientWidth - horizontalPadding;
+
+    // subtract all paddings/margins from viewport width; this gets the maximum width, the label can have
+    const cssMaxWidth = 'calc(100vw - 72px - 16px - 16px - 10px)';
+
+    label.style.minWidth = `min(${singleLineWidth / 2 + horizontalPadding + 50}px, ${cssMaxWidth})`;
+    label.style.whiteSpace = null;
   }
 }
