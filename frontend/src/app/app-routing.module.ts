@@ -1,15 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { GuildPermissionGuard } from './guards/guild-permission.guard';
+import { guildPermissionGuard } from './guards/guild-permission.guard';
 import { KeybindGeneratorComponent } from './keybind-generator/keybind-generator.component';
 import { RecorderComponent } from './recorder/recorder.component';
-import { CanDeactivateGuildSettingsGuard } from './settings/guild-settings/can-deactivate-guild-settings.guard';
 import { GuildSettingsComponent } from './settings/guild-settings/guild-settings.component';
 import { SettingsComponent } from './settings/settings.component';
-import { CanDeactivateSoundManagerGuard } from './settings/sound-manager/can-deactivate-sound-manager.guard';
+import { canDeactivateSoundManagerGuard } from './settings/sound-manager/can-deactivate-sound-manager.guard';
 import { SoundManagerComponent } from './settings/sound-manager/sound-manager.component';
 import { UserSettingsComponent } from './settings/user-settings/user-settings.component';
 import { SoundboardComponent } from './soundboard/soundboard.component';
+import { canDeactivateGuildSettingsGuard } from './settings/guild-settings/can-deactivate-guild-settings.guard';
 
 const routes: Routes = [
   {
@@ -39,7 +39,7 @@ const routes: Routes = [
       },
       {
         path: 'guilds/:guildId',
-        canActivate: [GuildPermissionGuard],
+        canActivate: [guildPermissionGuard],
         children: [
           {
             path: '',
@@ -49,12 +49,12 @@ const routes: Routes = [
           {
             path: 'settings',
             component: GuildSettingsComponent,
-            canDeactivate: [CanDeactivateGuildSettingsGuard],
+            canDeactivate: [canDeactivateGuildSettingsGuard],
           },
           {
             path: 'sounds',
             component: SoundManagerComponent,
-            canDeactivate: [CanDeactivateSoundManagerGuard],
+            canDeactivate: [canDeactivateSoundManagerGuard],
           },
         ],
       },
