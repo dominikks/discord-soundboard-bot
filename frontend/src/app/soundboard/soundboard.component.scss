@@ -70,6 +70,14 @@ mat-toolbar.discord-toolbar {
   .filler {
     flex: 1;
   }
+
+  .stop-button {
+    flex-shrink: 0;
+
+    ::ng-deep .mdc-button__label {
+      z-index: unset;
+    }
+  }
 }
 
 mat-toolbar:last-of-type {

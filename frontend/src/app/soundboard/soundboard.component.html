@@ -50,7 +50,10 @@
 
       <div class="filler"></div>
 
-      <button mat-button (click)="stopSound()"><mat-icon>stop</mat-icon> Stop</button>
+      <button mat-button class="stop-button" (click)="stopSound()">
+        <mat-icon>stop</mat-icon>
+        Stop
+      </button>
       <button mat-icon-button matTooltip="Join discord channel you are connected to" matTooltipShowDelay="500" (click)="joinChannel()">
         <mat-icon>login</mat-icon>
       </button>
