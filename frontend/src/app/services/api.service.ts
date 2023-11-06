@@ -70,7 +70,11 @@ export class ApiService {
     return this.http.post('/api/auth/logout', {}, { responseType: 'text' }).pipe(tap(() => this.user.set(null)));
   }
 
+  generateAuthToken() {
+    return this.http.post('/api/auth/token', {}, { responseType: 'text' });
+  }
+
   getAuthToken() {
-    return this.http.post('/api/auth/gettoken', {}, { responseType: 'text' });
+    return this.http.get('/api/auth/token', { responseType: 'text' });
   }
 }

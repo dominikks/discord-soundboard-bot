@@ -91,7 +91,7 @@ export class KeybindGeneratorComponent {
   }
 
   generateAutohotkey() {
-    this.apiService.getAuthToken().subscribe({
+    this.apiService.generateAuthToken().subscribe({
       next: authtoken => {
         const script = this.generateAutohotkeyScript(authtoken, this.keybinds);
         this.downloadText(script, 'soundboard.ahk');

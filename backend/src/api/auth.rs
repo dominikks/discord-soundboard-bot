@@ -1,47 +1,37 @@
-use crate::api::utils::AvatarOrDefault;
-use crate::api::Snowflake;
-use crate::api::DISCORD_CLIENT_ID;
-use crate::api::DISCORD_CLIENT_SECRET;
-use crate::db::models;
-use crate::db::DbConn;
-use crate::discord::management::get_guilds_for_user;
-use crate::discord::management::UserPermission;
-use crate::CacheHttp;
-use crate::BASE_URL;
+use std::error::Error;
+use std::iter;
+use std::time::{Duration, SystemTime};
+
 use bigdecimal::BigDecimal;
 use bigdecimal::FromPrimitive;
 use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
+use diesel::result::Error as DieselError;
 use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
-use oauth2::AuthUrl;
-use oauth2::AuthorizationCode;
 use oauth2::ClientId;
 use oauth2::ClientSecret;
-use oauth2::CsrfToken;
-use oauth2::PkceCodeChallenge;
-use oauth2::PkceCodeVerifier;
 use oauth2::RedirectUrl;
 use oauth2::RequestTokenError;
-use oauth2::Scope;
-use oauth2::TokenResponse;
 use oauth2::TokenUrl;
+use oauth2::{
+    AuthUrl, AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope,
+    TokenResponse,
+};
 use rand::distributions::Alphanumeric;
 use rand::rngs::OsRng;
 use rand::Rng;
 use rocket::get;
-use rocket::http::Cookie;
 use rocket::http::CookieJar;
-use rocket::http::SameSite;
 use rocket::http::Status;
+use rocket::http::{Cookie, SameSite};
 use rocket::outcome::try_outcome;
 use rocket::outcome::IntoOutcome;
 use rocket::request;
 use rocket::request::FromRequest;
 use rocket::request::Outcome;
-use rocket::response::status;
-use rocket::response::Redirect;
 use rocket::response::Responder;
+use rocket::response::{status, Redirect};
 use rocket::serde::json::Json;
 use rocket::time::OffsetDateTime;
 use rocket::Request;
@@ -53,10 +43,17 @@ use serde::Serializer;
 use serde_with::serde_as;
 use serde_with::TimestampSeconds;
 use serenity::model::id::UserId as SerenityUserId;
-use std::error::Error;
-use std::iter;
-use std::time::Duration;
-use std::time::SystemTime;
+
+use crate::api::utils::AvatarOrDefault;
+use crate::api::Snowflake;
+use crate::api::DISCORD_CLIENT_ID;
+use crate::api::DISCORD_CLIENT_SECRET;
+use crate::db::models;
+use crate::db::DbConn;
+use crate::discord::management::get_guilds_for_user;
+use crate::discord::management::UserPermission;
+use crate::CacheHttp;
+use crate::BASE_URL;
 
 static SESSION_COOKIE: &str = "auth_session";
 static LOGIN_COOKIE: &str = "auth_login";
@@ -85,6 +82,7 @@ pub fn get_routes() -> Vec<Route> {
         login_post,
         login_error,
         logout,
+        create_auth_token,
         get_auth_token
     ]
 }
@@ -158,6 +156,7 @@ impl<'r> FromRequest<'r> for TokenUserId {
     type Error = ();
 
     /// Protected api endpoints can inject `TokenUserId` to be accessible via auth token or session.
+    /// Tokens are valid indefinitely.
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         const TOKEN_PREFIX: &str = "Bearer ";
         let db = try_outcome!(request.guard::<DbConn>().await);
@@ -178,19 +177,6 @@ impl<'r> FromRequest<'r> for TokenUserId {
                 })
                 .await
                 .ok()
-                .and_then(|auth_token| {
-                    let diff = SystemTime::now()
-                        .duration_since(auth_token.creation_time)
-                        .ok()?
-                        .as_secs();
-
-                    // Ignore the token if it is more than a week old
-                    if diff > 60 * 60 * 24 * 7 {
-                        None
-                    } else {
-                        Some(auth_token)
-                    }
-                })
                 .and_then(|auth_token| auth_token.user_id.to_u64())
                 .map(TokenUserId);
 
@@ -213,6 +199,8 @@ enum AuthError {
     CsrfMissmatch(String),
     #[response(status = 403)]
     MissingLoginCookie(String),
+    #[response(status = 404)]
+    NotFound(String),
     #[response(status = 500)]
     RequestTokenError(String),
     #[response(status = 500)]
@@ -243,8 +231,8 @@ impl From<reqwest::Error> for AuthError {
     }
 }
 
-impl From<diesel::result::Error> for AuthError {
-    fn from(err: diesel::result::Error) -> Self {
+impl From<DieselError> for AuthError {
+    fn from(err: DieselError) -> Self {
         error!(?err, "Diesel error in API call");
         Self::InternalError(String::from("Database operation failed."))
     }
@@ -458,9 +446,10 @@ fn logout(cookies: &CookieJar<'_>) -> String {
 }
 
 /// Beware: this replaces the current auth token with a new one. The old one becomes invalid.
-#[post("/auth/gettoken")]
-async fn get_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
+#[post("/auth/token")]
+async fn create_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
     let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
+
     let auth_token: String = iter::repeat(())
         .map(|_| OsRng.sample(Alphanumeric))
         .map(char::from)
@@ -487,4 +476,26 @@ async fn get_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
     }
 
     Ok(auth_token)
+}
+
+#[get("/auth/token")]
+async fn get_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
+    let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
+
+    let token = db
+        .run(move |c| {
+            use crate::db::schema::authtokens::dsl::*;
+
+            authtokens.find(uid).first::<models::AuthToken>(c)
+        })
+        .await
+        .map_err(|err| {
+            if err == DieselError::NotFound {
+                AuthError::NotFound(String::from("No auth token found"))
+            } else {
+                AuthError::from(err)
+            }
+        })?;
+
+    Ok(token.token)
 }
