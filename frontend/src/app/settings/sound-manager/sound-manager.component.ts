@@ -39,16 +39,29 @@ export class SoundManagerComponent {
     return sounds.filter(sound => sound.hasChanges());
   });
 
+  readonly soundsFuse = computed(() => {
+    const sounds = this.sounds();
+
+    return new Fuse(sounds, {
+      keys: ['name', 'category'],
+      getFn: (obj, path) => {
+        const sound = obj.sound();
+        if (Array.isArray(path)) return path.map(p => sound[p]);
+        else return sound[path];
+      },
+    });
+  });
+
   readonly soundFilterString = signal('');
   readonly filteredSounds = computed(() => {
     const filterText = this.soundFilterString();
-    const sounds = this.sounds();
 
     if (filterText.length > 0) {
-      const fuse = new Fuse(sounds, { keys: ['sound.name', 'sound.category'] });
-      return fuse.search(filterText).map(res => res.item);
+      return this.soundsFuse()
+        .search(filterText)
+        .map(res => res.item);
     } else {
-      return sounds;
+      return this.sounds();
     }
   });
 
