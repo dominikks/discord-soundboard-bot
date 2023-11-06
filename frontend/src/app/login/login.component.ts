@@ -7,5 +7,5 @@ import { ApiService } from '../services/api.service';
   styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent {
-  constructor(public apiService: ApiService) {}
+  constructor(protected apiService: ApiService) {}
 }

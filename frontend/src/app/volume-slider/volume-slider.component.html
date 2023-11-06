@@ -1,4 +1,4 @@
 <mat-icon>volume_up</mat-icon>
 <mat-slider color="primary" min="0" max="100" discrete [displayWith]="formatLabel">
-  <input matSliderThumb [ngModel]="settings.localVolume$ | async" (ngModelChange)="settings.localVolume$.next($event)" />
+  <input matSliderThumb [ngModel]="settings.localVolume()" (ngModelChange)="settings.localVolume.set($event)" />
 </mat-slider>

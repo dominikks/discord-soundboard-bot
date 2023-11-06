@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, QueryList, signal, ViewChild, ViewChildren } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
 import { WebAudioBufferSource, WebAudioContext, WebAudioGain } from '@ng-web-apis/audio';
-import { BehaviorSubject, combineLatest, EMPTY, Subject } from 'rxjs';
-import { catchError, map, mergeMap, takeUntil, withLatestFrom } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from '../services/api.service';
-import { SettingsService } from '../services/settings.service';
+import { AppSettingsService } from '../services/app-settings.service';
 import { RecorderService, Recording as SrvRecording, RecordingUser } from '../services/recorder.service';
 
 interface Recording extends SrvRecording {
@@ -19,99 +19,80 @@ interface Recording extends SrvRecording {
   styleUrls: ['./recorder.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RecorderComponent implements OnInit, OnDestroy {
+export class RecorderComponent {
   get settings() {
     return this.settingsService.settings;
   }
 
-  private onDestroy$ = new Subject<void>();
-  user$ = this.apiService.user$;
-  deleteRecording$ = new Subject<Recording>();
-  record$ = new Subject<void>();
+  readonly user = this.apiService.user();
 
-  private recordings$ = new BehaviorSubject<Recording[]>(null);
-  shownRecordings$ = combineLatest([this.settings.guildId$, this.recordings$]).pipe(
-    map(([guildId, recordings]) => recordings?.filter(recording => recording.guildId === guildId))
-  );
+  data$: Observable<Recording[]>;
+
+  readonly recordings = signal<Recording[]>(null);
+  readonly shownRecordings = computed(() => {
+    const guildId = this.settings.guildId();
+    return this.recordings().filter(recording => recording.guildId === guildId);
+  });
 
   @ViewChildren(WebAudioBufferSource) audioBufferSources: QueryList<WebAudioBufferSource>;
   @ViewChild(WebAudioGain) gainNode: WebAudioGain;
   @ViewChild(WebAudioContext) contextNode: WebAudioContext;
 
-  gain = this.settings.localVolume$.pipe(map(volume => clamp(volume / 100, 0, 1)));
-  isPlaying: Recording;
+  readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
+  readonly currentlyPlaying = signal<Recording>(null);
 
   constructor(
     private apiService: ApiService,
     private recorderService: RecorderService,
-    private settingsService: SettingsService,
-    private snackBar: MatSnackBar
-  ) {}
-
-  ngOnInit() {
-    this.deleteRecording$
-      .pipe(
-        takeUntil(this.onDestroy$),
-        mergeMap(recording =>
-          this.recorderService.deleteRecording(recording).pipe(
-            catchError(error => {
-              console.error(error);
-              this.snackBar.open('Deleting failed', 'Ok');
-              this.reload();
-              return EMPTY;
-            }),
-            map(_ => recording)
-          )
-        ),
-        withLatestFrom(this.recordings$)
-      )
-      .subscribe(([toDelete, recordings]) => {
-        recordings = recordings.slice();
-        recordings.splice(recordings.indexOf(toDelete), 1);
-        this.recordings$.next(recordings);
-        this.snackBar.open('Deleted', undefined, { duration: 1500 });
-      });
-
-    this.record$
-      .pipe(
-        takeUntil(this.onDestroy$),
-        withLatestFrom(this.settings.guildId$),
-        mergeMap(([, guildId]) => {
-          this.snackBar.open(`Preparing recording. This may take up to one minute.`);
-          return this.recorderService.record(guildId).pipe(
-            catchError(error => {
-              console.error(error);
-              if (error.status === 404) {
-                this.snackBar.open('No data to be saved. Is the bot in a voice channel?', 'Ok');
-              } else {
-                this.snackBar.open('Unknown error while saving', 'Ok');
-              }
-              return EMPTY;
-            })
-          );
-        })
-      )
-      .subscribe(_ => {
-        this.snackBar.open(`Saved`, undefined, { duration: 1500 });
-        this.reload();
-      });
-
+    private settingsService: AppSettingsService,
+    private snackBar: MatSnackBar,
+    private cdRef: ChangeDetectorRef
+  ) {
     this.reload();
   }
 
-  ngOnDestroy() {
-    this.onDestroy$.next();
-    this.onDestroy$.complete();
+  reload() {
+    this.data$ = this.recorderService
+      .loadRecordings()
+      .pipe(
+        map(recordings =>
+          recordings
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .map(recording => ({ ...recording, selected: recording.users.map(_ => true), start: 0, end: recording.length }))
+        )
+      );
   }
 
-  reload() {
-    this.recordings$.next(null);
-    this.recorderService.loadRecordings().subscribe(recordings => {
-      this.recordings$.next(
-        recordings
-          .sort((a, b) => b.timestamp - a.timestamp)
-          .map(recording => ({ ...recording, selected: recording.users.map(_ => true), start: 0, end: recording.length }))
-      );
+  deleteRecording(recording: Recording) {
+    this.recorderService.deleteRecording(recording).subscribe({
+      next: () => {
+        this.recordings.mutate(recordings => {
+          recordings.splice(recordings.indexOf(recording), 1);
+        });
+        this.snackBar.open('Recording deleted!', undefined, { duration: 1500 });
+      },
+      error: () => {
+        this.snackBar.open('Failed to delete recording.', 'Damn', { duration: undefined });
+        this.reload();
+      },
+    });
+  }
+
+  record() {
+    this.snackBar.open(`Preparing recording. This may take up to one minute.`);
+    this.recorderService.record(this.settings.guildId()).subscribe({
+      next: () => {
+        this.snackBar.open(`Recording saved!`, undefined, { duration: 1500 });
+        this.reload();
+        this.cdRef.markForCheck();
+      },
+      error: error => {
+        if (error.status === 404) {
+          this.snackBar.open('No data to be saved. Is the bot in a voice channel?');
+        } else {
+          this.snackBar.open('Unknown error while saving.', 'Damn', { duration: undefined });
+        }
+      },
     });
   }
 
@@ -120,7 +101,7 @@ export class RecorderComponent implements OnInit, OnDestroy {
   }
 
   play(recording: Recording) {
-    this.isPlaying = recording;
+    this.currentlyPlaying.set(recording);
 
     setTimeout(() => {
       const playTime = this.contextNode.currentTime + 0.1;
@@ -131,7 +112,7 @@ export class RecorderComponent implements OnInit, OnDestroy {
   }
 
   stop() {
-    this.isPlaying = undefined;
+    this.currentlyPlaying.set(null);
   }
 
   downloadMix(recording: Recording) {
@@ -141,15 +122,14 @@ export class RecorderComponent implements OnInit, OnDestroy {
         end: recording.end,
         userIds: recording.users.filter((_, i) => recording.selected[i]).map(user => user.id),
       })
-      .subscribe(
-        data => {
+      .subscribe({
+        next: data => {
           window.open(data.downloadUrl, '_blank');
         },
-        error => {
-          console.error(error);
-          this.snackBar.open('Error when mixing', 'Ok');
-        }
-      );
+        error: () => {
+          this.snackBar.open('Unknown error when mixing.', 'Damn', { duration: undefined });
+        },
+      });
   }
 
   formatTrimSlider(value: number) {

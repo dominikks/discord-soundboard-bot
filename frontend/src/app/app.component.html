@@ -1,9 +1,4 @@
-<ng-container *ngIf="loggedIn$ | async; else needsLogin">
-  <router-outlet></router-outlet>
+<ng-container *appDataLoad="data$; callback: loadedData$" [ngSwitch]="apiService.user() != null">
+  <router-outlet *ngSwitchCase="true"></router-outlet>
+  <app-login *ngSwitchCase="false"></app-login>
 </ng-container>
-
-<ng-template #needsLogin>
-  <app-login></app-login>
-</ng-template>
-
-<app-error-box></app-error-box>

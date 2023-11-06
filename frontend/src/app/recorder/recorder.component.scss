@@ -40,12 +40,6 @@ p {
 main {
   flex: 1;
 
-  &.loading-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
   mat-checkbox {
     margin-left: 2em;
   }

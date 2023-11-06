@@ -1,18 +1,10 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
-import { map } from 'rxjs/operators';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
 import { ApiService } from '../services/api.service';
 
-@Injectable({
-  providedIn: 'root',
-})
-export class GuildPermissionGuard {
-  constructor(private apiService: ApiService, private router: Router) {}
+export const guildPermissionGuard: CanActivateFn = (route, _state) => {
+  const guildId = route.params.guildId;
+  const user = inject(ApiService).user();
 
-  canActivate(route: ActivatedRouteSnapshot, _state: RouterStateSnapshot) {
-    const guildId = route.params.guildId;
-    return this.apiService.user$.pipe(
-      map(user => (user.guilds.find(guild => guild.id === guildId).role !== 'user' ? true : this.router.parseUrl('/settings')))
-    );
-  }
-}
+  return user?.guilds.find(guild => guild.id === guildId).role !== 'user' ? true : inject(Router).parseUrl('/settings');
+};

@@ -15,8 +15,8 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
   ],
 })
 export class UnsavedChangesBoxComponent {
-  @Input() hasChanges: boolean;
-  @Input() isSaving: boolean;
+  @Input({ required: true }) hasChanges: boolean;
+  @Input({ required: true }) isSaving: boolean;
   @Input() disabled = false;
 
   @Output() saveChanges = new EventEmitter<void>();

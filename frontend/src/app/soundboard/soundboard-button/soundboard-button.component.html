@@ -1,11 +1,17 @@
 <button mat-raised-button (click)="this.playSound()" class="main-button">
   <div class="sound-name"><ng-content></ng-content></div>
-  <div class="sound-source mat-small" [matTooltip]="(guildId | guildName | async) + dispCategory" matTooltipShowDelay="500">
-    <ng-container *ngIf="category == null">{{ guildId | guildName | async }}</ng-container>
+  <div class="sound-source mat-small" [matTooltip]="(guildId | guildName) + displayedCategory" matTooltipShowDelay="500">
+    <ng-container *ngIf="category == null">{{ guildId | guildName }}</ng-container>
     <ng-container *ngIf="category === ''"><span class="no-category">-- empty --</span></ng-container>
     <ng-container *ngIf="category != null && category.length > 0">{{ category }}</ng-container>
   </div>
 </button>
-<button mat-icon-button [color]="isLocallyPlaying && 'warn'" class="preview-button" (click)="this.handleLocalSound()">
+<button
+  mat-icon-button
+  *ngIf="canPlayLocally"
+  [color]="isLocallyPlaying && 'warn'"
+  class="preview-button"
+  (click)="this.handleLocalSound()"
+>
   <mat-icon>{{ isLocallyPlaying ? 'stop' : 'volume_up' }}</mat-icon>
 </button>

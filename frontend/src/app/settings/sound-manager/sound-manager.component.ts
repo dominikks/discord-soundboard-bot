@@ -1,28 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, Input, signal, WritableSignal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, combineLatest, from, of, ReplaySubject, Subject } from 'rxjs';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  finalize,
-  first,
-  map,
-  mergeMap,
-  pairwise,
-  shareReplay,
-  switchMap,
-  takeUntil,
-  tap,
-  toArray,
-  withLatestFrom,
-} from 'rxjs/operators';
-import { Sound, Soundfile, SoundsService } from 'src/app/services/sounds.service';
-import { SettingsService } from 'src/app/services/settings.service';
+import { from, Observable } from 'rxjs';
+import { finalize, map, mergeMap, tap, toArray } from 'rxjs/operators';
 import { clamp, sortBy } from 'lodash-es';
 import { MatDialog } from '@angular/material/dialog';
 import Fuse from 'fuse.js';
+import { AppSettingsService } from '../../services/app-settings.service';
+import { Sound, SoundFile, SoundsService } from '../../services/sounds.service';
 import { SoundDeleteConfirmComponent } from './sound-delete-confirm/sound-delete-confirm.component';
 
 @Component({
@@ -30,125 +14,114 @@ import { SoundDeleteConfirmComponent } from './sound-delete-confirm/sound-delete
   styleUrls: ['./sound-manager.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SoundManagerComponent implements OnDestroy, OnInit {
-  private onDestroy$ = new Subject<void>();
-
+export class SoundManagerComponent {
   get settings() {
     return this.settingsService.settings;
   }
 
-  guildId$ = new ReplaySubject<string>(1);
-  sounds$ = new ReplaySubject<SoundEntry[]>(1);
-  soundsWithChanges$ = this.sounds$.pipe(
-    switchMap(sounds =>
-      sounds.length === 0
-        ? of([])
-        : combineLatest(sounds.map(sound => sound.hasChanges$)).pipe(map(checks => sounds.filter((_, i) => checks[i])))
-    ),
-    shareReplay(1)
-  );
+  _guildId: string;
+  @Input({ required: true }) set guildId(guildId: string) {
+    this._guildId = guildId;
 
-  soundFilterString$ = new BehaviorSubject('');
-  filteredSounds$ = combineLatest([this.soundFilterString$, this.sounds$]).pipe(
-    debounceTime(300),
-    map(([filterText, sounds]) => {
-      if (filterText.length > 0) {
-        const fuse = new Fuse(sounds, { keys: ['sound.name', 'sound.category'] });
-        return fuse.search(filterText).map(res => res.item);
-      } else {
-        return sounds;
-      }
-    })
-  );
+    this.data$ = this.soundsService
+      .loadSounds()
+      .pipe(map(sounds => sounds.filter(sound => sound.guildId === guildId).map(sound => new SoundEntry(this.soundsService, sound))));
+  }
 
-  isSaving$ = new BehaviorSubject(false);
-  isUploading$ = new BehaviorSubject(false);
-  isProcessing$ = new BehaviorSubject(false); // tracks replace and delete operations
+  data$: Observable<SoundEntry[]>;
 
-  hasChanges$ = this.soundsWithChanges$.pipe(map(sounds => sounds.length > 0));
-  saveChanges$ = new Subject<void>();
-  discardChanges$ = new Subject<void>();
+  readonly sounds = signal<SoundEntry[]>(null);
+  readonly soundsWithChanges = computed(() => {
+    const sounds = this.sounds();
 
-  currentAudio$ = new BehaviorSubject<HTMLAudioElement>(null);
-  playAudioClick$ = new Subject<SoundEntry>();
+    if (sounds == null || sounds.length === 0) return [];
+
+    return sounds.filter(sound => sound.hasChanges());
+  });
+
+  readonly soundFilterString = signal('');
+  readonly filteredSounds = computed(() => {
+    const filterText = this.soundFilterString();
+    const sounds = this.sounds();
+
+    if (filterText.length > 0) {
+      const fuse = new Fuse(sounds, { keys: ['sound.name', 'sound.category'] });
+      return fuse.search(filterText).map(res => res.item);
+    } else {
+      return sounds;
+    }
+  });
+
+  readonly isSaving = signal(false);
+  readonly isUploading = signal(false);
+  readonly isProcessing = signal(false); // tracks replace and delete operations
+
+  readonly hasChanges = computed(() => this.soundsWithChanges().length > 0);
+
+  readonly currentAudio = signal<HTMLAudioElement>(null);
 
   constructor(
     private soundsService: SoundsService,
-    private settingsService: SettingsService,
-    private route: ActivatedRoute,
+    private settingsService: AppSettingsService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog
-  ) {}
+  ) {
+    effect(() => {
+      const audio = this.currentAudio();
+      if (audio == null) return;
 
-  ngOnInit() {
-    // Update guildid and sounds on route change
-    this.route.params.pipe(takeUntil(this.onDestroy$)).subscribe(params => {
-      const guildId = params.guildId;
-      this.guildId$.next(guildId);
-
-      this.soundsService.sounds$
-        .pipe(
-          first(),
-          map(sounds => sounds.filter(sound => sound.guildId === guildId).map(sound => new SoundEntry(this.soundsService, sound)))
-        )
-        .subscribe(sounds => this.sounds$.next(sounds));
+      audio.volume = clamp(this.settings.localVolume() / 100, 0, 1);
     });
-
-    // Play sounds
-    this.playAudioClick$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.currentAudio$)).subscribe(([entry, audio]) => {
-      if (audio) {
-        audio.pause();
-      } else {
-        const newAudio = new Audio();
-        newAudio.src = entry.sound.getDownloadUrl();
-        this.currentAudio$.next(newAudio);
-      }
-    });
-    // Delete HTMLAudioElements when a new one is played
-    this.currentAudio$.pipe(takeUntil(this.onDestroy$), pairwise()).subscribe(([previous, current]) => {
-      if (previous) {
-        previous.remove();
-      }
-      if (current) {
-        current.onpause = () => this.currentAudio$.next(null);
-        current.load();
-        current.play();
-      }
-    });
-    // Set volume
-    combineLatest([this.currentAudio$, this.settings.localVolume$])
-      .pipe(
-        takeUntil(this.onDestroy$),
-        filter(([audio]) => audio != null)
-      )
-      .subscribe(([audio, volume]) => this.setAudioVolume(audio, volume));
-
-    this.saveChanges$.pipe(takeUntil(this.onDestroy$), withLatestFrom(this.soundsWithChanges$)).subscribe(([, sounds]) => {
-      this.isSaving$.next(true);
-      from(sounds)
-        .pipe(
-          mergeMap(sound => sound.saveChanges(), 5),
-          finalize(() => this.isSaving$.next(false))
-        )
-        .subscribe({
-          error: () => this.snackBar.open('Failed to save changes to sounds', 'Damn'),
-        });
-    });
-    this.discardChanges$
-      .pipe(takeUntil(this.onDestroy$), withLatestFrom(this.soundsWithChanges$))
-      .subscribe(([, sounds]) => sounds.forEach(sound => sound.discardChanges()));
   }
 
-  onImportFileChange(event: Event, guildId: string) {
+  saveChanges() {
+    this.isSaving.set(true);
+    from(this.soundsWithChanges())
+      .pipe(
+        mergeMap(sound => sound.saveChanges(), 5),
+        finalize(() => this.isSaving.set(false))
+      )
+      .subscribe({
+        error: () => this.snackBar.open('Failed to save changes to sounds.', 'Damn', { duration: undefined }),
+      });
+  }
+
+  discardChanges() {
+    this.soundsWithChanges().forEach(sound => sound.discardChanges());
+  }
+
+  playAudio(entry: SoundEntry) {
+    const audio = this.currentAudio();
+
+    if (audio) {
+      audio.pause();
+    } else {
+      const newAudio = new Audio();
+      newAudio.src = entry.sound().getDownloadUrl();
+
+      newAudio.onpause = () => {
+        if (this.currentAudio() === newAudio) {
+          newAudio.remove();
+          this.currentAudio.set(null);
+        }
+      };
+      this.currentAudio.set(newAudio);
+
+      newAudio.load();
+      newAudio.play();
+    }
+  }
+
+  onImportFileChange(event: Event) {
     const files = Array.from((event.target as HTMLInputElement).files);
-    this.isUploading$.next(true);
+    this.isUploading.set(true);
     from(files)
       .pipe(
         mergeMap(file => {
           const endingIndex = file.name.lastIndexOf('.');
           const filename = endingIndex > 0 ? file.name.substring(0, endingIndex) : file.name;
           return this.soundsService
-            .createSound(guildId, filename, '')
+            .createSound(this._guildId, filename, '')
             .pipe(
               mergeMap(sound =>
                 this.soundsService
@@ -158,106 +131,94 @@ export class SoundManagerComponent implements OnDestroy, OnInit {
             );
         }, 5),
         toArray(),
-        withLatestFrom(this.sounds$),
-        finalize(() => this.isUploading$.next(false))
+        finalize(() => this.isUploading.set(false))
       )
       .subscribe({
-        next: ([newEntries, sounds]) => {
-          this.sounds$.next([...sounds, ...sortBy(newEntries, entry => entry.sound.name.toLowerCase())]);
-          this.snackBar.open('Upload successful');
+        next: newEntries => {
+          this.sounds.update(sounds => [...sounds, ...sortBy(newEntries, entry => entry.sound.name.toLowerCase())]);
+          this.snackBar.open('Upload successful!');
         },
-        error: () => this.snackBar.open('Upload of sounds failed!', 'Damn'),
+        error: () => this.snackBar.open('Upload of sounds failed!', 'Damn', { duration: undefined }),
       });
   }
 
   deleteSound(entry: SoundEntry) {
     this.dialog
-      .open(SoundDeleteConfirmComponent, { data: { sound: entry.sound } })
+      .open(SoundDeleteConfirmComponent, { data: { sound: entry.sound() } })
       .afterClosed()
       .subscribe(result => {
         if (result) {
-          this.isProcessing$.next(true);
+          this.isProcessing.set(true);
           this.soundsService
-            .deleteSound(entry.sound)
+            .deleteSound(entry.sound())
             .pipe(
-              withLatestFrom(this.sounds$),
-              tap(([, sounds]) => this.sounds$.next(sounds.filter(sound => sound !== entry))),
-              finalize(() => this.isProcessing$.next(false))
+              tap(() => {
+                this.sounds.update(sounds => sounds.filter(sound => sound !== entry));
+              }),
+              finalize(() => this.isProcessing.set(false))
             )
             .subscribe({
-              error: () => this.snackBar.open('Failed to delete sound', 'Damn'),
+              error: () => this.snackBar.open('Failed to delete sound.', 'Damn', { duration: undefined }),
             });
         }
       });
   }
 
-  replaceSoundfile(file: File, entry: SoundEntry) {
-    this.isProcessing$.next(true);
+  replaceSoundFile(file: File, entry: SoundEntry) {
+    this.isProcessing.set(true);
     this.soundsService
-      .uploadSound(entry.sound, file)
+      .uploadSound(entry.sound(), file)
       .pipe(
-        tap(soundfile => entry.replaceSoundfile(soundfile)),
-        finalize(() => this.isProcessing$.next(false))
+        tap(soundFile => entry.replaceSoundFile(soundFile)),
+        finalize(() => this.isProcessing.set(false))
       )
       .subscribe({
-        error: () => this.snackBar.open('Failed to upload soundfile', 'Damn'),
+        error: () => this.snackBar.open('Failed to upload sound file.', 'Damn', { duration: undefined }),
       });
   }
 
-  private setAudioVolume(audio: HTMLAudioElement, volume: number) {
-    audio.volume = clamp(volume / 100, 0, 1);
-  }
-
-  ngOnDestroy() {
-    this.onDestroy$.next();
-    this.onDestroy$.complete();
-  }
-
   trackById(_index: number, item: SoundEntry) {
-    return item.sound.id;
+    return item.sound().id;
   }
 }
 
 export class SoundEntry {
   // This is the sound we started with
-  private internalSound: Sound;
+  private readonly internalSound: WritableSignal<Sound>;
   // This sound is edited
-  sound: Sound;
+  readonly sound: WritableSignal<Sound>;
 
-  checkChanges$ = new BehaviorSubject<void>(null);
-  hasChanges$ = this.checkChanges$.pipe(
-    map(
-      () =>
-        this.internalSound.category !== this.sound.category ||
-        this.internalSound.name !== this.sound.name ||
-        this.internalSound.volumeAdjustment !== this.sound.volumeAdjustment
-    ),
-    distinctUntilChanged(),
-    shareReplay(1)
-  );
+  hasChanges = computed(() => {
+    const sound = this.sound();
+    const internalSound = this.internalSound();
+
+    return (
+      internalSound.category !== sound.category ||
+      internalSound.name !== sound.name ||
+      internalSound.volumeAdjustment !== sound.volumeAdjustment
+    );
+  });
 
   constructor(private soundsService: SoundsService, sound: Sound) {
-    this.internalSound = new Sound(sound);
-    this.sound = new Sound(sound);
+    this.internalSound = signal(new Sound(sound));
+    this.sound = signal(new Sound(sound));
   }
 
   saveChanges() {
-    return of(this.sound).pipe(
-      mergeMap(sound => this.soundsService.updateSound(sound).pipe(map(() => sound))),
-      tap(sound => {
-        this.internalSound = new Sound(sound);
-        this.checkChanges$.next();
-      })
-    );
+    const sound = new Sound(this.sound());
+    return this.soundsService.updateSound(sound).pipe(tap(() => this.internalSound.set(sound)));
   }
 
   discardChanges() {
-    this.sound = new Sound(this.internalSound);
-    this.checkChanges$.next();
+    this.sound.set(new Sound(this.internalSound()));
   }
 
-  replaceSoundfile(soundfile: Soundfile) {
-    this.sound.soundfile = soundfile;
-    this.internalSound.soundfile = soundfile;
+  mutateSound(update: Partial<Pick<Sound, 'category' | 'name' | 'volumeAdjustment'>>) {
+    this.sound.mutate(sound => Object.assign(sound, update));
+  }
+
+  replaceSoundFile(soundFile: SoundFile) {
+    this.sound.mutate(sound => (sound.soundfile = soundFile));
+    this.internalSound.mutate(internalSound => (internalSound.soundfile = soundFile));
   }
 }

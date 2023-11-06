@@ -10,8 +10,8 @@ import { KeyCommand } from '../keybind-generator.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchableSoundSelectComponent implements OnChanges {
-  @Input() sounds: Sound[];
-  @Input() selectedCommand: KeyCommand;
+  @Input({ required: true }) sounds: Sound[];
+  @Input({ required: true }) selectedCommand: KeyCommand;
   @Output() selectedCommandChange = new EventEmitter<KeyCommand>();
 
   soundsFuse: Fuse<Sound>;

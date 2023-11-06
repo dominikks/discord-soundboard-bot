@@ -578,7 +578,7 @@ dependencies = [
 
 [[package]]
 name = "discord-soundboard-bot"
-version = "0.3.3"
+version = "0.4.0-dev"
 dependencies = [
  "bigdecimal",
  "diesel",

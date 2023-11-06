@@ -28,7 +28,8 @@ a.mat-mdc-button {
 
   height: 36px;
   padding: 0;
-  overflow-y: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
 
   .mat-mdc-button {
     flex: 1;

@@ -1,5 +1,5 @@
 <div class="settings-container" [class.is-mobile]="mobileQuery.matches">
-  <app-header pageTitle="Settings" [showSidenavToggle]="mobileQuery.matches" (toggleSidenav)="snav.toggle()"></app-header>
+  <app-header pageTitle="Settings" [showSidenavToggle]="mobileQuery.matches" (toggleSidenav)="sidenav.toggle()"></app-header>
 
   <mat-sidenav-container [style.margin-top.px]="mobileQuery.matches ? (toolbarBreakpointQuery.matches ? 92 : 100) : 0">
     <mat-sidenav
@@ -10,14 +10,14 @@
       [fixedTopGap]="toolbarBreakpointQuery.matches ? 92 : 100"
     >
       <mat-nav-list class="sidenav-list">
-        <mat-list-item routerLink="/settings/user" routerLinkActive="active-nav-link" *ngIf="user$ | async as user">
-          <img matListItemIcon [src]="user.avatarUrl" />
+        <mat-list-item routerLink="/settings/user" routerLinkActive="active-nav-link">
+          <img matListItemIcon [src]="user.avatarUrl" alt="The user's Discord avatar" />
           <div>User settings</div>
         </mat-list-item>
 
-        <ng-container *ngFor="let guild of guilds$ | async">
+        <ng-container *ngFor="let guild of guilds">
           <mat-list-item [routerLink]="'/settings/guilds/' + guild.id">
-            <img *ngIf="guild.iconUrl; else discordIcon" matListItemIcon [src]="guild.iconUrl" />
+            <img *ngIf="guild.iconUrl; else discordIcon" matListItemIcon [src]="guild.iconUrl" alt="The Discord server's avatar" />
             <div matListItemTitle>{{ guild.name }}</div>
             <div matListItemLine>{{ guild.role === 'admin' ? 'Admin' : 'Moderator' }}</div>
 

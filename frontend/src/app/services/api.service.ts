@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { map, mergeMap, retry, shareReplay, tap } from 'rxjs/operators';
+import { Injectable, signal } from '@angular/core';
+import { map } from 'rxjs';
 import { sortBy } from 'lodash-es';
-import { ErrorService } from './error.service';
+import { tap } from 'rxjs/operators';
 
 export interface AppInfo {
   version: string;
@@ -36,49 +35,27 @@ export interface RandomInfix {
   displayName: string;
 }
 
-export interface GuildSettings {
-  userRoleId: string;
-  moderatorRoleId: string;
-  targetMeanVolume: number;
-  targetMaxVolume: number;
-}
-
-export interface GuildData extends GuildSettings {
-  roles: Map<string, string>;
-}
-
 @Injectable({
   providedIn: 'root',
 })
 export class ApiService {
-  appInfo$ = this.http.get<AppInfo>('/api/info').pipe(retry(5), this.errorService.showError('Failed to fetch Server info'), shareReplay());
-  user$ = this.http.get<User>('/api/user').pipe(retry(5), this.errorService.showError('Failed to fetch user data'), shareReplay());
+  readonly user = signal<User | null>(null);
+  readonly appInfo = signal<AppInfo>(null);
 
-  private loadRandomInfixes$ = new BehaviorSubject<void>(null);
-  randomInfixes$ = this.loadRandomInfixes$.pipe(
-    mergeMap(_ => this.http.get<RandomInfix[]>('/api/randominfixes')),
-    retry(5),
-    this.errorService.showError('Failed to fetch random buttons'),
-    map(infixes => sortBy(infixes, infix => infix.displayName.toLowerCase())),
-    shareReplay()
-  );
+  constructor(private http: HttpClient) {}
 
-  constructor(private http: HttpClient, private errorService: ErrorService) {
-    this.loadRandomInfixes$.next();
+  loadAppInfo() {
+    return this.http.get<AppInfo>('/api/info');
   }
 
-  updateRandomInfixes(guildId: string, infixes: { infix: string; displayName: string }[]) {
+  loadUser() {
+    return this.http.get<User>('/api/user');
+  }
+
+  loadRandomInfixes() {
     return this.http
-      .put(`/api/guilds/${encodeURIComponent(guildId)}/randominfixes`, infixes, { responseType: 'text' })
-      .pipe(tap(() => this.loadRandomInfixes$.next()));
-  }
-
-  loadGuildSettings(guildId: string) {
-    return this.http.get<GuildData>(`/api/guilds/${encodeURIComponent(guildId)}/settings`);
-  }
-
-  updateGuildSettings(guildId: string, guildSettings: Partial<GuildSettings>) {
-    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/settings`, guildSettings, { responseType: 'text' });
+      .get<RandomInfix[]>('/api/random-infixes')
+      .pipe(map(infixes => sortBy(infixes, infix => infix.displayName.toLowerCase())));
   }
 
   joinCurrentChannel(guildId: string) {
@@ -87,5 +64,13 @@ export class ApiService {
 
   leaveChannel(guildId: string) {
     return this.http.post(`/api/guilds/${encodeURIComponent(guildId)}/leave`, {}, { responseType: 'text' });
+  }
+
+  logout() {
+    return this.http.post('/api/auth/logout', {}, { responseType: 'text' }).pipe(tap(() => this.user.set(null)));
+  }
+
+  getAuthToken() {
+    return this.http.post('/api/auth/gettoken', {}, { responseType: 'text' });
   }
 }
