@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map } from 'rxjs/operators';
+import { sortBy } from 'lodash-es';
 import { Guild } from './api.service';
 
 interface ApiSound {
@@ -64,7 +65,10 @@ export class SoundsService {
   constructor(private http: HttpClient) {}
 
   loadSounds() {
-    return this.http.get<ApiSound[]>('/api/sounds').pipe(map(sounds => sounds.map(sound => new Sound(sound))));
+    return this.http.get<ApiSound[]>('/api/sounds').pipe(
+      map(sounds => sounds.map(sound => new Sound(sound))),
+      map(sounds => sortBy(sounds, sound => sound.name.toLowerCase()))
+    );
   }
 
   playSound(sound: Sound, guild: Guild | string, autojoin: boolean) {
