@@ -4,10 +4,11 @@
 
 .main-button {
   height: 100%;
-  width: 100%;
+  min-width: 100%;
+  object-fit: cover;
 
   &:not(:only-child) {
-    padding-right: 56px;
+    padding-right: 72px;
   }
 
   ::ng-deep .mdc-button__label {
@@ -15,6 +16,7 @@
     align-self: stretch;
     flex-direction: column;
     text-align: center;
+    min-width: 100%;
 
     z-index: 0; // prevents the label from overlapping the preview button or filters
   }
@@ -25,6 +27,10 @@
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
+
+  &.mat-unthemed {
+    color: rgba(232, 230, 227, 0.38);
+  }
 }
 
 .sound-name,
@@ -38,7 +44,15 @@
   align-items: center;
   justify-content: center;
   font-weight: 500;
-  padding-bottom: 1em;
+  margin-top: 0.5em;
+  margin-bottom: 1.5em;
+  max-height: 100%;
+  word-break: break-word;
+
+  ::ng-deep .mat-icon {
+    flex: none;
+    margin-right: 0.5em;
+  }
 }
 
 .sound-source {

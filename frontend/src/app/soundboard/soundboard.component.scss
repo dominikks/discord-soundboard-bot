@@ -4,7 +4,7 @@
   flex-direction: column;
 }
 
-$main-width: 1200px;
+$main-width: 1500px;
 
 .max-width {
   margin: 0 auto;
@@ -95,9 +95,8 @@ main {
 
     app-soundboard-button {
       margin: 5px;
-      flex: 1 0 175px;
-      max-width: 300px;
-      height: 70px;
+      flex: 1 0 170px;
+      min-height: 70px;
     }
   }
 
