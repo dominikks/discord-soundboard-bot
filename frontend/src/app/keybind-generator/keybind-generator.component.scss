@@ -35,6 +35,12 @@ mat-toolbar {
   }
 }
 
+.auth-token-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .table-wrapper {
   margin-bottom: 16px;
   overflow-x: auto;

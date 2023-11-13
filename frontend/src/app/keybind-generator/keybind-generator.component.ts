@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, signal } from '@
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { pull } from 'lodash-es';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Subject } from 'rxjs';
+import { catchError, forkJoin, of, Subject, tap, throwError } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AppSettingsService } from '../services/app-settings.service';
-import { ApiService } from '../services/api.service';
+import { ApiService, AuthToken } from '../services/api.service';
 import { Sound, SoundsService } from '../services/sounds.service';
 import { KeyCombination } from './keycombination-input/key-combination-input.component';
 
@@ -29,10 +30,16 @@ export class KeybindGeneratorComponent {
 
   readonly user = this.apiService.user();
 
-  readonly data$ = this.soundsService.loadSounds();
-  readonly dataLoaded$ = new Subject<Sound[]>();
+  readonly data$ = forkJoin([
+    this.soundsService.loadSounds(),
+    this.apiService
+      .getAuthToken()
+      .pipe(catchError(error => (error instanceof HttpErrorResponse && error.status === 404 ? of(null) : throwError(() => error)))),
+  ]);
+  readonly dataLoaded$ = new Subject<[Array<Sound>, AuthToken | null]>();
 
   readonly sounds = signal<Sound[]>(null);
+  readonly authToken = signal<AuthToken | null>(null);
   keybinds: Keybind[];
 
   constructor(
@@ -51,9 +58,10 @@ export class KeybindGeneratorComponent {
     }
     this.keybinds = initialKeybinds;
 
-    this.dataLoaded$.pipe(takeUntilDestroyed()).subscribe(sounds => {
+    this.dataLoaded$.pipe(takeUntilDestroyed()).subscribe(([sounds, authToken]) => {
       this.cleanupKeybinds(this.keybinds, sounds);
       this.sounds.set(sounds);
+      this.authToken.set(authToken);
     });
   }
 
@@ -64,6 +72,8 @@ export class KeybindGeneratorComponent {
       const sound = sounds.find(s => keybind.command && typeof keybind.command === 'object' && s.id === keybind.command.id);
       if (sound != null) {
         keybind.command = sound;
+      } else if (typeof keybind.command !== 'string') {
+        keybind.command = null;
       }
     }
   }
@@ -90,10 +100,26 @@ export class KeybindGeneratorComponent {
     this.downloadText(JSON.stringify(this.keybinds), 'keybinds.json');
   }
 
-  generateAutohotkey() {
+  regenerateToken() {
     this.apiService.generateAuthToken().subscribe({
-      next: authtoken => {
-        const script = this.generateAutohotkeyScript(authtoken, this.keybinds);
+      next: newToken => this.authToken.set(newToken),
+      error: error => {
+        console.error(error);
+        this.snackBar.open('Failed to generate new auth token.', 'Damn');
+      },
+    });
+  }
+
+  generateAutohotkey() {
+    const authToken = this.authToken();
+
+    const observable = authToken
+      ? of(authToken)
+      : this.apiService.generateAuthToken().pipe(tap(authToken => this.authToken.set(authToken)));
+
+    observable.subscribe({
+      next: authToken => {
+        const script = this.generateAutohotkeyScript(authToken.token, this.keybinds);
         this.downloadText(script, 'soundboard.ahk');
       },
       error: error => {
@@ -124,9 +150,9 @@ export class KeybindGeneratorComponent {
     };
   }
 
-  private generateAutohotkeyScript(authtoken: string, keybinds: Keybind[]) {
+  private generateAutohotkeyScript(authToken: string, keybinds: Keybind[]) {
     let script = 'PlaySound(server, id) {\n';
-    script += `command := "curl -X POST -H ""Authorization: Bearer ${authtoken}"" `;
+    script += `command := "curl -X POST -H ""Authorization: Bearer ${authToken}"" `;
     // eslint-disable-next-line max-len
     script += `""${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/guilds/" . server . "/play/" . id . """"\n`;
     script += 'shell := ComObjCreate("WScript.Shell")\n';
@@ -135,7 +161,7 @@ export class KeybindGeneratorComponent {
     script += '}\n';
 
     script += 'ExecCommand(server, cmd) {\n';
-    script += `command := "curl -X POST -H ""Authorization: Bearer ${authtoken}"" `;
+    script += `command := "curl -X POST -H ""Authorization: Bearer ${authToken}"" `;
     // eslint-disable-next-line max-len
     script += `""${window.location.protocol}//${window.location.hostname}:${window.location.port}/api/guilds/" . server . "/" . cmd . """"\n`;
     script += 'shell := ComObjCreate("WScript.Shell")\n';

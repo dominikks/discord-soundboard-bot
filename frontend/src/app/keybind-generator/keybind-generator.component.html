@@ -14,9 +14,19 @@
     automatically play sounds when a key combination on your computer is pressed.</p
   >
   <p
-    >The generated script contains a personal auth token for your account. Do not share it with others. It expires after a week, at which
-    point you will have to re-download the AutoHotkey script.</p
+    >The generated script contains a personal auth token for your account. Do not share it with others. You can regenerate it manually,
+    making all previously downloaded scripts invalid.</p
   >
+  <p class="auth-token-row" [ngSwitch]="authToken() != null">
+    <ng-container *ngSwitchCase="false">
+      <span>No auth token generated.</span>
+      <button mat-button (click)="regenerateToken()"><mat-icon>autorenew</mat-icon> Generate token</button>
+    </ng-container>
+    <ng-container *ngSwitchCase="true">
+      <span>Auth token generated on {{ authToken().createdAt * 1000 | date : 'short' }}</span>
+      <button mat-button (click)="regenerateToken()"><mat-icon>autorenew</mat-icon> Regenerate token</button>
+    </ng-container>
+  </p>
   <div class="table-wrapper mat-elevation-z8">
     <mat-table [dataSource]="keybinds" cdkDropList [cdkDropListData]="keybinds" (cdkDropListDropped)="onDrop($event)">
       <ng-container matColumnDef="dragDrop">

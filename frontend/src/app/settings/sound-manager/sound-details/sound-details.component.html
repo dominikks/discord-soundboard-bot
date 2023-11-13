@@ -2,7 +2,7 @@
   <mat-expansion-panel-header>
     <mat-panel-title>
       {{ sound().name }}{{ soundEntry.hasChanges() ? '*' : '' }}
-      <mat-icon *ngIf="sound().soundfile == null" matTooltip="No sound file uploaded. Click the upload button below."
+      <mat-icon *ngIf="sound().soundFile == null" matTooltip="No sound file uploaded. Click the upload button below."
         >error_outline</mat-icon
       >
     </mat-panel-title>
@@ -53,25 +53,25 @@
           <div>Created</div>
           <div timeago [date]="sound().createdAt * 1000" [matTooltip]="sound().createdAt * 1000 | date : 'medium'"></div>
         </div>
-        <ng-container *ngIf="sound().soundfile != null; else noFile">
+        <ng-container *ngIf="sound().soundFile != null; else noFile">
           <div>
             <div>Max Volume</div>
-            <div>{{ sound().soundfile.maxVolume | number : '1.1-1' }} dB</div>
+            <div>{{ sound().soundFile.maxVolume | number : '1.1-1' }} dB</div>
           </div>
           <div>
             <div>Mean Volume</div>
-            <div>{{ sound().soundfile.meanVolume | number : '1.1-1' }} dB</div>
+            <div>{{ sound().soundFile.meanVolume | number : '1.1-1' }} dB</div>
           </div>
           <div>
             <div>Length</div>
-            <div>{{ sound().soundfile.length | number : '1.3-3' }} s</div>
+            <div>{{ sound().soundFile.length | number : '1.3-3' }} s</div>
           </div>
           <div>
             <div>Uploaded</div>
             <div
               timeago
-              [date]="sound().soundfile.uploadedAt * 1000"
-              [matTooltip]="sound().soundfile.uploadedAt * 1000 | date : 'medium'"
+              [date]="sound().soundFile.uploadedAt * 1000"
+              [matTooltip]="sound().soundFile.uploadedAt * 1000 | date : 'medium'"
             ></div>
           </div>
         </ng-container>
@@ -89,7 +89,7 @@
     </button>
     <div class="spinner-button-container">
       <button mat-stroked-button [disabled]="isBusy" (click)="!isBusy && fileImport.click()"
-        ><mat-icon>file_upload</mat-icon> {{ sound().soundfile == null ? 'Upload' : 'Replace' }} sound</button
+        ><mat-icon>file_upload</mat-icon> {{ sound().soundFile == null ? 'Upload' : 'Replace' }} sound</button
       >
       <div class="spinner-container" *ngIf="isBusy">
         <mat-spinner diameter="24"></mat-spinner>

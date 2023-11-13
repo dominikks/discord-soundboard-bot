@@ -445,41 +445,61 @@ fn logout(cookies: &CookieJar<'_>) -> String {
     String::from("User logged out")
 }
 
+#[serde_as]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AuthToken {
+    token: String,
+    #[serde_as(as = "TimestampSeconds<String>")]
+    created_at: SystemTime,
+}
+
+impl From<models::AuthToken> for AuthToken {
+    fn from(value: models::AuthToken) -> Self {
+        Self {
+            token: value.token,
+            created_at: value.creation_time,
+        }
+    }
+}
+
 /// Beware: this replaces the current auth token with a new one. The old one becomes invalid.
 #[post("/auth/token")]
-async fn create_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
+async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
     let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
 
-    let auth_token: String = iter::repeat(())
+    let random_token: String = iter::repeat(())
         .map(|_| OsRng.sample(Alphanumeric))
         .map(char::from)
         .take(32)
         .collect();
 
+    let auth_token = models::AuthToken {
+        user_id: uid,
+        token: random_token.clone(),
+        creation_time: SystemTime::now(),
+    };
+
     {
-        let auth_token = models::AuthToken {
-            user_id: uid,
-            token: auth_token.clone(),
-            creation_time: SystemTime::now(),
-        };
+        let auth_token = auth_token.clone();
         db.run(move |c| {
             use crate::db::schema::authtokens::dsl::*;
 
             diesel::insert_into(authtokens)
-                .values(&auth_token.clone())
+                .values(&auth_token)
                 .on_conflict(user_id)
                 .do_update()
-                .set(auth_token)
+                .set(&auth_token)
                 .execute(c)
         })
         .await?;
     }
 
-    Ok(auth_token)
+    Ok(Json(auth_token.into()))
 }
 
 #[get("/auth/token")]
-async fn get_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
+async fn get_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
     let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
 
     let token = db
@@ -497,5 +517,5 @@ async fn get_auth_token(user: UserId, db: DbConn) -> Result<String, AuthError> {
             }
         })?;
 
-    Ok(token.token)
+    Ok(Json(token.into()))
 }

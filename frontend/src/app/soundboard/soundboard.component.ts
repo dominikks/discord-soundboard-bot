@@ -85,8 +85,8 @@ export class SoundboardComponent {
       next: () => {
         if (this.settings.debug()) {
           let volString =
-            sound.soundfile != null
-              ? `Volume: Max ${sound.soundfile.maxVolume.toFixed(1)} dB, Average ${sound.soundfile.meanVolume.toFixed(1)} dB, `
+            sound.soundFile != null
+              ? `Volume: Max ${sound.soundFile.maxVolume.toFixed(1)} dB, Average ${sound.soundFile.meanVolume.toFixed(1)} dB, `
               : '';
           volString += sound.volumeAdjustment != null ? `Manual adjustment ${sound.volumeAdjustment} dB` : 'Automatic adjustment';
           this.snackBar.open(volString, 'Ok');
