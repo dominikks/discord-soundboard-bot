@@ -14,10 +14,9 @@ A soundboard for discord! Try it out at [floomer.app](https://floomer.app).
 
 ## Screenshots
 
-<img src="doc/images/screenshots/dashboard.png" width="600" />
-
-<img src="https://i.postimg.cc/qBDTpXpH/Screenshot-2022-07-09-at-11-05-50-Soundboard.png" width="400" />
-<img src="https://i.postimg.cc/hPJqvzGz/Screenshot-2022-07-09-at-11-06-55-Soundboard.png" width="400" />
+<img src="doc/images/screenshots/dashboard.png" />
+<img src="doc/images/screenshots/guild-settings.png" />
+<img src="doc/images/screenshots/guild-sounds.png" />
 
 ## Usage
 
