@@ -105,7 +105,7 @@ export class KeybindGeneratorComponent {
       next: newToken => this.authToken.set(newToken),
       error: error => {
         console.error(error);
-        this.snackBar.open('Failed to generate new auth token.', 'Damn');
+        this.snackBar.open('Failed to generate new auth token.', 'Damn', { duration: undefined });
       },
     });
   }
