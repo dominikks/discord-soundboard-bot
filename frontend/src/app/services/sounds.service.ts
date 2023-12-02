@@ -11,7 +11,7 @@ interface ApiSound {
   category: string;
   createdAt: number;
   volumeAdjustment?: number;
-  soundfile?: Readonly<SoundFile>;
+  soundFile?: Readonly<SoundFile>;
 }
 
 export interface SoundFile {
@@ -28,7 +28,7 @@ export class Sound implements ApiSound {
   category: string;
   createdAt: number;
   volumeAdjustment?: number;
-  soundfile?: Readonly<SoundFile>;
+  soundFile?: Readonly<SoundFile>;
 
   constructor(base: ApiSound) {
     this.id = base.id;
@@ -37,7 +37,7 @@ export class Sound implements ApiSound {
     this.category = base.category;
     this.createdAt = base.createdAt;
     this.volumeAdjustment = base.volumeAdjustment;
-    this.soundfile = base.soundfile;
+    this.soundFile = base.soundFile;
   }
 
   getDownloadUrl() {

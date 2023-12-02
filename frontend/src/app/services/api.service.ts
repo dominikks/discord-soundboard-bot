@@ -35,6 +35,11 @@ export interface RandomInfix {
   displayName: string;
 }
 
+export interface AuthToken {
+  token: string;
+  createdAt: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -70,7 +75,11 @@ export class ApiService {
     return this.http.post('/api/auth/logout', {}, { responseType: 'text' }).pipe(tap(() => this.user.set(null)));
   }
 
+  generateAuthToken() {
+    return this.http.post<AuthToken>('/api/auth/token', {});
+  }
+
   getAuthToken() {
-    return this.http.post('/api/auth/gettoken', {}, { responseType: 'text' });
+    return this.http.get<AuthToken>('/api/auth/token');
   }
 }

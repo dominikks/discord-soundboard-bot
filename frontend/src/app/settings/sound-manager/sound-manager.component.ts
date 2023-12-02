@@ -139,7 +139,7 @@ export class SoundManagerComponent {
               mergeMap(sound =>
                 this.soundsService
                   .uploadSound(sound, file)
-                  .pipe(map(soundfile => new SoundEntry(this.soundsService, new Sound({ ...sound, soundfile }))))
+                  .pipe(map(soundFile => new SoundEntry(this.soundsService, new Sound({ ...sound, soundFile }))))
               )
             );
         }, 5),
@@ -231,7 +231,7 @@ export class SoundEntry {
   }
 
   replaceSoundFile(soundFile: SoundFile) {
-    this.sound.mutate(sound => (sound.soundfile = soundFile));
-    this.internalSound.mutate(internalSound => (internalSound.soundfile = soundFile));
+    this.sound.mutate(sound => (sound.soundFile = soundFile));
+    this.internalSound.mutate(internalSound => (internalSound.soundFile = soundFile));
   }
 }

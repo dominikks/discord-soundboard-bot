@@ -1,14 +1,8 @@
-use crate::api::auth::UserId;
-use crate::api::Snowflake;
-use crate::audio_utils;
-use crate::db::models;
-use crate::db::DbConn;
-use crate::discord::management::check_guild_moderator;
-use crate::discord::management::check_guild_user;
-use crate::discord::management::get_guilds_for_user;
-use crate::discord::management::PermissionError;
-use crate::file_handling;
-use crate::CacheHttp;
+use std::convert::TryFrom;
+use std::num::TryFromIntError;
+use std::path::PathBuf;
+use std::time::SystemTime;
+
 use bigdecimal::BigDecimal;
 use bigdecimal::FromPrimitive;
 use bigdecimal::ToPrimitive;
@@ -26,11 +20,19 @@ use serde::Serialize;
 use serde_with::serde_as;
 use serde_with::TimestampSeconds;
 use serenity::model::id::GuildId;
-use std::convert::TryFrom;
-use std::num::TryFromIntError;
-use std::path::PathBuf;
-use std::time::SystemTime;
 use tokio::fs;
+
+use crate::api::auth::UserId;
+use crate::api::Snowflake;
+use crate::audio_utils;
+use crate::db::models;
+use crate::db::DbConn;
+use crate::discord::management::check_guild_moderator;
+use crate::discord::management::check_guild_user;
+use crate::discord::management::get_guilds_for_user;
+use crate::discord::management::PermissionError;
+use crate::file_handling;
+use crate::CacheHttp;
 
 pub fn get_routes() -> Vec<Route> {
     routes![
@@ -114,7 +116,7 @@ struct Sound {
     #[serde_as(as = "TimestampSeconds<String>")]
     created_at: SystemTime,
     volume_adjustment: Option<f32>,
-    soundfile: Option<Soundfile>,
+    sound_file: Option<Soundfile>,
 }
 
 #[serde_as]
@@ -144,7 +146,7 @@ impl TryFrom<(models::Sound, Option<models::Soundfile>)> for Sound {
             category: s.category,
             created_at: s.created_at,
             volume_adjustment: s.volume_adjustment,
-            soundfile: f.map(|f| Soundfile {
+            sound_file: f.map(|f| Soundfile {
                 max_volume: f.max_volume,
                 mean_volume: f.mean_volume,
                 length: f.length,

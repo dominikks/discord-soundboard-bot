@@ -3,6 +3,7 @@
 .max-width {
   max-width: 1500px;
   margin: 0 auto;
+  padding: 0 16px;
   width: 100%;
 }
 
@@ -28,11 +29,13 @@ mat-toolbar {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  margin: 0 16px;
+  gap: 8px;
+}
 
-  button {
-    margin-bottom: 8px;
-  }
+.auth-token-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .table-wrapper {
