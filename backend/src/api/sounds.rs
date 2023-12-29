@@ -22,6 +22,7 @@ use serde_with::TimestampSeconds;
 use serenity::model::id::GuildId;
 use tokio::fs;
 
+use crate::api::auth::TokenUserId;
 use crate::api::auth::UserId;
 use crate::api::Snowflake;
 use crate::audio_utils;
@@ -160,7 +161,7 @@ impl TryFrom<(models::Sound, Option<models::Soundfile>)> for Sound {
 async fn list_sounds(
     cache_http: &State<CacheHttp>,
     db: DbConn,
-    user: UserId,
+    user: TokenUserId,
 ) -> Result<Json<Vec<Sound>>, SoundsError> {
     let guild_ids = get_guilds_for_user(cache_http.inner(), &db, user.into())
         .await?
@@ -195,7 +196,7 @@ async fn get_sound(
     sound_id: i32,
     cache_http: &State<CacheHttp>,
     db: DbConn,
-    user: UserId,
+    user: TokenUserId,
 ) -> Result<NamedFile, SoundsError> {
     let (filename, guild_id) = db
         .run(move |c| {
