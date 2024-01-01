@@ -45,7 +45,7 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/dominikks/discord-soundboard-bot
+          images: ghcr.io/richard-kramer/discord-soundboard-bot
 
       - name: Set environment variables
         if: startsWith(github.ref, 'refs/heads/')

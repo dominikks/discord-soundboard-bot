@@ -33,7 +33,7 @@ FROM debian:stable-slim as composer
 # Get ffmpeg
 RUN apt-get update && apt-get install -y curl tar xz-utils \
   && apt-get clean \
-  && curl -L -# --compressed -A 'https://github.com/dominikks/discord-soundboard-bot' -o linux-x64.tar.xz 'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz' \
+  && curl -L -# --compressed -A 'https://github.com/richard-kramer/discord-soundboard-bot' -o linux-x64.tar.xz 'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz' \
   && tar -x -C /usr/bin --strip-components 1 -f linux-x64.tar.xz --wildcards '*/ffmpeg' '*/ffprobe' \
   && tar -x -f linux-x64.tar.xz --ignore-case --wildcards -O '**/GPLv3.txt' > /usr/bin/ffmpeg.LICENSE
 

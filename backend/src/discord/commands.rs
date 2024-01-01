@@ -162,7 +162,7 @@ async fn info(ctx: &Context, msg: &Message) -> CommandResult {
     let mut resp = format!(
         "discord-soundboard-bot v{}\n\
     Control at {}\n\
-    Source code at https://github.com/dominikks/discord-soundboard-bot",
+    Source code at https://github.com/richard-kramer/discord-soundboard-bot",
         VERSION,
         BASE_URL.clone()
     );
