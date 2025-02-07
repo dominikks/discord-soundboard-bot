@@ -32,6 +32,8 @@ mat-toolbar.controls-toolbar {
 
   mat-form-field,
   app-volume-slider {
+    flex: 49%;
+
     @media (min-width: 900px) {
       &:not(.search-field) {
         flex: 1 1 150px;
@@ -42,8 +44,6 @@ mat-toolbar.controls-toolbar {
         flex: 1 0 150px;
       }
     }
-
-    flex: 49%;
   }
 }
 

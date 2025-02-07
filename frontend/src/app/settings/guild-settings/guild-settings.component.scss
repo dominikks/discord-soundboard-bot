@@ -37,6 +37,8 @@
 }
 
 .save-state-idle-icon {
+  animation: fadeout 1s ease-out 1s both;
+
   @keyframes fadeout {
     0% {
       opacity: 1;
@@ -45,6 +47,4 @@
       opacity: 0;
     }
   }
-
-  animation: fadeout 1s ease-out 1s both;
 }

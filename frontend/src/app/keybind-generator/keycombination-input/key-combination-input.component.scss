@@ -1,4 +1,4 @@
-@import 'variables';
+@use 'variables';
 
 .keybind-input {
   width: 250px;
@@ -9,11 +9,11 @@
   user-select: none;
 
   &:focus {
-    border-color: $primary;
+    border-color: variables.$primary;
   }
 
   &.invalid:not(:focus) {
-    border-color: $warn;
+    border-color: variables.$warn;
   }
 }
 

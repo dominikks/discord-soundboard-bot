@@ -1,4 +1,4 @@
-@import 'variables';
+@use 'variables';
 
 :host {
   display: flex;
@@ -18,7 +18,7 @@ mat-card {
 }
 
 .login-title {
-  background-color: $primary;
+  background-color: variables.$primary;
   color: rgba(black, 0.87);
   height: 3em;
   display: flex;
