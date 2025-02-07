@@ -6,8 +6,8 @@ edition = "2021"
 
 [dependencies]
 bigdecimal = "0.4"
-diesel = { version = "2.1", default-features = false, features = ["postgres", "numeric"] }
-diesel_migrations = "2.1"
+diesel = { version = "2.2", default-features = false, features = ["postgres", "numeric"] }
+diesel_migrations = "2.2"
 dotenv = "0.15"
 lazy_static = "1.4"
 oauth2 = "4.4"
@@ -27,6 +27,8 @@ tokio = { version = "1.32", features = ["rt", "rt-multi-thread", "macros", "proc
 tracing = "0.1"
 tracing-futures = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# Use bundled postgres for diesel
+pq-sys = { version = "0.6", features = ["bundled"] }
 # Needed for Diesel Postgres linking for MUSL
 # https://github.com/emk/rust-musl-builder#making-diesel-work
 openssl = "*"
