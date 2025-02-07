@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { LOCALE_ID, NgModule } from '@angular/core';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -56,84 +56,79 @@ import { VolumeSliderComponent } from './volume-slider/volume-slider.component';
 import { DataLoadDirective } from './data-load/data-load.directive';
 import { DataLoadErrorComponent } from './data-load/data-load-error.component';
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    SoundboardComponent,
-    SoundboardButtonComponent,
-    KeybindGeneratorComponent,
-    KeyCombinationInputComponent,
-    SearchableSoundSelectComponent,
-    RecorderComponent,
-    FooterComponent,
-    HeaderComponent,
-    LoginComponent,
-    SettingsComponent,
-    UserSettingsComponent,
-    GuildSettingsComponent,
-    RandomInfixesComponent,
-    UnsavedChangesBoxComponent,
-    SoundManagerComponent,
-    SoundDetailsComponent,
-    SoundDeleteConfirmComponent,
-    GuildNamePipe,
-    EventLogDialogComponent,
-    ScrollIntoViewDirective,
-    EventDescriptionPipe,
-    VolumeSliderComponent,
-    DataLoadDirective,
-    DataLoadErrorComponent,
-  ],
-  imports: [
-    // Angular
-    BrowserModule,
-    HttpClientModule,
-    AppRoutingModule,
-    BrowserAnimationsModule,
-    FormsModule,
-    // Angular Material
-    MatCardModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatSliderModule,
-    MatIconModule,
-    MatSnackBarModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatRippleModule,
-    MatCheckboxModule,
-    MatSelectModule,
-    MatTableModule,
-    MatDialogModule,
-    DragDropModule,
-    MatMenuModule,
-    MatListModule,
-    MatExpansionModule,
-    MatDividerModule,
-    MatTooltipModule,
-    MatToolbarModule,
-    MatSidenavModule,
-    ScrollingModule,
-    // Other Dependencies
-    TimeagoModule.forRoot(),
-    WebAudioModule,
-    NgxMatSelectSearchModule,
-  ],
-  providers: [
-    {
-      provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,
-      useValue: {
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        duration: 5000,
-      },
-    },
-    {
-      provide: LOCALE_ID,
-      useValue: 'en-US',
-    },
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptorService, multi: true },
-  ],
-  bootstrap: [AppComponent],
-})
+@NgModule({ declarations: [
+        AppComponent,
+        SoundboardComponent,
+        SoundboardButtonComponent,
+        KeybindGeneratorComponent,
+        KeyCombinationInputComponent,
+        SearchableSoundSelectComponent,
+        RecorderComponent,
+        FooterComponent,
+        HeaderComponent,
+        LoginComponent,
+        SettingsComponent,
+        UserSettingsComponent,
+        GuildSettingsComponent,
+        RandomInfixesComponent,
+        UnsavedChangesBoxComponent,
+        SoundManagerComponent,
+        SoundDetailsComponent,
+        SoundDeleteConfirmComponent,
+        GuildNamePipe,
+        EventLogDialogComponent,
+        ScrollIntoViewDirective,
+        EventDescriptionPipe,
+        VolumeSliderComponent,
+        DataLoadDirective,
+        DataLoadErrorComponent,
+    ],
+    bootstrap: [AppComponent], imports: [
+        // Angular
+        BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
+        FormsModule,
+        // Angular Material
+        MatCardModule,
+        MatButtonModule,
+        MatProgressSpinnerModule,
+        MatSliderModule,
+        MatIconModule,
+        MatSnackBarModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatRippleModule,
+        MatCheckboxModule,
+        MatSelectModule,
+        MatTableModule,
+        MatDialogModule,
+        DragDropModule,
+        MatMenuModule,
+        MatListModule,
+        MatExpansionModule,
+        MatDividerModule,
+        MatTooltipModule,
+        MatToolbarModule,
+        MatSidenavModule,
+        ScrollingModule,
+        // Other Dependencies
+        TimeagoModule.forRoot(),
+        WebAudioModule,
+        NgxMatSelectSearchModule], providers: [
+        {
+            provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,
+            useValue: {
+                horizontalPosition: 'center',
+                verticalPosition: 'top',
+                duration: 5000,
+            },
+        },
+        {
+            provide: LOCALE_ID,
+            useValue: 'en-US',
+        },
+        { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptorService, multi: true },
+        provideHttpClient(withInterceptorsFromDi()),
+    ] })
 export class AppModule {}
