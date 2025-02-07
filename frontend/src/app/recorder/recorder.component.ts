@@ -52,23 +52,24 @@ export class RecorderComponent {
   }
 
   reload() {
-    this.data$ = this.recorderService
-      .loadRecordings()
-      .pipe(
-        map(recordings =>
-          recordings
-            .sort((a, b) => b.timestamp - a.timestamp)
-            .map(recording => ({ ...recording, selected: recording.users.map(_ => true), start: 0, end: recording.length }))
-        )
-      );
+    this.data$ = this.recorderService.loadRecordings().pipe(
+      map(recordings =>
+        recordings
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .map(recording => ({
+            ...recording,
+            selected: recording.users.map(_ => true),
+            start: 0,
+            end: recording.length,
+          }))
+      )
+    );
   }
 
   deleteRecording(recording: Recording) {
     this.recorderService.deleteRecording(recording).subscribe({
       next: () => {
-        this.recordings.mutate(recordings => {
-          recordings.splice(recordings.indexOf(recording), 1);
-        });
+        this.recordings.update(recordings => recordings.filter(r => r !== recording));
         this.snackBar.open('Recording deleted!', undefined, { duration: 1500 });
       },
       error: () => {

@@ -16,7 +16,7 @@ export class EventLogDialogComponent {
 
   constructor(@Inject(MAT_DIALOG_DATA) events: Observable<Event>, snackBar: MatSnackBar) {
     events.pipe(takeUntilDestroyed()).subscribe({
-      next: event => this.events.mutate(events => events.push(event)),
+      next: event => this.events.update(events => [...events, event]),
       error: () => snackBar.open('Failed to fetch events.', 'Damn', { duration: undefined }),
     });
   }

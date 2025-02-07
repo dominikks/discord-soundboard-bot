@@ -227,11 +227,11 @@ export class SoundEntry {
   }
 
   mutateSound(update: Partial<Pick<Sound, 'category' | 'name' | 'volumeAdjustment'>>) {
-    this.sound.mutate(sound => Object.assign(sound, update));
+    this.sound.update(sound => new Sound({ ...sound, ...update }));
   }
 
   replaceSoundFile(soundFile: SoundFile) {
-    this.sound.mutate(sound => (sound.soundFile = soundFile));
-    this.internalSound.mutate(internalSound => (internalSound.soundFile = soundFile));
+    this.sound.update(sound => new Sound({ ...sound, soundFile }));
+    this.internalSound.update(internalSound => new Sound({ ...internalSound, soundFile }));
   }
 }

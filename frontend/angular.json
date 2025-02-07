@@ -70,19 +70,19 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "discord-soundboard-bot:build",
-            "proxyConfig": "proxy.config.js"
+            "proxyConfig": "proxy.config.js",
+            "buildTarget": "discord-soundboard-bot:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "discord-soundboard-bot:build:production"
+              "buildTarget": "discord-soundboard-bot:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "discord-soundboard-bot:build"
+            "buildTarget": "discord-soundboard-bot:build"
           }
         },
         "test": {
