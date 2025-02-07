@@ -24,7 +24,8 @@ interface DataLoadContext<T> {
  * https://github.com/angular/angular/blob/e40a640dfe54b03bfe917d08098c319b0b200d25/packages/common/src/directives/ng_if.ts#L230
  */
 @Directive({
-  selector: '[appDataLoad]',
+    selector: '[appDataLoad]',
+    standalone: false
 })
 export class DataLoadDirective<T> implements OnChanges {
   // eslint-disable-next-line @typescript-eslint/naming-convention

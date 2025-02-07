@@ -15,9 +15,10 @@ interface Recording extends SrvRecording {
 }
 
 @Component({
-  templateUrl: './recorder.component.html',
-  styleUrls: ['./recorder.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './recorder.component.html',
+    styleUrls: ['./recorder.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class RecorderComponent {
   get settings() {

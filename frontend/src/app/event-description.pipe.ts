@@ -1,7 +1,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { Event } from './services/events.service';
 
-@Pipe({ name: 'eventDescription' })
+@Pipe({
+    name: 'eventDescription',
+    standalone: false
+})
 export class EventDescriptionPipe implements PipeTransform {
   transform(event: Event): string {
     switch (event.type) {

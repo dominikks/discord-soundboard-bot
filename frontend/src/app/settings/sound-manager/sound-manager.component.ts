@@ -10,9 +10,10 @@ import { Sound, SoundFile, SoundsService } from '../../services/sounds.service';
 import { SoundDeleteConfirmComponent } from './sound-delete-confirm/sound-delete-confirm.component';
 
 @Component({
-  templateUrl: './sound-manager.component.html',
-  styleUrls: ['./sound-manager.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './sound-manager.component.html',
+    styleUrls: ['./sound-manager.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SoundManagerComponent {
   get settings() {

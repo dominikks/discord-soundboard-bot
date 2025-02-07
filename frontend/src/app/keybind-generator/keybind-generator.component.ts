@@ -21,9 +21,10 @@ interface Keybind {
 const STORAGE_KEY = 'keybinds';
 
 @Component({
-  templateUrl: './keybind-generator.component.html',
-  styleUrls: ['./keybind-generator.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './keybind-generator.component.html',
+    styleUrls: ['./keybind-generator.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class KeybindGeneratorComponent {
   readonly displayedColumns = ['dragDrop', 'keyCombination', 'discordServer', 'command', 'actions'];

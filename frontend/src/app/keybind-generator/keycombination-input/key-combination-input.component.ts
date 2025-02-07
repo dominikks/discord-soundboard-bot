@@ -7,10 +7,11 @@ export interface KeyCombination {
 }
 
 @Component({
-  selector: 'app-key-combination-input',
-  templateUrl: './key-combination-input.component.html',
-  styleUrls: ['./key-combination-input.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-key-combination-input',
+    templateUrl: './key-combination-input.component.html',
+    styleUrls: ['./key-combination-input.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class KeyCombinationInputComponent {
   @Input({ required: true }) keyCombination: KeyCombination;

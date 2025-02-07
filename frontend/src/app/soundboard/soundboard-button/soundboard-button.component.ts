@@ -1,10 +1,11 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 
 @Component({
-  selector: 'app-soundboard-button',
-  templateUrl: './soundboard-button.component.html',
-  styleUrls: ['./soundboard-button.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-soundboard-button',
+    templateUrl: './soundboard-button.component.html',
+    styleUrls: ['./soundboard-button.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SoundboardButtonComponent implements AfterViewInit {
   @Input({ required: true }) guildId: string;

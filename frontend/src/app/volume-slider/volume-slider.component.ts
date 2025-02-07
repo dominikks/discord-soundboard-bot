@@ -2,9 +2,10 @@ import { Component } from '@angular/core';
 import { AppSettingsService } from '../services/app-settings.service';
 
 @Component({
-  selector: 'app-volume-slider',
-  templateUrl: './volume-slider.component.html',
-  styleUrls: ['./volume-slider.component.scss'],
+    selector: 'app-volume-slider',
+    templateUrl: './volume-slider.component.html',
+    styleUrls: ['./volume-slider.component.scss'],
+    standalone: false
 })
 export class VolumeSliderComponent {
   get settings() {

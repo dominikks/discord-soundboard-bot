@@ -9,9 +9,10 @@ import { GuildSettings, GuildSettingsService } from '../../services/guild-settin
 type SavingState = 'saved' | 'saving' | 'error';
 
 @Component({
-  templateUrl: './guild-settings.component.html',
-  styleUrls: ['./guild-settings.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './guild-settings.component.html',
+    styleUrls: ['./guild-settings.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class GuildSettingsComponent {
   @ViewChild(RandomInfixesComponent) randomInfixesComponent: RandomInfixesComponent;

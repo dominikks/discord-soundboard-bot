@@ -4,10 +4,11 @@ import { SoundEntry } from '../sound-manager.component';
 type VolumeAdjustmentMode = 'auto' | 'manual';
 
 @Component({
-  selector: 'app-sound-details',
-  templateUrl: './sound-details.component.html',
-  styleUrls: ['./sound-details.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-sound-details',
+    templateUrl: './sound-details.component.html',
+    styleUrls: ['./sound-details.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SoundDetailsComponent {
   @Input({ required: true }) soundEntry: SoundEntry;

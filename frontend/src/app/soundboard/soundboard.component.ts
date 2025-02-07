@@ -13,9 +13,10 @@ import { EventsService } from '../services/events.service';
 import { EventLogDialogComponent } from './event-log-dialog/event-log-dialog.component';
 
 @Component({
-  templateUrl: './soundboard.component.html',
-  styleUrls: ['./soundboard.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './soundboard.component.html',
+    styleUrls: ['./soundboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SoundboardComponent {
   get settings() {

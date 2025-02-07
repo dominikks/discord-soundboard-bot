@@ -13,10 +13,11 @@ import { RandomInfix } from 'src/app/services/api.service';
 import { GuildSettingsService } from '../../services/guild-settings.service';
 
 @Component({
-  selector: 'app-random-infixes',
-  templateUrl: './random-infixes.component.html',
-  styleUrls: ['./random-infixes.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-random-infixes',
+    templateUrl: './random-infixes.component.html',
+    styleUrls: ['./random-infixes.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class RandomInfixesComponent implements OnChanges {
   @Input({ required: true }) guildId: string;

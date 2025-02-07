@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
 
 @Component({
-  template: `
+    template: `
     <div class="error-box">
       <mat-icon>error</mat-icon>
       <div>There was an error loading the required data. Please try again later.</div>
     </div>
     <button mat-button (click)="retry.emit()"><mat-icon>refresh</mat-icon> Retry</button>
   `,
-  styles: [
-    `
+    styles: [
+        `
       @use '@angular/material' as mat;
 
       :host {
@@ -34,8 +34,9 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angul
         }
       }
     `,
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class DataLoadErrorComponent {
   @Output() retry = new EventEmitter<void>();

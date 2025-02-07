@@ -6,9 +6,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  templateUrl: './event-log-dialog.component.html',
-  styleUrls: ['./event-log-dialog.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    templateUrl: './event-log-dialog.component.html',
+    styleUrls: ['./event-log-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EventLogDialogComponent {
   readonly displayedColumns = ['timestamp', 'icon', 'user', 'description'];

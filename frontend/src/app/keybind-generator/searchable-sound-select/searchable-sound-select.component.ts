@@ -4,10 +4,11 @@ import Fuse from 'fuse.js';
 import { KeyCommand } from '../keybind-generator.component';
 
 @Component({
-  selector: 'app-searchable-sound-select',
-  templateUrl: './searchable-sound-select.component.html',
-  styleUrls: ['./searchable-sound-select.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-searchable-sound-select',
+    templateUrl: './searchable-sound-select.component.html',
+    styleUrls: ['./searchable-sound-select.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SearchableSoundSelectComponent implements OnChanges {
   @Input({ required: true }) sounds: Sound[];
