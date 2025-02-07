@@ -28,7 +28,7 @@ RUN cargo build --release
 
 ############################################################
 ### Stage 2: Compose
-FROM debian:stable-slim as composer
+FROM debian:12-slim as composer
 
 # Get ffmpeg
 RUN apt-get update && apt-get install -y curl tar xz-utils \
@@ -48,7 +48,7 @@ ADD --chown=discordbot:discordbot frontend/dist/discord-soundboard-bot /app/stat
 
 ############################################################
 ### Stage 3: Final image
-FROM gcr.io/distroless/cc
+FROM gcr.io/distroless/cc-debian12
 LABEL maintainer="dominik@kus.software"
 
 COPY --from=composer /etc/passwd /etc/
