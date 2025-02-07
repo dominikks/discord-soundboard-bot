@@ -1,5 +1,4 @@
 import {
-  ApplicationRef,
   Directive,
   Input,
   isSignal,
@@ -45,12 +44,7 @@ export class DataLoadDirective<T> implements OnChanges {
   private data: T;
   private activeSubscription: Subscription;
 
-  constructor(
-    private templateRef: TemplateRef<DataLoadContext<T>>,
-    private appRef: ApplicationRef,
-    private viewContainer: ViewContainerRef,
-    private renderer: Renderer2
-  ) {}
+  constructor(private templateRef: TemplateRef<DataLoadContext<T>>, private viewContainer: ViewContainerRef, private renderer: Renderer2) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if ('appDataLoad' in changes) {
