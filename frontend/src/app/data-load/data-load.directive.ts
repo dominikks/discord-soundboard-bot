@@ -23,10 +23,7 @@ interface DataLoadContext<T> {
  * https://angular.io/guide/structural-directives#improving-template-type-checking-for-custom-directives
  * https://github.com/angular/angular/blob/e40a640dfe54b03bfe917d08098c319b0b200d25/packages/common/src/directives/ng_if.ts#L230
  */
-@Directive({
-    selector: '[appDataLoad]',
-    standalone: false
-})
+@Directive({ selector: '[appDataLoad]' })
 export class DataLoadDirective<T> implements OnChanges {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   static ngTemplateGuard_appDataLoad: 'binding';

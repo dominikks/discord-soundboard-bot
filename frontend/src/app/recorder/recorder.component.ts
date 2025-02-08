@@ -1,12 +1,37 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, QueryList, signal, ViewChild, ViewChildren } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
-import { WebAudioBufferSource, WebAudioContext, WebAudioGain } from '@ng-web-apis/audio';
+import { WebAudioBufferSource, WebAudioContext, WebAudioGain, WebAudioModule } from '@ng-web-apis/audio';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiService } from '../services/api.service';
 import { AppSettingsService } from '../services/app-settings.service';
 import { RecorderService, Recording as SrvRecording, RecordingUser } from '../services/recorder.service';
+import { HeaderComponent } from '../header/header.component';
+import { DataLoadDirective } from '../data-load/data-load.directive';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import { NgFor, NgIf, DecimalPipe, DatePipe } from '@angular/common';
+import { MatOption } from '@angular/material/core';
+import { VolumeSliderComponent } from '../volume-slider/volume-slider.component';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import {
+  MatAccordion,
+  MatExpansionPanel,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatExpansionPanelDescription,
+  MatExpansionPanelContent,
+} from '@angular/material/expansion';
+import { TimeagoModule } from 'ngx-timeago';
+import { MatDivider } from '@angular/material/divider';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatSlider, MatSliderRangeThumb } from '@angular/material/slider';
+import { FooterComponent } from '../footer/footer.component';
 
 interface Recording extends SrvRecording {
   selected: boolean[];
@@ -15,10 +40,41 @@ interface Recording extends SrvRecording {
 }
 
 @Component({
-    templateUrl: './recorder.component.html',
-    styleUrls: ['./recorder.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  templateUrl: './recorder.component.html',
+  styleUrls: ['./recorder.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    HeaderComponent,
+    DataLoadDirective,
+    MatToolbar,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    FormsModule,
+    NgFor,
+    MatOption,
+    VolumeSliderComponent,
+    MatButton,
+    MatIcon,
+    MatIconButton,
+    MatTooltip,
+    NgIf,
+    MatAccordion,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    TimeagoModule,
+    MatExpansionPanelDescription,
+    MatExpansionPanelContent,
+    MatDivider,
+    MatCheckbox,
+    MatSlider,
+    MatSliderRangeThumb,
+    WebAudioModule,
+    FooterComponent,
+    DecimalPipe,
+    DatePipe,
+  ],
 })
 export class RecorderComponent {
   get settings() {

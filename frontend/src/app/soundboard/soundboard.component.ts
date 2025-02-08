@@ -11,12 +11,52 @@ import { ApiService, RandomInfix } from '../services/api.service';
 import { Sound, SoundsService } from '../services/sounds.service';
 import { EventsService } from '../services/events.service';
 import { EventLogDialogComponent } from './event-log-dialog/event-log-dialog.component';
+import { HeaderComponent } from '../header/header.component';
+import { DataLoadDirective } from '../data-load/data-load.directive';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatSelect } from '@angular/material/select';
+import { NgFor, NgIf, AsyncPipe, UpperCasePipe, DatePipe } from '@angular/common';
+import { MatOption } from '@angular/material/core';
+import { VolumeSliderComponent } from '../volume-slider/volume-slider.component';
+import { SoundboardButtonComponent } from './soundboard-button/soundboard-button.component';
+import { FooterComponent } from '../footer/footer.component';
+import { EventDescriptionPipe } from '../event-description.pipe';
 
 @Component({
-    templateUrl: './soundboard.component.html',
-    styleUrls: ['./soundboard.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  templateUrl: './soundboard.component.html',
+  styleUrls: ['./soundboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    HeaderComponent,
+    DataLoadDirective,
+    MatToolbar,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatIconButton,
+    MatSuffix,
+    MatIcon,
+    MatTooltip,
+    MatSelect,
+    NgFor,
+    MatOption,
+    VolumeSliderComponent,
+    NgIf,
+    MatButton,
+    SoundboardButtonComponent,
+    FooterComponent,
+    AsyncPipe,
+    UpperCasePipe,
+    DatePipe,
+    EventDescriptionPipe,
+  ],
 })
 export class SoundboardComponent {
   get settings() {

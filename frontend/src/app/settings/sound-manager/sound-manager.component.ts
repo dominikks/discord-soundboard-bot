@@ -8,12 +8,52 @@ import Fuse from 'fuse.js';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { Sound, SoundFile, SoundsService } from '../../services/sounds.service';
 import { SoundDeleteConfirmComponent } from './sound-delete-confirm/sound-delete-confirm.component';
+import { DataLoadDirective } from '../../data-load/data-load.directive';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatTooltip } from '@angular/material/tooltip';
+import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { VolumeSliderComponent } from '../../volume-slider/volume-slider.component';
+import { CdkVirtualScrollViewport, CdkFixedSizeVirtualScroll, CdkVirtualForOf } from '@angular/cdk/scrolling';
+import { MatAccordion } from '@angular/material/expansion';
+import { SoundDetailsComponent } from './sound-details/sound-details.component';
+import { UnsavedChangesBoxComponent } from '../unsaved-changes-box/unsaved-changes-box.component';
+import { GuildNamePipe } from '../../guild-name.pipe';
 
 @Component({
-    templateUrl: './sound-manager.component.html',
-    styleUrls: ['./sound-manager.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  templateUrl: './sound-manager.component.html',
+  styleUrls: ['./sound-manager.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DataLoadDirective,
+    MatToolbar,
+    MatTooltip,
+    NgIf,
+    MatProgressSpinner,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatIconButton,
+    MatSuffix,
+    MatIcon,
+    VolumeSliderComponent,
+    MatButton,
+    CdkVirtualScrollViewport,
+    CdkFixedSizeVirtualScroll,
+    MatAccordion,
+    CdkVirtualForOf,
+    SoundDetailsComponent,
+    NgSwitch,
+    NgSwitchCase,
+    UnsavedChangesBoxComponent,
+    GuildNamePipe,
+  ],
 })
 export class SoundManagerComponent {
   get settings() {

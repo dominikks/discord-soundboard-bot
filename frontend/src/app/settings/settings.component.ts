@@ -1,15 +1,35 @@
 import { MediaMatcher } from '@angular/cdk/layout';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
-import { MatSidenav } from '@angular/material/sidenav';
-import { Router } from '@angular/router';
+import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../services/api.service';
+import { HeaderComponent } from '../header/header.component';
+import { MatNavList, MatListItem, MatListItemIcon, MatListItemTitle, MatListItemLine } from '@angular/material/list';
+import { NgFor, NgIf } from '@angular/common';
+import { FooterComponent } from '../footer/footer.component';
 
 @Component({
-    templateUrl: './settings.component.html',
-    styleUrls: ['./settings.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  templateUrl: './settings.component.html',
+  styleUrls: ['./settings.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    HeaderComponent,
+    MatSidenavContainer,
+    MatSidenav,
+    MatNavList,
+    MatListItem,
+    RouterLink,
+    RouterLinkActive,
+    MatListItemIcon,
+    NgFor,
+    NgIf,
+    MatListItemTitle,
+    MatListItemLine,
+    MatSidenavContent,
+    RouterOutlet,
+    FooterComponent,
+  ],
 })
 export class SettingsComponent implements OnDestroy {
   @ViewChild(MatSidenav) sidenav: MatSidenav;

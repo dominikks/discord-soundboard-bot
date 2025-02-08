@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgIf } from '@angular/common';
 
 export interface KeyCombination {
   key: string;
@@ -7,11 +8,11 @@ export interface KeyCombination {
 }
 
 @Component({
-    selector: 'app-key-combination-input',
-    templateUrl: './key-combination-input.component.html',
-    styleUrls: ['./key-combination-input.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'app-key-combination-input',
+  templateUrl: './key-combination-input.component.html',
+  styleUrls: ['./key-combination-input.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgIf],
 })
 export class KeyCombinationInputComponent {
   @Input({ required: true }) keyCombination: KeyCombination;

@@ -1,5 +1,4 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { guildPermissionGuard } from './guards/guild-permission.guard';
 import { KeybindGeneratorComponent } from './keybind-generator/keybind-generator.component';
 import { RecorderComponent } from './recorder/recorder.component';
@@ -11,7 +10,7 @@ import { UserSettingsComponent } from './settings/user-settings/user-settings.co
 import { SoundboardComponent } from './soundboard/soundboard.component';
 import { canDeactivateGuildSettingsGuard } from './settings/guild-settings/can-deactivate-guild-settings.guard';
 
-const routes: Routes = [
+export const APP_ROUTES: Routes = [
   {
     path: '',
     component: SoundboardComponent,
@@ -65,9 +64,3 @@ const routes: Routes = [
     redirectTo: '',
   },
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes, { useHash: false, bindToComponentInputs: true })],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}

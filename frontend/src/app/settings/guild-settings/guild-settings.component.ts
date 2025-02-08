@@ -5,14 +5,47 @@ import { forkJoin } from 'rxjs';
 import { ApiService, RandomInfix } from '../../services/api.service';
 import { RandomInfixesComponent } from '../random-infixes/random-infixes.component';
 import { GuildSettings, GuildSettingsService } from '../../services/guild-settings.service';
+import { DataLoadDirective } from '../../data-load/data-load.directive';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatTooltip } from '@angular/material/tooltip';
+import { NgIf, NgFor, NgTemplateOutlet, NgSwitch, NgSwitchCase, KeyValuePipe } from '@angular/common';
+import { MatIcon } from '@angular/material/icon';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import { MatOption } from '@angular/material/core';
+import { MatInput } from '@angular/material/input';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { UnsavedChangesBoxComponent } from '../unsaved-changes-box/unsaved-changes-box.component';
 
 type SavingState = 'saved' | 'saving' | 'error';
 
 @Component({
-    templateUrl: './guild-settings.component.html',
-    styleUrls: ['./guild-settings.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  templateUrl: './guild-settings.component.html',
+  styleUrls: ['./guild-settings.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DataLoadDirective,
+    MatToolbar,
+    MatTooltip,
+    NgIf,
+    MatIcon,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    FormsModule,
+    MatOption,
+    NgFor,
+    NgTemplateOutlet,
+    MatInput,
+    MatSuffix,
+    NgSwitch,
+    NgSwitchCase,
+    MatProgressSpinner,
+    RandomInfixesComponent,
+    UnsavedChangesBoxComponent,
+    KeyValuePipe,
+  ],
 })
 export class GuildSettingsComponent {
   @ViewChild(RandomInfixesComponent) randomInfixesComponent: RandomInfixesComponent;

@@ -1,10 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { ApiService } from './services/api.service';
 
-@Pipe({
-    name: 'guildName',
-    standalone: false
-})
+@Pipe({ name: 'guildName' })
 export class GuildNamePipe implements PipeTransform {
   constructor(private apiService: ApiService) {}
 

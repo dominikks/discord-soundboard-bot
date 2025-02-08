@@ -1,14 +1,38 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, signal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { pull } from 'lodash-es';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDragHandle, CdkDrag } from '@angular/cdk/drag-drop';
 import { catchError, forkJoin, of, Subject, tap, throwError } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AppSettingsService } from '../services/app-settings.service';
 import { ApiService, AuthToken } from '../services/api.service';
 import { Sound, SoundsService } from '../services/sounds.service';
-import { KeyCombination } from './keycombination-input/key-combination-input.component';
+import { KeyCombination, KeyCombinationInputComponent } from './keycombination-input/key-combination-input.component';
+import { HeaderComponent } from '../header/header.component';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { DataLoadDirective } from '../data-load/data-load.directive';
+import { NgSwitch, NgSwitchCase, NgFor, DatePipe } from '@angular/common';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow,
+} from '@angular/material/table';
+import { MatSelect } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import { MatOption } from '@angular/material/core';
+import { SearchableSoundSelectComponent } from './searchable-sound-select/searchable-sound-select.component';
+import { FooterComponent } from '../footer/footer.component';
 
 export type KeyCommand = Sound | 'stop' | 'record';
 
@@ -21,10 +45,41 @@ interface Keybind {
 const STORAGE_KEY = 'keybinds';
 
 @Component({
-    templateUrl: './keybind-generator.component.html',
-    styleUrls: ['./keybind-generator.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  templateUrl: './keybind-generator.component.html',
+  styleUrls: ['./keybind-generator.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    HeaderComponent,
+    MatToolbar,
+    MatButton,
+    MatTooltip,
+    MatIcon,
+    DataLoadDirective,
+    NgSwitch,
+    NgSwitchCase,
+    MatTable,
+    CdkDropList,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCellDef,
+    MatCell,
+    CdkDragHandle,
+    KeyCombinationInputComponent,
+    MatSelect,
+    FormsModule,
+    NgFor,
+    MatOption,
+    SearchableSoundSelectComponent,
+    MatIconButton,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    CdkDrag,
+    FooterComponent,
+    DatePipe,
+  ],
 })
 export class KeybindGeneratorComponent {
   readonly displayedColumns = ['dragDrop', 'keyCombination', 'discordServer', 'command', 'actions'];

@@ -1,11 +1,14 @@
 import { Component } from '@angular/core';
 import { AppSettingsService } from '../services/app-settings.service';
+import { MatIcon } from '@angular/material/icon';
+import { MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-    selector: 'app-volume-slider',
-    templateUrl: './volume-slider.component.html',
-    styleUrls: ['./volume-slider.component.scss'],
-    standalone: false
+  selector: 'app-volume-slider',
+  templateUrl: './volume-slider.component.html',
+  styleUrls: ['./volume-slider.component.scss'],
+  imports: [MatIcon, MatSlider, MatSliderThumb, FormsModule],
 })
 export class VolumeSliderComponent {
   get settings() {
