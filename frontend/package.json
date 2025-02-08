@@ -3,7 +3,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --configuration production",
+    "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
     "format": "prettier --write .",
