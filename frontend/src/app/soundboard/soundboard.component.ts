@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, signal, inject } from '@angular/core';
 import { clamp, sample, sortBy, uniq } from 'lodash-es';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
@@ -57,6 +57,13 @@ import { EventDescriptionPipe } from '../event-description.pipe';
   ],
 })
 export class SoundboardComponent {
+  private apiService = inject(ApiService);
+  private soundsService = inject(SoundsService);
+  private settingsService = inject(AppSettingsService);
+  private eventsService = inject(EventsService);
+  private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
+
   get settings() {
     return this.settingsService.settings;
   }
@@ -101,14 +108,7 @@ export class SoundboardComponent {
     return target ? this.eventsService.getEventStream(target).pipe(shareReplay(100)) : EMPTY;
   });
 
-  constructor(
-    private apiService: ApiService,
-    private soundsService: SoundsService,
-    private settingsService: AppSettingsService,
-    private eventsService: EventsService,
-    private snackBar: MatSnackBar,
-    private dialog: MatDialog
-  ) {
+  constructor() {
     // Update volume of HTMLAudioElement
     effect(() => {
       const audio = this.currentAudio();

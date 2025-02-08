@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, Input, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, Input, signal, ViewChild, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
@@ -44,6 +44,10 @@ type SavingState = 'saved' | 'saving' | 'error';
   ],
 })
 export class GuildSettingsComponent {
+  private apiService = inject(ApiService);
+  private guildSettingsService = inject(GuildSettingsService);
+  private snackBar = inject(MatSnackBar);
+
   @ViewChild(RandomInfixesComponent) randomInfixesComponent: RandomInfixesComponent;
 
   private readonly _guildId = signal<string>(null);
@@ -78,8 +82,6 @@ export class GuildSettingsComponent {
 
   readonly randomInfixesHasChanges = signal(false);
   readonly randomInfixIsSaving = signal(false);
-
-  constructor(private apiService: ApiService, private guildSettingsService: GuildSettingsService, private snackBar: MatSnackBar) {}
 
   saveRandomInfixes() {
     this.randomInfixIsSaving.set(true);

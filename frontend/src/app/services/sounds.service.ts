@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { sortBy } from 'lodash-es';
 import { Guild } from './api.service';
@@ -62,7 +62,7 @@ export class Sound implements ApiSound {
   providedIn: 'root',
 })
 export class SoundsService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   loadSounds() {
     return this.http.get<ApiSound[]>('/api/sounds').pipe(

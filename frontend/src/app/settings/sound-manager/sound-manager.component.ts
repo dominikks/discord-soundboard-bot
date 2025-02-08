@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, Input, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, Input, signal, WritableSignal, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { from, Observable } from 'rxjs';
 import { finalize, map, mergeMap, tap, toArray } from 'rxjs/operators';
@@ -53,6 +53,11 @@ import { GuildNamePipe } from '../../guild-name.pipe';
   ],
 })
 export class SoundManagerComponent {
+  private soundsService = inject(SoundsService);
+  private settingsService = inject(AppSettingsService);
+  private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
+
   get settings() {
     return this.settingsService.settings;
   }
@@ -111,12 +116,7 @@ export class SoundManagerComponent {
 
   readonly currentAudio = signal<HTMLAudioElement>(null);
 
-  constructor(
-    private soundsService: SoundsService,
-    private settingsService: AppSettingsService,
-    private snackBar: MatSnackBar,
-    private dialog: MatDialog
-  ) {
+  constructor() {
     effect(() => {
       const audio = this.currentAudio();
       if (audio == null) return;

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ApiService } from '../services/api.service';
 import { MatCard } from '@angular/material/card';
 import { MatAnchor } from '@angular/material/button';
@@ -11,5 +11,5 @@ import { FooterComponent } from '../footer/footer.component';
   imports: [MatCard, MatAnchor, FooterComponent],
 })
 export class LoginComponent {
-  constructor(protected apiService: ApiService) {}
+  protected apiService = inject(ApiService);
 }

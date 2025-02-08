@@ -1,5 +1,5 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild, inject } from '@angular/core';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,6 +30,9 @@ import { FooterComponent } from '../footer/footer.component';
   ],
 })
 export class SettingsComponent implements OnDestroy {
+  private apiService = inject(ApiService);
+  private router = inject(Router);
+
   @ViewChild(MatSidenav) sidenav: MatSidenav;
 
   readonly mobileQuery: MediaQueryList;
@@ -39,7 +42,10 @@ export class SettingsComponent implements OnDestroy {
   readonly user = this.apiService.user();
   readonly guilds = this.user.guilds.filter(guild => guild.role !== 'user');
 
-  constructor(private apiService: ApiService, private router: Router, changeDetectorRef: ChangeDetectorRef, media: MediaMatcher) {
+  constructor() {
+    const changeDetectorRef = inject(ChangeDetectorRef);
+    const media = inject(MediaMatcher);
+
     this.mobileQuery = media.matchMedia('(max-width: 750px)');
     this.toolbarBreakpointQuery = media.matchMedia('(max-width: 599px)');
     this._mediaQueryListener = () => changeDetectorRef.detectChanges();

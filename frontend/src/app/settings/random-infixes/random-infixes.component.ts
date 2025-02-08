@@ -7,6 +7,7 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  inject,
 } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { RandomInfix } from 'src/app/services/api.service';
@@ -28,13 +29,14 @@ import { MatIcon } from '@angular/material/icon';
   imports: [MatCard, MatDivider, MatFormField, MatLabel, MatInput, FormsModule, MatError, MatIconButton, MatIcon, MatButton],
 })
 export class RandomInfixesComponent implements OnChanges {
+  private guildSettingsService = inject(GuildSettingsService);
+  private cdRef = inject(ChangeDetectorRef);
+
   @Input({ required: true }) guildId: string;
   @Input({ required: true }) randomInfixes: RandomInfix[];
   @Output() hasChanges = new EventEmitter<boolean>();
 
   infixes: RandomInfix[];
-
-  constructor(private guildSettingsService: GuildSettingsService, private cdRef: ChangeDetectorRef) {}
 
   addRandomInfix() {
     this.infixes.push({ guildId: this.guildId, displayName: '', infix: '' });

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AppSettingsService } from 'src/app/services/app-settings.service';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
@@ -10,5 +10,5 @@ import { FormsModule } from '@angular/forms';
   imports: [MatCheckbox, FormsModule],
 })
 export class UserSettingsComponent {
-  constructor(public settingsService: AppSettingsService) {}
+  settingsService = inject(AppSettingsService);
 }

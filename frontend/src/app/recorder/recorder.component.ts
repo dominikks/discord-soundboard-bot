@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, QueryList, signal, ViewChild, ViewChildren } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  computed,
+  QueryList,
+  signal,
+  ViewChild,
+  ViewChildren,
+  inject,
+} from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
 import { WebAudioBufferSource, WebAudioContext, WebAudioGain, WebAudioModule } from '@ng-web-apis/audio';
@@ -75,6 +85,12 @@ interface Recording extends SrvRecording {
   ],
 })
 export class RecorderComponent {
+  private apiService = inject(ApiService);
+  private recorderService = inject(RecorderService);
+  private settingsService = inject(AppSettingsService);
+  private snackBar = inject(MatSnackBar);
+  private cdRef = inject(ChangeDetectorRef);
+
   get settings() {
     return this.settingsService.settings;
   }
@@ -96,13 +112,7 @@ export class RecorderComponent {
   readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
   readonly currentlyPlaying = signal<Recording>(null);
 
-  constructor(
-    private apiService: ApiService,
-    private recorderService: RecorderService,
-    private settingsService: AppSettingsService,
-    private snackBar: MatSnackBar,
-    private cdRef: ChangeDetectorRef
-  ) {
+  constructor() {
     this.reload();
   }
 

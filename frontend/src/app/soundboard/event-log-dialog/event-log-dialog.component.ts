@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { Event } from 'src/app/services/events.service';
@@ -39,7 +39,10 @@ export class EventLogDialogComponent {
   readonly displayedColumns = ['timestamp', 'icon', 'user', 'description'];
   readonly events = signal<Event[]>([]);
 
-  constructor(@Inject(MAT_DIALOG_DATA) events: Observable<Event>, snackBar: MatSnackBar) {
+  constructor() {
+    const events = inject<Observable<Event>>(MAT_DIALOG_DATA);
+    const snackBar = inject(MatSnackBar);
+
     events.pipe(takeUntilDestroyed()).subscribe({
       next: event => this.events.update(events => [...events, event]),
       error: () => snackBar.open('Failed to fetch events.', 'Damn', { duration: undefined }),

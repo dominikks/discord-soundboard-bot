@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 type BaseEventData = { guildId: string; userName: string; userAvatarUrl: string; timestamp: number };
@@ -16,7 +16,7 @@ export type Event = (
   providedIn: 'root',
 })
 export class EventsService {
-  constructor(private zone: NgZone) {}
+  private zone = inject(NgZone);
 
   getEventStream(guildId: string): Observable<Event> {
     return new Observable(observer => {

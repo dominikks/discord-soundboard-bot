@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AppSettingsService } from '../services/app-settings.service';
 import { MatIcon } from '@angular/material/icon';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
@@ -11,11 +11,11 @@ import { FormsModule } from '@angular/forms';
   imports: [MatIcon, MatSlider, MatSliderThumb, FormsModule],
 })
 export class VolumeSliderComponent {
+  private settingsService = inject(AppSettingsService);
+
   get settings() {
     return this.settingsService.settings;
   }
-
-  constructor(private settingsService: AppSettingsService) {}
 
   formatLabel(value: number): string {
     return `${value.toFixed(0)} %`;

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ApiService } from '../services/api.service';
@@ -34,12 +34,12 @@ import { MatDivider } from '@angular/material/divider';
   ],
 })
 export class HeaderComponent {
+  protected apiService = inject(ApiService);
+
   @Input({ required: true }) pageTitle: string;
   @Input() showSidenavToggle = false;
 
   @Output() toggleSidenav = new EventEmitter<void>();
-
-  constructor(protected apiService: ApiService) {}
 
   logout() {
     this.apiService

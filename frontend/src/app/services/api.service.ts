@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { map } from 'rxjs';
 import { sortBy } from 'lodash-es';
 import { tap } from 'rxjs/operators';
@@ -44,10 +44,10 @@ export interface AuthToken {
   providedIn: 'root',
 })
 export class ApiService {
+  private http = inject(HttpClient);
+
   readonly user = signal<User | null>(null);
   readonly appInfo = signal<AppInfo>(null);
-
-  constructor(private http: HttpClient) {}
 
   loadAppInfo() {
     return this.http.get<AppInfo>('/api/info');

@@ -1,4 +1,4 @@
-import { effect, Injectable, signal } from '@angular/core';
+import { effect, Injectable, signal, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ApiService } from './api.service';
 
@@ -16,7 +16,9 @@ export class AppSettingsService {
     autoJoin: signal(true),
   };
 
-  constructor(apiService: ApiService) {
+  constructor() {
+    const apiService = inject(ApiService);
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions } from '@angular/material/dialog';
 import { Sound } from 'src/app/services/sounds.service';
 import { CdkScrollable } from '@angular/cdk/scrolling';
@@ -11,7 +11,10 @@ import { MatButton } from '@angular/material/button';
   imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton],
 })
 export class SoundDeleteConfirmComponent {
-  constructor(private dialogRef: MatDialogRef<SoundDeleteConfirmComponent>, @Inject(MAT_DIALOG_DATA) public data: { sound: Sound }) {}
+  private dialogRef = inject<MatDialogRef<SoundDeleteConfirmComponent>>(MatDialogRef);
+  data = inject<{
+    sound: Sound;
+  }>(MAT_DIALOG_DATA);
 
   confirm() {
     this.dialogRef.close(true);

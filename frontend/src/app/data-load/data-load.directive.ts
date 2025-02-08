@@ -8,6 +8,7 @@ import {
   TemplateRef,
   ViewContainerRef,
   WritableSignal,
+  inject,
 } from '@angular/core';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Observable, Subject, Subscription } from 'rxjs';
@@ -25,6 +26,10 @@ interface DataLoadContext<T> {
  */
 @Directive({ selector: '[appDataLoad]' })
 export class DataLoadDirective<T> implements OnChanges {
+  private templateRef = inject<TemplateRef<DataLoadContext<T>>>(TemplateRef);
+  private viewContainer = inject(ViewContainerRef);
+  private renderer = inject(Renderer2);
+
   // eslint-disable-next-line @typescript-eslint/naming-convention
   static ngTemplateGuard_appDataLoad: 'binding';
 
@@ -41,8 +46,6 @@ export class DataLoadDirective<T> implements OnChanges {
   private state: 'loading' | 'error' | 'done';
   private data: T;
   private activeSubscription: Subscription;
-
-  constructor(private templateRef: TemplateRef<DataLoadContext<T>>, private viewContainer: ViewContainerRef, private renderer: Renderer2) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if ('appDataLoad' in changes) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, signal, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { pull } from 'lodash-es';
 import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDragHandle, CdkDrag } from '@angular/cdk/drag-drop';
@@ -79,6 +79,12 @@ const STORAGE_KEY = 'keybinds';
   ],
 })
 export class KeybindGeneratorComponent {
+  private apiService = inject(ApiService);
+  private soundsService = inject(SoundsService);
+  private settingsService = inject(AppSettingsService);
+  private snackBar = inject(MatSnackBar);
+  private cdRef = inject(ChangeDetectorRef);
+
   readonly displayedColumns = ['dragDrop', 'keyCombination', 'discordServer', 'command', 'actions'];
 
   readonly user = this.apiService.user();
@@ -95,13 +101,7 @@ export class KeybindGeneratorComponent {
   readonly authToken = signal<AuthToken | null>(null);
   keybinds: Keybind[];
 
-  constructor(
-    private apiService: ApiService,
-    private soundsService: SoundsService,
-    private settingsService: AppSettingsService,
-    private snackBar: MatSnackBar,
-    private cdRef: ChangeDetectorRef
-  ) {
+  constructor() {
     const saved = localStorage.getItem(STORAGE_KEY);
     let initialKeybinds = [];
     if (saved) {
