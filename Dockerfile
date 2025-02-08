@@ -44,7 +44,7 @@ RUN addgroup --gid 1000 discordbot \
   && chown -R discordbot:discordbot /app
 
 COPY --chown=discordbot:discordbot --from=builder /app/target/x86_64-unknown-linux-musl/release/discord-soundboard-bot /app/Rocket.toml /app/
-ADD --chown=discordbot:discordbot frontend/dist/discord-soundboard-bot /app/static
+ADD --chown=discordbot:discordbot frontend/dist/discord-soundboard-bot/browser frontend/dist/discord-soundboard-bot/3rdpartylicenses.txt /app/static/
 
 ############################################################
 ### Stage 3: Final image
