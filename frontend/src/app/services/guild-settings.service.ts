@@ -15,7 +15,9 @@ export class GuildSettingsService {
   private http = inject(HttpClient);
 
   updateRandomInfixes(guildId: string, infixes: Omit<RandomInfix, 'guildId'>[]) {
-    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/random-infixes`, infixes, { responseType: 'text' });
+    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/random-infixes`, infixes, {
+      responseType: 'text',
+    });
   }
 
   loadGuildSettings(guildId: string) {
@@ -23,6 +25,8 @@ export class GuildSettingsService {
   }
 
   updateGuildSettings(guildId: string, guildSettings: Partial<Omit<GuildSettings, 'roles'>>) {
-    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/settings`, guildSettings, { responseType: 'text' });
+    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/settings`, guildSettings, {
+      responseType: 'text',
+    });
   }
 }

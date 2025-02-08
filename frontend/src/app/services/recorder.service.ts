@@ -56,8 +56,8 @@ export class RecorderService {
             ...user,
             url: `/api/guilds/${recording.guildId}/recordings/${recording.timestamp}/${user.id}`,
           })),
-        }))
-      )
+        })),
+      ),
     );
   }
 

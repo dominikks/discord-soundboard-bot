@@ -65,7 +65,9 @@ export class SoundDetailsComponent {
     return this.soundEntry.sound;
   }
 
-  readonly volumeAdjustmentMode = computed(() => (this.soundEntry.sound().volumeAdjustment == null ? 'auto' : 'manual'));
+  readonly volumeAdjustmentMode = computed(() =>
+    this.soundEntry.sound().volumeAdjustment == null ? 'auto' : 'manual',
+  );
 
   updateVolumeAdjustmentMode(mode: VolumeAdjustmentMode) {
     if (mode === 'auto') {

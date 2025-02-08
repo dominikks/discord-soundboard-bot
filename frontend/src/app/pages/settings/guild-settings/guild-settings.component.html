@@ -1,96 +1,105 @@
 <ng-container *appDataLoad="data$(); callback: loadedData">
   <mat-toolbar
     ><div class="title"
-      >Settings for <span class="guild-name" [matTooltip]="guild().name" [matTooltipShowDelay]="500">{{ guild().name }}</span></div
+      >Settings for
+      <span class="guild-name" [matTooltip]="guild().name" [matTooltipShowDelay]="500">{{ guild().name }}</span></div
     ></mat-toolbar
   >
 
   <div class="guild-container">
     <!-- Admin only area -->
     @if (role() === 'admin') {
-    <h2 class="section-title"><mat-icon>admin_panel_settings</mat-icon>&nbsp;<span>User</span></h2>
-    <p
-      >You can define a role from your server to be the soundboard user role. Only users with that role (or moderator or admin role) can
-      view and play sounds as well as create, view and delete recordings on your server.</p
-    >
-    <div class="setting-input-wrapper">
-      <mat-form-field>
-        <mat-label>User role</mat-label>
-        <mat-select [ngModel]="guildSettings().userRoleId" (ngModelChange)="setUserRoleId($event, guild().id)">
-          <mat-option [value]="null">-- Disable users --</mat-option>
-          @for (role of guildSettings().roles | keyvalue; track role) {
-          <mat-option [value]="role.key">{{ role.value }}</mat-option>
+      <h2 class="section-title"><mat-icon>admin_panel_settings</mat-icon>&nbsp;<span>User</span></h2>
+      <p
+        >You can define a role from your server to be the soundboard user role. Only users with that role (or moderator
+        or admin role) can view and play sounds as well as create, view and delete recordings on your server.</p
+      >
+      <div class="setting-input-wrapper">
+        <mat-form-field>
+          <mat-label>User role</mat-label>
+          <mat-select [ngModel]="guildSettings().userRoleId" (ngModelChange)="setUserRoleId($event, guild().id)">
+            <mat-option [value]="null">-- Disable users --</mat-option>
+            @for (role of guildSettings().roles | keyvalue; track role) {
+              <mat-option [value]="role.key">{{ role.value }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: userIsSaving() }"></ng-container>
+      </div>
+      <h2 class="section-title"><mat-icon>admin_panel_settings</mat-icon>&nbsp;<span>Moderator</span></h2>
+      <p
+        >You can define a role from your server to be the moderator role. Every user with that role will be able to edit
+        the random buttons and sounds within your server.</p
+      >
+      <div class="setting-input-wrapper">
+        <mat-form-field>
+          <mat-label>Moderator role</mat-label>
+          <mat-select
+            [ngModel]="guildSettings().moderatorRoleId"
+            (ngModelChange)="setModeratorRoleId($event, guild().id)"
+          >
+            <mat-option [value]="null">-- Disable moderators --</mat-option>
+            @for (role of guildSettings().roles | keyvalue; track role) {
+              <mat-option [value]="role.key">{{ role.value }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: moderatorIsSaving() }"></ng-container>
+      </div>
+      <p
+        >The soundboard automatically boosts the volume of sounds that are too quiet. The server-specific values to
+        which the sounds are boosted can be defined below. Those settings can also be overriden manually for each
+        sound.</p
+      >
+      <div class="setting-input-wrapper">
+        <mat-form-field>
+          <mat-label>Target mean volume</mat-label>
+          <input
+            matInput
+            type="number"
+            min="-30"
+            max="30"
+            step="1"
+            [ngModel]="guildSettings().targetMeanVolume"
+            (change)="setMeanVolume($any($event.target).value, guild().id)"
+            required
+          />
+          <span matTextSuffix>dB</span>
+        </mat-form-field>
+        <mat-icon matTooltip="Default is -13">info</mat-icon>
+        <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: meanVolumeIsSaving() }"></ng-container>
+      </div>
+      <div class="setting-input-wrapper">
+        <mat-form-field>
+          <mat-label>Target max volume</mat-label>
+          <input
+            matInput
+            type="number"
+            min="-30"
+            max="30"
+            step="1"
+            [ngModel]="guildSettings().targetMaxVolume"
+            (change)="setMaxVolume($any($event.target).value, guild().id)"
+            required
+          />
+          <span matTextSuffix>dB</span>
+        </mat-form-field>
+        <mat-icon matTooltip="Default is 0">info</mat-icon>
+        <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: maxVolumeIsSaving() }"></ng-container>
+      </div>
+      <ng-template #savingIndicator let-state>
+        @switch (state) {
+          @case ('saving') {
+            <mat-spinner [diameter]="24"></mat-spinner>
           }
-        </mat-select>
-      </mat-form-field>
-      <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: userIsSaving() }"></ng-container>
-    </div>
-    <h2 class="section-title"><mat-icon>admin_panel_settings</mat-icon>&nbsp;<span>Moderator</span></h2>
-    <p
-      >You can define a role from your server to be the moderator role. Every user with that role will be able to edit the random buttons
-      and sounds within your server.</p
-    >
-    <div class="setting-input-wrapper">
-      <mat-form-field>
-        <mat-label>Moderator role</mat-label>
-        <mat-select [ngModel]="guildSettings().moderatorRoleId" (ngModelChange)="setModeratorRoleId($event, guild().id)">
-          <mat-option [value]="null">-- Disable moderators --</mat-option>
-          @for (role of guildSettings().roles | keyvalue; track role) {
-          <mat-option [value]="role.key">{{ role.value }}</mat-option>
+          @case ('error') {
+            <mat-icon matTooltip="Failed to save" color="warn">error_outline</mat-icon>
           }
-        </mat-select>
-      </mat-form-field>
-      <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: moderatorIsSaving() }"></ng-container>
-    </div>
-    <p
-      >The soundboard automatically boosts the volume of sounds that are too quiet. The server-specific values to which the sounds are
-      boosted can be defined below. Those settings can also be overriden manually for each sound.</p
-    >
-    <div class="setting-input-wrapper">
-      <mat-form-field>
-        <mat-label>Target mean volume</mat-label>
-        <input
-          matInput
-          type="number"
-          min="-30"
-          max="30"
-          step="1"
-          [ngModel]="guildSettings().targetMeanVolume"
-          (change)="setMeanVolume($any($event.target).value, guild().id)"
-          required
-        />
-        <span matTextSuffix>dB</span>
-      </mat-form-field>
-      <mat-icon matTooltip="Default is -13">info</mat-icon>
-      <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: meanVolumeIsSaving() }"></ng-container>
-    </div>
-    <div class="setting-input-wrapper">
-      <mat-form-field>
-        <mat-label>Target max volume</mat-label>
-        <input
-          matInput
-          type="number"
-          min="-30"
-          max="30"
-          step="1"
-          [ngModel]="guildSettings().targetMaxVolume"
-          (change)="setMaxVolume($any($event.target).value, guild().id)"
-          required
-        />
-        <span matTextSuffix>dB</span>
-      </mat-form-field>
-      <mat-icon matTooltip="Default is 0">info</mat-icon>
-      <ng-container *ngTemplateOutlet="savingIndicator; context: { $implicit: maxVolumeIsSaving() }"></ng-container>
-    </div>
-    <ng-template #savingIndicator let-state>
-      @switch (state) { @case ('saving') {
-      <mat-spinner [diameter]="24"></mat-spinner>
-      } @case ('error') {
-      <mat-icon matTooltip="Failed to save" color="warn">error_outline</mat-icon>
-      } @case ('saved') {
-      <mat-icon class="save-state-idle-icon">check</mat-icon>
-      } }
-    </ng-template>
+          @case ('saved') {
+            <mat-icon class="save-state-idle-icon">check</mat-icon>
+          }
+        }
+      </ng-template>
     }
 
     <h2 class="section-title"><mat-icon>shuffle</mat-icon>&nbsp;<span>Random buttons</span></h2>

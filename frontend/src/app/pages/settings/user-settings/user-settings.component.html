@@ -6,7 +6,10 @@
     (ngModelChange)="settingsService.settings.autoJoin.set($event)"
     >Automatically join the channel you are in when playing a sound.</mat-checkbox
   >
-  <mat-checkbox color="primary" [ngModel]="settingsService.settings.debug()" (ngModelChange)="settingsService.settings.debug.set($event)"
+  <mat-checkbox
+    color="primary"
+    [ngModel]="settingsService.settings.debug()"
+    (ngModelChange)="settingsService.settings.debug.set($event)"
     >Show debug information when playing sounds.</mat-checkbox
   >
 </div>

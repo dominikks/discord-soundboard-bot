@@ -11,7 +11,13 @@ import {
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
-import { WebAudioBufferSource, WebAudioContext, WebAudioGain, WebAudioModule } from '@ng-web-apis/audio';
+import {
+  WebAudioBufferSource,
+  WebAudioContext,
+  WebAudioDestination,
+  WebAudioGain,
+  WebAudioOutput,
+} from '@ng-web-apis/audio';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MatToolbar } from '@angular/material/toolbar';
@@ -78,10 +84,14 @@ interface Recording extends SrvRecording {
     MatCheckbox,
     MatSlider,
     MatSliderRangeThumb,
-    WebAudioModule,
     FooterComponent,
     DecimalPipe,
     DatePipe,
+    WebAudioContext,
+    WebAudioGain,
+    WebAudioDestination,
+    WebAudioBufferSource,
+    WebAudioOutput,
   ],
 })
 export class RecorderComponent {
@@ -126,8 +136,8 @@ export class RecorderComponent {
             selected: recording.users.map(_ => true),
             start: 0,
             end: recording.length,
-          }))
-      )
+          })),
+      ),
     );
   }
 

@@ -93,7 +93,11 @@ export class KeybindGeneratorComponent {
     this.soundsService.loadSounds(),
     this.apiService
       .getAuthToken()
-      .pipe(catchError(error => (error instanceof HttpErrorResponse && error.status === 404 ? of(null) : throwError(() => error)))),
+      .pipe(
+        catchError(error =>
+          error instanceof HttpErrorResponse && error.status === 404 ? of(null) : throwError(() => error),
+        ),
+      ),
   ]);
   readonly dataLoaded$ = new Subject<[Array<Sound>, AuthToken | null]>();
 
@@ -122,7 +126,9 @@ export class KeybindGeneratorComponent {
     // The keybind objects might have different instances of the sound objects with the same content.
     // We ensure the same instances are used.
     for (const keybind of keybinds) {
-      const sound = sounds.find(s => keybind.command && typeof keybind.command === 'object' && s.id === keybind.command.id);
+      const sound = sounds.find(
+        s => keybind.command && typeof keybind.command === 'object' && s.id === keybind.command.id,
+      );
       if (sound != null) {
         keybind.command = sound;
       } else if (typeof keybind.command !== 'string') {
@@ -224,7 +230,11 @@ export class KeybindGeneratorComponent {
 
     for (const bind of keybinds.filter(keybind => keybind.command != null && keybind.keyCombination.key !== '')) {
       script +=
-        '\n' + (bind.keyCombination.isControl ? '^' : '') + (bind.keyCombination.isAlt ? '!' : '') + bind.keyCombination.key + '::\n';
+        '\n' +
+        (bind.keyCombination.isControl ? '^' : '') +
+        (bind.keyCombination.isAlt ? '!' : '') +
+        bind.keyCombination.key +
+        '::\n';
       if (bind.command === 'record') {
         script += 'ExecCommand(' + bind.guildId + ', "record")\n';
       } else if (bind.command === 'stop') {

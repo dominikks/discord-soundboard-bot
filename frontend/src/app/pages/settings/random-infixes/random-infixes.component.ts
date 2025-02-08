@@ -25,7 +25,18 @@ import { GuildSettingsService } from '../../../services/guild-settings.service';
   templateUrl: './random-infixes.component.html',
   styleUrls: ['./random-infixes.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatCard, MatDivider, MatFormField, MatLabel, MatInput, FormsModule, MatError, MatIconButton, MatIcon, MatButton],
+  imports: [
+    MatCard,
+    MatDivider,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatError,
+    MatIconButton,
+    MatIcon,
+    MatButton,
+  ],
 })
 export class RandomInfixesComponent implements OnChanges {
   private guildSettingsService = inject(GuildSettingsService);
@@ -64,14 +75,14 @@ export class RandomInfixesComponent implements OnChanges {
     return this.guildSettingsService
       .updateRandomInfixes(
         this.guildId,
-        this.infixes.filter(infix => infix.displayName.length > 0 && infix.infix.length > 0)
+        this.infixes.filter(infix => infix.displayName.length > 0 && infix.infix.length > 0),
       )
       .pipe(
         tap(() => {
           this.randomInfixes = this.infixes;
           this.discardChanges();
           this.cdRef.markForCheck();
-        })
+        }),
       );
   }
 }

@@ -10,7 +10,8 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: 'keybind-generator',
-    loadComponent: () => import('./pages/keybind-generator/keybind-generator.component').then(m => m.KeybindGeneratorComponent),
+    loadComponent: () =>
+      import('./pages/keybind-generator/keybind-generator.component').then(m => m.KeybindGeneratorComponent),
   },
   {
     path: 'recorder',
@@ -27,7 +28,8 @@ export const APP_ROUTES: Routes = [
       },
       {
         path: 'user',
-        loadComponent: () => import('./pages/settings/user-settings/user-settings.component').then(m => m.UserSettingsComponent),
+        loadComponent: () =>
+          import('./pages/settings/user-settings/user-settings.component').then(m => m.UserSettingsComponent),
       },
       {
         path: 'guilds/:guildId',
@@ -40,12 +42,14 @@ export const APP_ROUTES: Routes = [
           },
           {
             path: 'settings',
-            loadComponent: () => import('./pages/settings/guild-settings/guild-settings.component').then(m => m.GuildSettingsComponent),
+            loadComponent: () =>
+              import('./pages/settings/guild-settings/guild-settings.component').then(m => m.GuildSettingsComponent),
             canDeactivate: [canDeactivateGuildSettingsGuard],
           },
           {
             path: 'sounds',
-            loadComponent: () => import('./pages/settings/sound-manager/sound-manager.component').then(m => m.SoundManagerComponent),
+            loadComponent: () =>
+              import('./pages/settings/sound-manager/sound-manager.component').then(m => m.SoundManagerComponent),
             canDeactivate: [canDeactivateSoundManagerGuard],
           },
         ],

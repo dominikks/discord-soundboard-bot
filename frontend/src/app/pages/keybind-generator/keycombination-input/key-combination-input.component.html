@@ -1,8 +1,11 @@
 <div class="keybind-input" tabindex="0" (keydown)="onKey($event)" [class.invalid]="keyCombination.key === ''">
   @if (keyCombination.key) {
-  <span>{{ keyCombination.isControl ? 'Ctrl+' : '' }}{{ keyCombination.isAlt ? 'Alt+' : '' }}{{ keyCombination.key }}</span>
+    <span
+      >{{ keyCombination.isControl ? 'Ctrl+' : '' }}{{ keyCombination.isAlt ? 'Alt+' : ''
+      }}{{ keyCombination.key }}</span
+    >
   } @else {
-  <span class="placeholder">Enter key combination</span>
+    <span class="placeholder">Enter key combination</span>
   }
   <ng-template #placeholder><span class="placeholder">Enter key combination</span></ng-template>
 </div>

@@ -18,7 +18,10 @@ import { LoginComponent } from './pages/login/login.component';
 export class AppComponent {
   protected apiService = inject(ApiService);
 
-  readonly data$ = forkJoin([this.apiService.loadAppInfo(), this.apiService.loadUser().pipe(catchError(() => of(null)))]);
+  readonly data$ = forkJoin([
+    this.apiService.loadAppInfo(),
+    this.apiService.loadUser().pipe(catchError(() => of(null))),
+  ]);
   readonly loadedData$ = new Subject<[AppInfo, User]>();
 
   constructor() {

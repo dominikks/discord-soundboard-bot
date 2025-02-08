@@ -63,7 +63,10 @@ export class GuildSettingsComponent {
   });
 
   readonly data$ = computed(() => {
-    return forkJoin([this.guildSettingsService.loadGuildSettings(this._guildId()), this.apiService.loadRandomInfixes()]);
+    return forkJoin([
+      this.guildSettingsService.loadGuildSettings(this._guildId()),
+      this.apiService.loadRandomInfixes(),
+    ]);
   });
   readonly loadedData = signal<[GuildSettings, RandomInfix[]]>(null);
 
@@ -100,7 +103,7 @@ export class GuildSettingsComponent {
     this.userIsSaving.set('saving');
     this.guildSettingsService.updateGuildSettings(guildId, { userRoleId: roleId }).subscribe(
       () => this.userIsSaving.set('saved'),
-      () => this.userIsSaving.set('error')
+      () => this.userIsSaving.set('error'),
     );
   }
 
@@ -108,7 +111,7 @@ export class GuildSettingsComponent {
     this.moderatorIsSaving.set('saving');
     this.guildSettingsService.updateGuildSettings(guildId, { moderatorRoleId: roleId }).subscribe(
       () => this.moderatorIsSaving.set('saved'),
-      () => this.moderatorIsSaving.set('error')
+      () => this.moderatorIsSaving.set('error'),
     );
   }
 
@@ -117,7 +120,7 @@ export class GuildSettingsComponent {
       this.meanVolumeIsSaving.set('saving');
       this.guildSettingsService.updateGuildSettings(guildId, { targetMeanVolume: +volume }).subscribe(
         () => this.meanVolumeIsSaving.set('saved'),
-        () => this.meanVolumeIsSaving.set('error')
+        () => this.meanVolumeIsSaving.set('error'),
       );
     }
   }
@@ -127,7 +130,7 @@ export class GuildSettingsComponent {
       this.maxVolumeIsSaving.set('saving');
       this.guildSettingsService.updateGuildSettings(guildId, { targetMaxVolume: +volume }).subscribe(
         () => this.maxVolumeIsSaving.set('saved'),
-        () => this.maxVolumeIsSaving.set('error')
+        () => this.maxVolumeIsSaving.set('error'),
       );
     }
   }

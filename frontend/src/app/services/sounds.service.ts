@@ -67,7 +67,7 @@ export class SoundsService {
   loadSounds() {
     return this.http.get<ApiSound[]>('/api/sounds').pipe(
       map(sounds => sounds.map(sound => new Sound(sound))),
-      map(sounds => sortBy(sounds, sound => sound.name.toLowerCase()))
+      map(sounds => sortBy(sounds, sound => sound.name.toLowerCase())),
     );
   }
 
@@ -88,7 +88,7 @@ export class SoundsService {
     return this.http.put(
       `/api/sounds/${encodeURIComponent(sound.id)}`,
       { name: sound.name, category: sound.category, volumeAdjustment: sound.volumeAdjustment },
-      { responseType: 'text' }
+      { responseType: 'text' },
     );
   }
 

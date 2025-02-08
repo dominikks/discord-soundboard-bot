@@ -127,7 +127,8 @@ export class SoundboardComponent {
             sound.soundFile != null
               ? `Volume: Max ${sound.soundFile.maxVolume.toFixed(1)} dB, Average ${sound.soundFile.meanVolume.toFixed(1)} dB, `
               : '';
-          volString += sound.volumeAdjustment != null ? `Manual adjustment ${sound.volumeAdjustment} dB` : 'Automatic adjustment';
+          volString +=
+            sound.volumeAdjustment != null ? `Manual adjustment ${sound.volumeAdjustment} dB` : 'Automatic adjustment';
           this.snackBar.open(volString, 'Ok');
         }
       },
@@ -159,7 +160,7 @@ export class SoundboardComponent {
   playInfix(infix: RandomInfix) {
     // Play random sound
     const matchingSounds = this.sounds()[0].filter(
-      sound => sound.name.toLowerCase().includes(infix.infix) && sound.guildId === infix.guildId
+      sound => sound.name.toLowerCase().includes(infix.infix) && sound.guildId === infix.guildId,
     );
     if (matchingSounds.length > 0) {
       this.playSound(sample(matchingSounds));
@@ -177,7 +178,9 @@ export class SoundboardComponent {
   }
 
   stopSound() {
-    this.soundsService.stopSound(this.settings.guildId()).subscribe({ error: () => this.snackBar.open('Failed to stop playback.') });
+    this.soundsService
+      .stopSound(this.settings.guildId())
+      .subscribe({ error: () => this.snackBar.open('Failed to stop playback.') });
   }
 
   stopLocalSound() {

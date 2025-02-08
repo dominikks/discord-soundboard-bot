@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, signal, WritableSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  Input,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { from, Observable } from 'rxjs';
 import { finalize, map, mergeMap, tap, toArray } from 'rxjs/operators';
@@ -67,7 +76,11 @@ export class SoundManagerComponent {
 
     this.data$ = this.soundsService
       .loadSounds()
-      .pipe(map(sounds => sounds.filter(sound => sound.guildId === guildId).map(sound => new SoundEntry(this.soundsService, sound))));
+      .pipe(
+        map(sounds =>
+          sounds.filter(sound => sound.guildId === guildId).map(sound => new SoundEntry(this.soundsService, sound)),
+        ),
+      );
   }
 
   data$: Observable<SoundEntry[]>;
@@ -129,7 +142,7 @@ export class SoundManagerComponent {
     from(this.soundsWithChanges())
       .pipe(
         mergeMap(sound => sound.saveChanges(), 5),
-        finalize(() => this.isSaving.set(false))
+        finalize(() => this.isSaving.set(false)),
       )
       .subscribe({
         error: () => this.snackBar.open('Failed to save changes to sounds.', 'Damn', { duration: undefined }),
@@ -176,12 +189,12 @@ export class SoundManagerComponent {
               mergeMap(sound =>
                 this.soundsService
                   .uploadSound(sound, file)
-                  .pipe(map(soundFile => new SoundEntry(this.soundsService, new Sound({ ...sound, soundFile }))))
-              )
+                  .pipe(map(soundFile => new SoundEntry(this.soundsService, new Sound({ ...sound, soundFile })))),
+              ),
             );
         }, 5),
         toArray(),
-        finalize(() => this.isUploading.set(false))
+        finalize(() => this.isUploading.set(false)),
       )
       .subscribe({
         next: newEntries => {
@@ -205,7 +218,7 @@ export class SoundManagerComponent {
               tap(() => {
                 this.sounds.update(sounds => sounds.filter(sound => sound !== entry));
               }),
-              finalize(() => this.isProcessing.set(false))
+              finalize(() => this.isProcessing.set(false)),
             )
             .subscribe({
               error: () => this.snackBar.open('Failed to delete sound.', 'Damn', { duration: undefined }),
@@ -220,7 +233,7 @@ export class SoundManagerComponent {
       .uploadSound(entry.sound(), file)
       .pipe(
         tap(soundFile => entry.replaceSoundFile(soundFile)),
-        finalize(() => this.isProcessing.set(false))
+        finalize(() => this.isProcessing.set(false)),
       )
       .subscribe({
         error: () => this.snackBar.open('Failed to upload sound file.', 'Damn', { duration: undefined }),
@@ -249,7 +262,10 @@ export class SoundEntry {
     );
   });
 
-  constructor(private soundsService: SoundsService, sound: Sound) {
+  constructor(
+    private soundsService: SoundsService,
+    sound: Sound,
+  ) {
     this.internalSound = signal(new Sound(sound));
     this.sound = signal(new Sound(sound));
   }

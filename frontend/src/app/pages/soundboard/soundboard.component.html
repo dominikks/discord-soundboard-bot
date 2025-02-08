@@ -12,16 +12,28 @@
           (keydown.enter)="playFirstMatch()"
           placeholder="ENTER plays the first result"
         />
-        <button mat-icon-button matSuffix (click)="soundSearchFilter.set('')" [class.invisible]="soundSearchFilter() === ''"
+        <button
+          mat-icon-button
+          matSuffix
+          (click)="soundSearchFilter.set('')"
+          [class.invisible]="soundSearchFilter() === ''"
           ><mat-icon>clear</mat-icon></button
         >
       </mat-form-field>
 
-      <mat-form-field matTooltip="Which category of sounds to display" matTooltipShowDelay="500" subscriptSizing="dynamic">
+      <mat-form-field
+        matTooltip="Which category of sounds to display"
+        matTooltipShowDelay="500"
+        subscriptSizing="dynamic"
+      >
         <mat-label>Filter by category</mat-label>
-        <mat-select [ngModel]="settings.soundCategories()" (ngModelChange)="settings.soundCategories.set($event)" multiple>
+        <mat-select
+          [ngModel]="settings.soundCategories()"
+          (ngModelChange)="settings.soundCategories.set($event)"
+          multiple
+        >
           @for (category of soundCategories(); track category) {
-          <mat-option [value]="category">{{ category || '-- No category --' }}</mat-option>
+            <mat-option [value]="category">{{ category || '-- No category --' }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -29,9 +41,9 @@
         <mat-label>Discord server</mat-label>
         <mat-select [ngModel]="target()" (ngModelChange)="target.set($event)">
           @for (guild of user.guilds; track guild) {
-          <mat-option [value]="guild.id">
-            {{ guild.name ?? guild.id }}
-          </mat-option>
+            <mat-option [value]="guild.id">
+              {{ guild.name ?? guild.id }}
+            </mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -42,13 +54,19 @@
 
   <mat-toolbar class="discord-toolbar">
     <div class="toolbar-content-wrapper">
-      <button mat-icon-button (click)="openEventLog()" matTooltip="Latest soundboard activity on the selected Discord server">
+      <button
+        mat-icon-button
+        (click)="openEventLog()"
+        matTooltip="Latest soundboard activity on the selected Discord server"
+      >
         <mat-icon>history</mat-icon>
       </button>
       <div class="event-text">
         @if (events$() | async; as event) {
-        {{ event.timestamp * 1000 | date : 'mediumTime' }}: {{ event.userName }} {{ event | eventDescription }}
-        } @else { No event to display }
+          {{ event.timestamp * 1000 | date: 'mediumTime' }}: {{ event.userName }} {{ event | eventDescription }}
+        } @else {
+          No event to display
+        }
       </div>
 
       <div class="filler"></div>
@@ -57,7 +75,12 @@
         <mat-icon>stop</mat-icon>
         Stop
       </button>
-      <button mat-icon-button matTooltip="Join discord channel you are connected to" matTooltipShowDelay="500" (click)="joinChannel()">
+      <button
+        mat-icon-button
+        matTooltip="Join discord channel you are connected to"
+        matTooltipShowDelay="500"
+        (click)="joinChannel()"
+      >
         <mat-icon>login</mat-icon>
       </button>
       <button mat-icon-button matTooltip="Leave discord channel" matTooltipShowDelay="500" (click)="leaveChannel()">
@@ -67,40 +90,44 @@
   </mat-toolbar>
 
   @if (user.guilds.length > 0 && sounds()[0].length > 0) {
-  <main class="max-width">
-    <div class="button-container">
-      @if (soundSearchFilter().length === 0) { @for (infix of randomInfixes(); track infix) {
-      <app-soundboard-button (click)="playInfix(infix)" [guildId]="infix.guildId" [canPlayLocally]="false"
-        ><mat-icon>shuffle</mat-icon> {{ infix.displayName | uppercase }}</app-soundboard-button
-      >
-      } } @for (sound of filteredSounds(); track trackById($index, sound)) {
-      <app-soundboard-button
-        (playRemote)="playSound(sound)"
-        (playLocal)="playLocalSound(sound)"
-        (stopLocal)="stopLocalSound()"
-        [isLocallyPlaying]="currentLocalSound() === sound"
-        [category]="sound.category"
-        [guildId]="sound.guildId"
-        >{{ sound.name }}</app-soundboard-button
-      >
-      }
-    </div>
-  </main>
+    <main class="max-width">
+      <div class="button-container">
+        @if (soundSearchFilter().length === 0) {
+          @for (infix of randomInfixes(); track infix) {
+            <app-soundboard-button (click)="playInfix(infix)" [guildId]="infix.guildId" [canPlayLocally]="false"
+              ><mat-icon>shuffle</mat-icon> {{ infix.displayName | uppercase }}</app-soundboard-button
+            >
+          }
+        }
+        @for (sound of filteredSounds(); track trackById($index, sound)) {
+          <app-soundboard-button
+            (playRemote)="playSound(sound)"
+            (playLocal)="playLocalSound(sound)"
+            (stopLocal)="stopLocalSound()"
+            [isLocallyPlaying]="currentLocalSound() === sound"
+            [category]="sound.category"
+            [guildId]="sound.guildId"
+            >{{ sound.name }}</app-soundboard-button
+          >
+        }
+      </div>
+    </main>
   } @else {
-  <main class="centering-wrapper guild-warning-wrapper">
-    <mat-icon>error_outline</mat-icon>
-    @if (user.guilds.length === 0) {
-    <div>
-      You are currently not in any Discord servers with the Soundboard bot. Try adding the bot to your server by clicking on your avatar in
-      the toolbar.
-    </div>
-    } @if (sounds()[0].length === 0) {
-    <div>
-      There are currently no sounds uploaded to your Discord servers. Try to upload some sounds via the settings or ask your server
-      administrator to do so.
-    </div>
-    }
-  </main>
+    <main class="centering-wrapper guild-warning-wrapper">
+      <mat-icon>error_outline</mat-icon>
+      @if (user.guilds.length === 0) {
+        <div>
+          You are currently not in any Discord servers with the Soundboard bot. Try adding the bot to your server by
+          clicking on your avatar in the toolbar.
+        </div>
+      }
+      @if (sounds()[0].length === 0) {
+        <div>
+          There are currently no sounds uploaded to your Discord servers. Try to upload some sounds via the settings or
+          ask your server administrator to do so.
+        </div>
+      }
+    </main>
   }
 </ng-container>
 
