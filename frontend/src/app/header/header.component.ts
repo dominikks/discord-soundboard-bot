@@ -3,7 +3,7 @@ import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ApiService } from '../services/api.service';
 import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
-import { NgIf, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatIconButton, MatAnchor } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink, RouterLinkActive } from '@angular/router';
@@ -19,7 +19,6 @@ import { MatDivider } from '@angular/material/divider';
   imports: [
     MatToolbar,
     MatToolbarRow,
-    NgIf,
     MatIconButton,
     MatIcon,
     RouterLink,

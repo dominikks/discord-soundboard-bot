@@ -8,7 +8,7 @@ import {
   MatExpansionPanelContent,
   MatExpansionPanelActionRow,
 } from '@angular/material/expansion';
-import { NgIf, DecimalPipe, DatePipe } from '@angular/common';
+import { DecimalPipe, DatePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
@@ -32,7 +32,6 @@ type VolumeAdjustmentMode = 'auto' | 'manual';
     MatExpansionPanel,
     MatExpansionPanelHeader,
     MatExpansionPanelTitle,
-    NgIf,
     MatIcon,
     MatTooltip,
     MatExpansionPanelDescription,

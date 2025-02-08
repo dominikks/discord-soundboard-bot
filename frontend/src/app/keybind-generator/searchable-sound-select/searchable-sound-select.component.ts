@@ -6,7 +6,7 @@ import { MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { MatOption } from '@angular/material/core';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { NgIf, NgFor, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+
 import { MatIcon } from '@angular/material/icon';
 
 @Component({
@@ -14,19 +14,7 @@ import { MatIcon } from '@angular/material/icon';
   templateUrl: './searchable-sound-select.component.html',
   styleUrls: ['./searchable-sound-select.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatSelect,
-    FormsModule,
-    MatOption,
-    NgxMatSelectSearchModule,
-    NgIf,
-    MatIcon,
-    NgFor,
-    MatSelectTrigger,
-    NgSwitch,
-    NgSwitchCase,
-    NgSwitchDefault,
-  ],
+  imports: [MatSelect, FormsModule, MatOption, NgxMatSelectSearchModule, MatIcon, MatSelectTrigger],
 })
 export class SearchableSoundSelectComponent implements OnChanges {
   @Input({ required: true }) sounds: Sound[];

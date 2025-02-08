@@ -15,7 +15,7 @@ import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
 import { DataLoadDirective } from '../data-load/data-load.directive';
-import { NgSwitch, NgSwitchCase, NgFor, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   MatTable,
   MatColumnDef,
@@ -55,8 +55,6 @@ const STORAGE_KEY = 'keybinds';
     MatTooltip,
     MatIcon,
     DataLoadDirective,
-    NgSwitch,
-    NgSwitchCase,
     MatTable,
     CdkDropList,
     MatColumnDef,
@@ -68,7 +66,6 @@ const STORAGE_KEY = 'keybinds';
     KeyCombinationInputComponent,
     MatSelect,
     FormsModule,
-    NgFor,
     MatOption,
     SearchableSoundSelectComponent,
     MatIconButton,

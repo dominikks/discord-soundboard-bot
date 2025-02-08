@@ -2,15 +2,17 @@
   <mat-option>
     <ngx-mat-select-search [(ngModel)]="soundSearchFilter" (ngModelChange)="updateFilter()"></ngx-mat-select-search>
   </mat-option>
-  <ng-container *ngIf="soundSearchFilter.length === 0">
-    <mat-option value="stop"><mat-icon>stop</mat-icon> Stop</mat-option>
-    <mat-option value="record"><mat-icon>voicemail</mat-icon> Record last 60s</mat-option>
-  </ng-container>
-  <mat-option *ngFor="let sound of filteredSounds" [value]="sound">{{ sound.name }}</mat-option>
+  @if (soundSearchFilter.length === 0) {
+  <mat-option value="stop"><mat-icon>stop</mat-icon> Stop</mat-option>
+  <mat-option value="record"><mat-icon>voicemail</mat-icon> Record last 60s</mat-option>
+  } @for (sound of filteredSounds; track sound) {
+  <mat-option [value]="sound">{{ sound.name }}</mat-option>
+  }
 
-  <mat-select-trigger [ngSwitch]="selectedCommand">
-    <ng-container *ngSwitchCase="'stop'"><mat-icon>stop</mat-icon> Stop</ng-container>
-    <ng-container *ngSwitchCase="'record'"><mat-icon>voicemail</mat-icon> Record last 60s</ng-container>
-    <ng-container *ngSwitchDefault>{{ getSoundName(selectedCommand) }}</ng-container>
+  <mat-select-trigger>
+    @switch (selectedCommand) { @case ('stop') {
+    <mat-icon>stop</mat-icon> Stop } @case ('record') { <mat-icon>voicemail</mat-icon> Record last 60s } @default {
+    {{ getSoundName(selectedCommand) }}
+    } }
   </mat-select-trigger>
 </mat-select>

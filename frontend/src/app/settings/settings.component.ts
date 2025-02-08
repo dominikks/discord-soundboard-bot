@@ -6,7 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../services/api.service';
 import { HeaderComponent } from '../header/header.component';
 import { MatNavList, MatListItem, MatListItemIcon, MatListItemTitle, MatListItemLine } from '@angular/material/list';
-import { NgFor, NgIf } from '@angular/common';
+
 import { FooterComponent } from '../footer/footer.component';
 
 @Component({
@@ -22,8 +22,6 @@ import { FooterComponent } from '../footer/footer.component';
     RouterLink,
     RouterLinkActive,
     MatListItemIcon,
-    NgFor,
-    NgIf,
     MatListItemTitle,
     MatListItemLine,
     MatSidenavContent,

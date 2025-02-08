@@ -21,7 +21,7 @@ import { MatIconButton, MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatSelect } from '@angular/material/select';
-import { NgFor, NgIf, AsyncPipe, UpperCasePipe, DatePipe } from '@angular/common';
+import { AsyncPipe, UpperCasePipe, DatePipe } from '@angular/common';
 import { MatOption } from '@angular/material/core';
 import { VolumeSliderComponent } from '../volume-slider/volume-slider.component';
 import { SoundboardButtonComponent } from './soundboard-button/soundboard-button.component';
@@ -45,10 +45,8 @@ import { EventDescriptionPipe } from '../event-description.pipe';
     MatIcon,
     MatTooltip,
     MatSelect,
-    NgFor,
     MatOption,
     VolumeSliderComponent,
-    NgIf,
     MatButton,
     SoundboardButtonComponent,
     FooterComponent,

@@ -8,7 +8,7 @@ import { GuildSettings, GuildSettingsService } from '../../services/guild-settin
 import { DataLoadDirective } from '../../data-load/data-load.directive';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatTooltip } from '@angular/material/tooltip';
-import { NgIf, NgFor, NgTemplateOutlet, NgSwitch, NgSwitchCase, KeyValuePipe } from '@angular/common';
+import { NgTemplateOutlet, KeyValuePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
@@ -28,19 +28,15 @@ type SavingState = 'saved' | 'saving' | 'error';
     DataLoadDirective,
     MatToolbar,
     MatTooltip,
-    NgIf,
     MatIcon,
     MatFormField,
     MatLabel,
     MatSelect,
     FormsModule,
     MatOption,
-    NgFor,
     NgTemplateOutlet,
     MatInput,
     MatSuffix,
-    NgSwitch,
-    NgSwitchCase,
     MatProgressSpinner,
     RandomInfixesComponent,
     UnsavedChangesBoxComponent,

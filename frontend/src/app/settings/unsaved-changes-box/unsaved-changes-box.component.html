@@ -1,4 +1,5 @@
-<div class="wrapper" @enterLeave *ngIf="hasChanges || isSaving">
+@if (hasChanges || isSaving) {
+<div class="wrapper" @enterLeave>
   <mat-card>
     <mat-card-content>
       <div class="text-wrapper mat-h3">You have unsaved changes</div>
@@ -8,10 +9,13 @@
         <button mat-raised-button color="primary" [disabled]="isSaving" (click)="!isSaving && !disabled && saveChanges.emit()"
           >Save changes</button
         >
-        <div class="spinner-container" *ngIf="isSaving">
+        @if (isSaving) {
+        <div class="spinner-container">
           <mat-spinner diameter="24"></mat-spinner>
         </div>
+        }
       </div>
     </mat-card-content>
   </mat-card>
 </div>
+}

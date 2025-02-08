@@ -1,19 +1,24 @@
 <mat-card appearance="outlined" class="mat-elevation-z4">
-  <ng-container *ngFor="let randomInfix of infixes; let i = index">
-    <mat-divider *ngIf="i > 0"></mat-divider>
-    <div class="infix-list-item">
-      <mat-form-field subscriptSizing="dynamic">
-        <mat-label>Display Name</mat-label>
-        <input matInput [(ngModel)]="randomInfix.displayName" (ngModelChange)="hasChanges.emit(true)" maxlength="32" required />
-        <mat-error *ngIf="randomInfix.displayName.length === 0">Empty name is not allowed</mat-error>
-      </mat-form-field>
-      <mat-form-field subscriptSizing="dynamic">
-        <mat-label>Search Term</mat-label>
-        <input matInput [(ngModel)]="randomInfix.infix" (ngModelChange)="hasChanges.emit(true)" maxlength="32" required />
-        <mat-error *ngIf="randomInfix.infix.length === 0">Empty infix is not allowed</mat-error>
-      </mat-form-field>
-      <button mat-icon-button (click)="removeRandomInfix(i)"><mat-icon>delete</mat-icon></button>
-    </div>
-  </ng-container>
+  @for (randomInfix of infixes; track randomInfix; let i = $index) { @if (i > 0) {
+  <mat-divider></mat-divider>
+  }
+  <div class="infix-list-item">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Display Name</mat-label>
+      <input matInput [(ngModel)]="randomInfix.displayName" (ngModelChange)="hasChanges.emit(true)" maxlength="32" required />
+      @if (randomInfix.displayName.length === 0) {
+      <mat-error>Empty name is not allowed</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Search Term</mat-label>
+      <input matInput [(ngModel)]="randomInfix.infix" (ngModelChange)="hasChanges.emit(true)" maxlength="32" required />
+      @if (randomInfix.infix.length === 0) {
+      <mat-error>Empty infix is not allowed</mat-error>
+      }
+    </mat-form-field>
+    <button mat-icon-button (click)="removeRandomInfix(i)"><mat-icon>delete</mat-icon></button>
+  </div>
+  }
 </mat-card>
 <button mat-raised-button (click)="addRandomInfix()"><mat-icon>add</mat-icon> Add random button</button>

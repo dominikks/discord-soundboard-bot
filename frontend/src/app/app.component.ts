@@ -4,7 +4,7 @@ import { catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService, AppInfo, User } from './services/api.service';
 import { DataLoadDirective } from './data-load/data-load.directive';
-import { NgSwitch, NgSwitchCase } from '@angular/common';
+
 import { RouterOutlet } from '@angular/router';
 import { LoginComponent } from './login/login.component';
 
@@ -13,7 +13,7 @@ import { LoginComponent } from './login/login.component';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DataLoadDirective, NgSwitch, NgSwitchCase, RouterOutlet, LoginComponent],
+  imports: [DataLoadDirective, RouterOutlet, LoginComponent],
 })
 export class AppComponent {
   readonly data$ = forkJoin([this.apiService.loadAppInfo(), this.apiService.loadUser().pipe(catchError(() => of(null)))]);

@@ -1,6 +1,6 @@
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgIf } from '@angular/common';
+
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -17,7 +17,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
       transition(':leave', [animate('200ms ease-in', style({ transform: 'translateY(100%)' }))]),
     ]),
   ],
-  imports: [NgIf, MatCard, MatCardContent, MatButton, MatProgressSpinner],
+  imports: [MatCard, MatCardContent, MatButton, MatProgressSpinner],
 })
 export class UnsavedChangesBoxComponent {
   @Input({ required: true }) hasChanges: boolean;

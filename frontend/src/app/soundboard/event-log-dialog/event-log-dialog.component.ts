@@ -5,7 +5,7 @@ import { Event } from 'src/app/services/events.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { NgIf, NgSwitch, NgSwitchCase, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { MatTable, MatColumnDef, MatCellDef, MatCell, MatRowDef, MatRow } from '@angular/material/table';
 import { MatIcon } from '@angular/material/icon';
 import { ScrollIntoViewDirective } from '../../common/scroll-into-view.directive';
@@ -20,13 +20,10 @@ import { EventDescriptionPipe } from '../../event-description.pipe';
     MatDialogTitle,
     CdkScrollable,
     MatDialogContent,
-    NgIf,
     MatTable,
     MatColumnDef,
     MatCellDef,
     MatCell,
-    NgSwitch,
-    NgSwitchCase,
     MatIcon,
     MatRowDef,
     MatRow,

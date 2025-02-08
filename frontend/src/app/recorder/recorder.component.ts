@@ -13,7 +13,7 @@ import { MatToolbar } from '@angular/material/toolbar';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
-import { NgFor, NgIf, DecimalPipe, DatePipe } from '@angular/common';
+import { DecimalPipe, DatePipe } from '@angular/common';
 import { MatOption } from '@angular/material/core';
 import { VolumeSliderComponent } from '../volume-slider/volume-slider.component';
 import { MatButton, MatIconButton } from '@angular/material/button';
@@ -51,14 +51,12 @@ interface Recording extends SrvRecording {
     MatLabel,
     MatSelect,
     FormsModule,
-    NgFor,
     MatOption,
     VolumeSliderComponent,
     MatButton,
     MatIcon,
     MatIconButton,
     MatTooltip,
-    NgIf,
     MatAccordion,
     MatExpansionPanel,
     MatExpansionPanelHeader,

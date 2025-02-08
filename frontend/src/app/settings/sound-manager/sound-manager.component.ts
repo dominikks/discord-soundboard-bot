@@ -11,7 +11,7 @@ import { SoundDeleteConfirmComponent } from './sound-delete-confirm/sound-delete
 import { DataLoadDirective } from '../../data-load/data-load.directive';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatTooltip } from '@angular/material/tooltip';
-import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
+
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
@@ -33,7 +33,6 @@ import { GuildNamePipe } from '../../guild-name.pipe';
     DataLoadDirective,
     MatToolbar,
     MatTooltip,
-    NgIf,
     MatProgressSpinner,
     MatFormField,
     MatLabel,
@@ -49,8 +48,6 @@ import { GuildNamePipe } from '../../guild-name.pipe';
     MatAccordion,
     CdkVirtualForOf,
     SoundDetailsComponent,
-    NgSwitch,
-    NgSwitchCase,
     UnsavedChangesBoxComponent,
     GuildNamePipe,
   ],

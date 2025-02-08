@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
-import { NgIf } from '@angular/common';
+
 import { MatIcon } from '@angular/material/icon';
 import { GuildNamePipe } from '../../guild-name.pipe';
 
@@ -10,7 +10,7 @@ import { GuildNamePipe } from '../../guild-name.pipe';
   templateUrl: './soundboard-button.component.html',
   styleUrls: ['./soundboard-button.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButton, MatTooltip, NgIf, MatIconButton, MatIcon, GuildNamePipe],
+  imports: [MatButton, MatTooltip, MatIconButton, MatIcon, GuildNamePipe],
 })
 export class SoundboardButtonComponent implements AfterViewInit {
   @Input({ required: true }) guildId: string;
