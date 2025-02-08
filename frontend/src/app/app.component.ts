@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { forkJoin, of, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ApiService, AppInfo, User } from './services/api.service';
-import { DataLoadDirective } from './data-load/data-load.directive';
-
 import { RouterOutlet } from '@angular/router';
-import { LoginComponent } from './login/login.component';
+import { ApiService, AppInfo, User } from './services/api.service';
+import { DataLoadDirective } from './common/data-load/data-load.directive';
+
+import { LoginComponent } from './pages/login/login.component';
 
 @Component({
   selector: 'app-root',
