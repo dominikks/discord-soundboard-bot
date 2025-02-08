@@ -42,7 +42,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Run formatter
-        run: cargo fmt --manifest-path backend/Cargo.toml --check
+        run: cargo fmt --manifest-path backend/Cargo.toml --all -- --check
 
       - name: Run clippy
         run: cargo clippy --manifest-path backend/Cargo.toml
