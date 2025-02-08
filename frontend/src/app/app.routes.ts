@@ -1,31 +1,24 @@
 import { Routes } from '@angular/router';
 import { guildPermissionGuard } from './guards/guild-permission.guard';
-import { KeybindGeneratorComponent } from './keybind-generator/keybind-generator.component';
-import { RecorderComponent } from './recorder/recorder.component';
-import { GuildSettingsComponent } from './settings/guild-settings/guild-settings.component';
-import { SettingsComponent } from './settings/settings.component';
 import { canDeactivateSoundManagerGuard } from './settings/sound-manager/can-deactivate-sound-manager.guard';
-import { SoundManagerComponent } from './settings/sound-manager/sound-manager.component';
-import { UserSettingsComponent } from './settings/user-settings/user-settings.component';
-import { SoundboardComponent } from './soundboard/soundboard.component';
 import { canDeactivateGuildSettingsGuard } from './settings/guild-settings/can-deactivate-guild-settings.guard';
 
 export const APP_ROUTES: Routes = [
   {
     path: '',
-    component: SoundboardComponent,
+    loadComponent: () => import('./soundboard/soundboard.component').then(m => m.SoundboardComponent),
   },
   {
     path: 'keybind-generator',
-    component: KeybindGeneratorComponent,
+    loadComponent: () => import('./keybind-generator/keybind-generator.component').then(m => m.KeybindGeneratorComponent),
   },
   {
     path: 'recorder',
-    component: RecorderComponent,
+    loadComponent: () => import('./recorder/recorder.component').then(m => m.RecorderComponent),
   },
   {
     path: 'settings',
-    component: SettingsComponent,
+    loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent),
     children: [
       {
         path: '',
@@ -34,7 +27,7 @@ export const APP_ROUTES: Routes = [
       },
       {
         path: 'user',
-        component: UserSettingsComponent,
+        loadComponent: () => import('./settings/user-settings/user-settings.component').then(m => m.UserSettingsComponent),
       },
       {
         path: 'guilds/:guildId',
@@ -47,12 +40,12 @@ export const APP_ROUTES: Routes = [
           },
           {
             path: 'settings',
-            component: GuildSettingsComponent,
+            loadComponent: () => import('./settings/guild-settings/guild-settings.component').then(m => m.GuildSettingsComponent),
             canDeactivate: [canDeactivateGuildSettingsGuard],
           },
           {
             path: 'sounds',
-            component: SoundManagerComponent,
+            loadComponent: () => import('./settings/sound-manager/sound-manager.component').then(m => m.SoundManagerComponent),
             canDeactivate: [canDeactivateSoundManagerGuard],
           },
         ],
