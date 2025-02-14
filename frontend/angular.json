@@ -28,7 +28,13 @@
             },
             "scripts": [],
             "baseHref": "/",
-            "browser": "src/main.ts"
+            "browser": "src/main.ts",
+            "server": "src/main.server.ts",
+            "prerender": {
+              "discoverRoutes": false,
+              "routesFile": "src/app/app.routes-prerender.txt"
+            },
+            "ssr": false
           },
           "configurations": {
             "production": {
