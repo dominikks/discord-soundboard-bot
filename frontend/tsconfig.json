@@ -13,7 +13,8 @@
     "target": "ES2022",
     "module": "ESNext",
     "lib": ["ES2022", "dom"],
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "strict": true
   },
   "angularCompilerOptions": {
     "strictInjectionParameters": true,

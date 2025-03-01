@@ -71,12 +71,15 @@ export class SoundboardComponent {
   readonly user = this.apiService.user();
 
   readonly data$ = forkJoin([this.apiService.loadRandomInfixes(), this.soundsService.loadSounds()]);
-  readonly loadedData = signal<[RandomInfix[], Sound[]]>(null);
+  readonly loadedData = signal<[RandomInfix[], Sound[]] | null>(null);
 
   readonly randomInfixes = computed(() => this.loadedData()?.[0]);
-  readonly sounds = computed(() => {
-    const sounds = this.loadedData()[1];
-    return [sounds, new Fuse(sounds, { keys: ['name'] })] as [Sound[], Fuse<Sound>];
+  readonly sounds = computed<[Sound[], Fuse<Sound>]>(() => {
+    const data = this.loadedData();
+    if (!data) return [[], new Fuse([], { keys: ['name'] })];
+
+    const sounds = data[1];
+    return [sounds, new Fuse(sounds, { keys: ['name'] })];
   });
   readonly soundCategories = computed(() => {
     const sounds = this.sounds()[0];
@@ -97,8 +100,8 @@ export class SoundboardComponent {
     }
   });
 
-  readonly currentAudio = signal<HTMLAudioElement>(null);
-  readonly currentLocalSound = signal<Sound>(null);
+  readonly currentAudio = signal<HTMLAudioElement | null>(null);
+  readonly currentLocalSound = signal<Sound | null>(null);
   readonly soundSearchFilter = signal('');
 
   readonly target = this.settings.guildId;
@@ -163,7 +166,10 @@ export class SoundboardComponent {
       sound => sound.name.toLowerCase().includes(infix.infix) && sound.guildId === infix.guildId,
     );
     if (matchingSounds.length > 0) {
-      this.playSound(sample(matchingSounds));
+      const randomSound = sample(matchingSounds);
+      if (randomSound) {
+        this.playSound(randomSound);
+      }
     } else {
       this.snackBar.open('No matching sounds for this random button.');
     }
@@ -186,7 +192,7 @@ export class SoundboardComponent {
   stopLocalSound() {
     const currentAudio = this.currentAudio();
     if (currentAudio != null) {
-      currentAudio.removeAllListeners();
+      currentAudio.removeAllListeners?.();
       currentAudio.pause();
       currentAudio.remove();
       this.currentAudio.set(null);

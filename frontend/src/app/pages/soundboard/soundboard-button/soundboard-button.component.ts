@@ -21,7 +21,7 @@ import { GuildNamePipe } from '../../../common/guild-name.pipe';
   imports: [MatButton, MatTooltip, MatIconButton, MatIcon, GuildNamePipe],
 })
 export class SoundboardButtonComponent implements AfterViewInit {
-  @Input({ required: true }) guildId: string;
+  @Input({ required: true }) guildId!: string;
   @Input() category?: string;
   @Input() isLocallyPlaying = false;
   @Input() canPlayLocally = true;
@@ -29,7 +29,7 @@ export class SoundboardButtonComponent implements AfterViewInit {
   @Output() playLocal = new EventEmitter<void>();
   @Output() stopLocal = new EventEmitter<void>();
 
-  @ViewChild('soundName') nameLabel: ElementRef;
+  @ViewChild('soundName') nameLabel!: ElementRef;
 
   get displayedCategory() {
     return this.category == null || this.category === '' ? '' : `/${this.category}`;

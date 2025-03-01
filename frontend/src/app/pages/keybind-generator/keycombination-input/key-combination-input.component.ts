@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, model } from '@angular/core';
 
 export interface KeyCombination {
   key: string;
@@ -14,8 +14,7 @@ export interface KeyCombination {
   imports: [],
 })
 export class KeyCombinationInputComponent {
-  @Input({ required: true }) keyCombination: KeyCombination;
-  @Output() keyCombinationChange = new EventEmitter<KeyCombination>();
+  readonly keyCombination = model.required<KeyCombination>();
 
   onKey(event: KeyboardEvent) {
     // Ignore Control, Alt, Shift, Tab, Windows-Key
@@ -25,11 +24,11 @@ export class KeyCombinationInputComponent {
 
     event.preventDefault();
 
-    const keyCombination: KeyCombination = {
+    const updatedCombination: KeyCombination = {
       key: event.key.toUpperCase(),
       isAlt: event.altKey,
       isControl: event.ctrlKey,
     };
-    this.keyCombinationChange.emit(keyCombination);
+    this.keyCombination.set(updatedCombination);
   }
 }

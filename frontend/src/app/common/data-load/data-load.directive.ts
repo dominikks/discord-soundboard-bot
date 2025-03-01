@@ -19,6 +19,12 @@ interface DataLoadContext<T> {
   appDataLoad: T;
 }
 
+type DataLoadState<T> =
+  | { type: 'idle' }
+  | { type: 'loading'; subscription: Subscription }
+  | { type: 'error' }
+  | { type: 'done'; data: T };
+
 /**
  * We borrow some code from the ngIf directive to enable type checking in the template:
  * https://angular.io/guide/structural-directives#improving-template-type-checking-for-custom-directives
@@ -40,12 +46,10 @@ export class DataLoadDirective<T> implements OnChanges {
   private viewContainer = inject(ViewContainerRef);
   private renderer = inject(Renderer2);
 
-  @Input({ required: true }) appDataLoad: Observable<T>;
+  @Input({ required: true }) appDataLoad!: Observable<T>;
   @Input() appDataLoadCallback?: WritableSignal<T> | Subject<T>;
 
-  private state: 'loading' | 'error' | 'done';
-  private data: T;
-  private activeSubscription: Subscription;
+  private state: DataLoadState<T> = { type: 'idle' };
 
   ngOnChanges(changes: SimpleChanges) {
     if ('appDataLoad' in changes) {
@@ -54,14 +58,15 @@ export class DataLoadDirective<T> implements OnChanges {
   }
 
   private resubscribe() {
-    this.activeSubscription?.unsubscribe();
-    this.state = 'loading';
-    this.update();
+    // Clean up any existing subscription
+    if (this.state.type === 'loading') {
+      this.state.subscription.unsubscribe();
+    }
 
-    this.activeSubscription = this.appDataLoad.subscribe({
+    // Set up new subscription
+    const subscription = this.appDataLoad.subscribe({
       next: data => {
-        this.state = 'done';
-        this.data = data;
+        this.state = { type: 'done', data };
 
         if (isSignal(this.appDataLoadCallback)) {
           this.appDataLoadCallback.set(data);
@@ -72,23 +77,31 @@ export class DataLoadDirective<T> implements OnChanges {
         this.update();
       },
       error: () => {
-        this.state = 'error';
+        // Clean up subscription
+        if (this.state.type === 'loading') {
+          this.state.subscription.unsubscribe();
+        }
+        this.state = { type: 'error' };
         this.update();
       },
     });
+
+    this.state = { type: 'loading', subscription };
+    this.update();
   }
 
   private update() {
     this.viewContainer.clear();
 
-    switch (this.state) {
+    switch (this.state.type) {
       case 'done':
         const view = this.viewContainer.createEmbeddedView(this.templateRef, {
-          $implicit: this.data,
-          appDataLoad: this.data,
+          $implicit: this.state.data,
+          appDataLoad: this.state.data,
         } satisfies DataLoadContext<T>);
         view.detectChanges();
         break;
+      case 'idle':
       case 'loading': {
         const loadingSpinner = this.viewContainer.createComponent(MatProgressSpinner);
         loadingSpinner.instance.mode = 'indeterminate';

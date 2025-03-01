@@ -17,7 +17,7 @@
   </div>
 </button>
 @if (canPlayLocally) {
-  <button mat-icon-button [color]="isLocallyPlaying && 'warn'" class="preview-button" (click)="this.handleLocalSound()">
+  <button mat-icon-button [color]="isLocallyPlaying ? 'warn' : undefined" class="preview-button" (click)="this.handleLocalSound()">
     <mat-icon>{{ isLocallyPlaying ? 'stop' : 'volume_up' }}</mat-icon>
   </button>
 }

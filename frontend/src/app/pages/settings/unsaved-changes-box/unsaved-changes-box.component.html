@@ -1,21 +1,21 @@
-@if (hasChanges || isSaving) {
+@if (hasChanges() || isSaving()) {
   <div class="wrapper" @enterLeave>
     <mat-card>
       <mat-card-content>
         <div class="text-wrapper mat-h3">You have unsaved changes</div>
         <div class="flex-filler"></div>
-        <button mat-button [disabled]="isSaving || disabled" (click)="!isSaving && !disabled && discardChanges.emit()"
+        <button mat-button [disabled]="isSaving() || disabled()" (click)="!isSaving() && !disabled() && discardChanges.emit()"
           >Reset</button
         >
         <div class="save-button-container">
           <button
             mat-raised-button
             color="primary"
-            [disabled]="isSaving"
-            (click)="!isSaving && !disabled && saveChanges.emit()"
+            [disabled]="isSaving() || disabled()"
+            (click)="!isSaving() && !disabled() && saveChanges.emit()"
             >Save changes</button
           >
-          @if (isSaving) {
+          @if (isSaving()) {
             <div class="spinner-container">
               <mat-spinner diameter="24"></mat-spinner>
             </div>

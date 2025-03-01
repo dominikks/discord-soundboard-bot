@@ -1,5 +1,5 @@
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -19,10 +19,10 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
   imports: [MatCard, MatCardContent, MatButton, MatProgressSpinner],
 })
 export class UnsavedChangesBoxComponent {
-  @Input({ required: true }) hasChanges: boolean;
-  @Input({ required: true }) isSaving: boolean;
-  @Input() disabled = false;
+  readonly hasChanges = input.required<boolean>();
+  readonly isSaving = input.required<boolean>();
+  readonly disabled = input(false);
 
-  @Output() saveChanges = new EventEmitter<void>();
-  @Output() discardChanges = new EventEmitter<void>();
+  readonly saveChanges = output<void>();
+  readonly discardChanges = output<void>();
 }

@@ -36,7 +36,7 @@ import { ApiService } from '../../services/api.service';
 export class HeaderComponent {
   protected apiService = inject(ApiService);
 
-  @Input({ required: true }) pageTitle: string;
+  @Input({ required: true }) pageTitle!: string;
   @Input() showSidenavToggle = false;
 
   @Output() toggleSidenav = new EventEmitter<void>();

@@ -6,5 +6,6 @@ export const guildPermissionGuard: CanActivateFn = (route, _state) => {
   const guildId = route.params.guildId;
   const user = inject(ApiService).user();
 
-  return user?.guilds.find(guild => guild.id === guildId).role !== 'user' ? true : inject(Router).parseUrl('/settings');
+  const guild = user?.guilds.find(guild => guild.id === guildId);
+  return guild && guild.role !== 'user' ? true : inject(Router).parseUrl('/settings');
 };

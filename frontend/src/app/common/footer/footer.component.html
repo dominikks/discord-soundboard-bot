@@ -1,17 +1,21 @@
 <footer>
-  <a
-    href="https://github.com/dominikks/discord-soundboard-bot"
-    target="_blank"
-    rel="noopener"
-    matTooltip="Build id: {{ info.buildId }} &mdash; Build date: {{ info.buildTimestamp * 1000 | date: 'medium' }}"
-    [matTooltipDisabled]="!info.buildId || !info.buildTimestamp"
-  >
-    discord-soundboard-bot {{ info.version }}
-  </a>
-  &mdash;
-  <a href="3rdpartylicenses.txt" target="_blank" rel="noopener">Licenses</a>
-  @if (info.legalUrl) {
+  @if (info) {
+    <a
+      href="https://github.com/dominikks/discord-soundboard-bot"
+      target="_blank"
+      rel="noopener"
+      matTooltip="Build id: {{ info.buildId }} &mdash; Build date: {{ info.buildTimestamp ? (info.buildTimestamp * 1000 | date: 'medium') : 'unknown' }}"
+      [matTooltipDisabled]="!info.buildId || !info.buildTimestamp"
+    >
+      discord-soundboard-bot {{ info.version }}
+    </a>
     &mdash;
-    <a [href]="info.legalUrl" target="_blank" rel="noopener">Legal</a>
+    <a href="3rdpartylicenses.txt" target="_blank" rel="noopener">Licenses</a>
+    @if (info.legalUrl) {
+      &mdash;
+      <a [href]="info.legalUrl" target="_blank" rel="noopener">Legal</a>
+    }
+  } @else {
+    <span>Loading application info...</span>
   }
 </footer>

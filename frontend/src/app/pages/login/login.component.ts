@@ -1,15 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatCard } from '@angular/material/card';
 import { MatAnchor } from '@angular/material/button';
-import { ApiService } from '../../services/api.service';
 import { FooterComponent } from '../../common/footer/footer.component';
 
 @Component({
-  selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   imports: [MatCard, MatAnchor, FooterComponent],
 })
-export class LoginComponent {
-  protected apiService = inject(ApiService);
-}
+export class LoginComponent {}
