@@ -13,14 +13,14 @@
     </div>
 
     <div class="avatar-button-wrapper">
-      @let user = apiService.user();
+      @let currentUser = user();
       <div
         class="avatar-button mat-elevation-z3"
-        [matTooltip]="user ? 'Logged in as ' + user.username + '#' + user.discriminator : 'User'"
+        [matTooltip]="currentUser ? 'Logged in as ' + currentUser.username + '#' + currentUser.discriminator : 'User'"
         [matMenuTriggerFor]="userMenu"
         matRipple
       >
-        <img [src]="user?.avatarUrl" alt="The user's avatar" />
+        <img [src]="currentUser?.avatarUrl" alt="The user's avatar" />
       </div>
     </div>
 
@@ -34,15 +34,13 @@
         Keybinds</a
       >
       <mat-divider></mat-divider>
-      @let appInfo = apiService.appInfo();
+      @let appInfo = appInfoState.data();
       <a
         mat-menu-item
         [href]="
-          appInfo
-            ? 'https://discordapp.com/oauth2/authorize?client_id=' +
-              appInfo.discordClientId +
-              '&scope=bot&permissions=3147776'
-            : '#'
+          'https://discordapp.com/oauth2/authorize?client_id=' +
+          appInfo.discordClientId +
+          '&scope=bot&permissions=3147776'
         "
         target="_blank"
       >

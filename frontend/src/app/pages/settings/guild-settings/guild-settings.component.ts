@@ -1,4 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, Input, signal, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  Input,
+  Pipe,
+  PipeTransform,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
@@ -13,12 +24,19 @@ import { MatOption } from '@angular/material/core';
 import { MatInput } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { DataLoadDirective } from '../../../common/data-load/data-load.directive';
-import { GuildSettings, GuildSettingsService } from '../../../services/guild-settings.service';
+import { GuildSettingsService } from '../../../services/guild-settings.service';
 import { RandomInfixesComponent } from '../random-infixes/random-infixes.component';
-import { ApiService, RandomInfix } from '../../../services/api.service';
+import { ApiService, RandomInfix, User } from '../../../services/api.service';
 import { UnsavedChangesBoxComponent } from '../unsaved-changes-box/unsaved-changes-box.component';
 
 type SavingState = 'saved' | 'saving' | 'error';
+
+@Pipe({ name: 'filterInfixes' })
+export class FilterRandomInfixesPipe implements PipeTransform {
+  transform(value: RandomInfix[], guildId: string) {
+    return value.filter(infix => infix.guildId === guildId);
+  }
+}
 
 @Component({
   templateUrl: './guild-settings.component.html',
@@ -41,6 +59,7 @@ type SavingState = 'saved' | 'saving' | 'error';
     RandomInfixesComponent,
     UnsavedChangesBoxComponent,
     KeyValuePipe,
+    FilterRandomInfixesPipe,
   ],
 })
 export class GuildSettingsComponent {
@@ -48,40 +67,26 @@ export class GuildSettingsComponent {
   private guildSettingsService = inject(GuildSettingsService);
   private snackBar = inject(MatSnackBar);
 
-  @ViewChild(RandomInfixesComponent) randomInfixesComponent: RandomInfixesComponent;
+  @ViewChild(RandomInfixesComponent) randomInfixesComponent!: RandomInfixesComponent;
+  @Input({ required: true }) user!: User;
 
-  private readonly _guildId = signal<string>(null);
-  @Input({ required: true }) set guildId(value: string) {
-    this._guildId.set(value);
-  }
+  readonly guildId = input.required<string>();
+  private readonly guild = computed(() => this.user.guilds.find(guild => guild.id === this.guildId()));
 
-  readonly guild = computed(() => {
-    return this.apiService.user().guilds.find(guild => guild.id === this._guildId());
-  });
-  readonly role = computed(() => {
-    return this.guild()?.role;
-  });
+  readonly guildName = computed(() => this.guild()?.name ?? 'Unknown guild');
+  readonly guildRole = computed(() => this.guild()?.role);
 
   readonly data$ = computed(() => {
-    return forkJoin([
-      this.guildSettingsService.loadGuildSettings(this._guildId()),
-      this.apiService.loadRandomInfixes(),
-    ]);
-  });
-  readonly loadedData = signal<[GuildSettings, RandomInfix[]]>(null);
-
-  readonly guildSettings = computed(() => this.loadedData()[0]);
-  readonly randomInfixes = computed(() => this.loadedData()[1]);
-
-  readonly filteredRandomInfixes = computed(() => {
-    const randomInfixes = this.randomInfixes();
-    return randomInfixes.filter(infix => infix.guildId === this._guildId());
+    return forkJoin({
+      guildSettings: this.guildSettingsService.loadGuildSettings(this.guildId()),
+      randomInfixes: this.apiService.loadRandomInfixes(),
+    });
   });
 
-  readonly userIsSaving = signal<SavingState>(null);
-  readonly moderatorIsSaving = signal<SavingState>(null);
-  readonly meanVolumeIsSaving = signal<SavingState>(null);
-  readonly maxVolumeIsSaving = signal<SavingState>(null);
+  readonly userIsSaving = signal<SavingState | null>(null);
+  readonly moderatorIsSaving = signal<SavingState | null>(null);
+  readonly meanVolumeIsSaving = signal<SavingState | null>(null);
+  readonly maxVolumeIsSaving = signal<SavingState | null>(null);
 
   readonly randomInfixesHasChanges = signal(false);
   readonly randomInfixIsSaving = signal(false);

@@ -2,12 +2,14 @@
 
 <mat-toolbar>
   <div class="toolbar-content">
-    <button mat-button (click)="fileImport.click()" matTooltip="Import settings from file"
-      ><mat-icon>file_upload</mat-icon> Import</button
-    >
-    <button mat-button (click)="downloadKeybinds()" matTooltip="Download settings"
-      ><mat-icon>file_download</mat-icon> Export</button
-    >
+    <button mat-button (click)="fileImport.click()" matTooltip="Import settings from file">
+      <mat-icon>file_upload</mat-icon>
+      Import
+    </button>
+    <button mat-button (click)="downloadKeybinds()" matTooltip="Download settings">
+      <mat-icon>file_download</mat-icon>
+      Export
+    </button>
     <input class="hidden" type="file" accept=".json" (change)="onImportFileChange($event)" #fileImport />
   </div>
 </mat-toolbar>
@@ -23,34 +25,38 @@
     regenerate it manually, making all previously downloaded scripts invalid.</p
   >
   <p class="auth-token-row">
-    @switch (authToken() != null) {
-      @case (false) {
-        <span>No auth token generated.</span>
-        <button mat-button (click)="regenerateToken()"><mat-icon>autorenew</mat-icon> Generate token</button>
-      }
-      @case (true) {
-        <span>Auth token generated on {{ authToken().createdAt * 1000 | date: 'short' }}</span>
-        <button mat-button (click)="regenerateToken()"><mat-icon>autorenew</mat-icon> Regenerate token</button>
-      }
+    @let token = authToken();
+    @if (token != null) {
+      <span>Auth token generated on {{ token.createdAt * 1000 | date: 'short' }}</span>
+      <button mat-button (click)="regenerateToken()">
+        <mat-icon>autorenew</mat-icon>
+        Regenerate token
+      </button>
+    } @else {
+      <span>No auth token generated.</span>
+      <button mat-button (click)="regenerateToken()">
+        <mat-icon>autorenew</mat-icon>
+        Generate token
+      </button>
     }
   </p>
   <div class="table-wrapper mat-elevation-z8">
     <mat-table [dataSource]="keybinds" cdkDropList [cdkDropListData]="keybinds" (cdkDropListDropped)="onDrop($event)">
       <ng-container matColumnDef="dragDrop">
         <mat-header-cell *matHeaderCellDef></mat-header-cell>
-        <mat-cell *matCellDef="let element"
-          ><mat-icon class="drag-handle" cdkDragHandle>drag_handle</mat-icon></mat-cell
-        >
+        <mat-cell *matCellDef="let element">
+          <mat-icon class="drag-handle" cdkDragHandle>drag_handle</mat-icon>
+        </mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="keyCombination">
         <mat-header-cell *matHeaderCellDef>Key combination</mat-header-cell>
-        <mat-cell *matCellDef="let element"
-          ><app-key-combination-input
+        <mat-cell *matCellDef="let element">
+          <app-key-combination-input
             [(keyCombination)]="element.keyCombination"
             (keyCombinationChange)="saveKeybinds()"
-          ></app-key-combination-input
-        ></mat-cell>
+          ></app-key-combination-input>
+        </mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="discordServer">
@@ -77,9 +83,11 @@
 
       <ng-container matColumnDef="actions">
         <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-        <mat-cell *matCellDef="let element"
-          ><button mat-icon-button (click)="deleteKeybind(element)"><mat-icon>delete</mat-icon></button></mat-cell
-        >
+        <mat-cell *matCellDef="let element">
+          <button mat-icon-button (click)="deleteKeybind(element)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-cell>
       </ng-container>
 
       <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
@@ -93,10 +101,14 @@
   </div>
 
   <div class="button-row">
-    <button mat-raised-button (click)="addKeybind()"><mat-icon>add</mat-icon> Add keybind</button>
-    <button mat-raised-button color="primary" (click)="generateAutohotkey()" class="mat-elevation-z4"
-      ><mat-icon>get_app</mat-icon> Generate AutoHotkey script</button
-    >
+    <button mat-raised-button (click)="addKeybind()">
+      <mat-icon>add</mat-icon>
+      Add keybind
+    </button>
+    <button mat-raised-button color="primary" (click)="generateAutohotkey()" class="mat-elevation-z4">
+      <mat-icon>get_app</mat-icon>
+      Generate AutoHotkey script
+    </button>
   </div>
 </div>
 

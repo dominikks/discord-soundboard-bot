@@ -1,12 +1,12 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy, ViewChild } from '@angular/core';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatListItem, MatListItemIcon, MatListItemLine, MatListItemTitle, MatNavList } from '@angular/material/list';
-import { ApiService } from '../../services/api.service';
 import { HeaderComponent } from '../../common/header/header.component';
 import { FooterComponent } from '../../common/footer/footer.component';
+import { User } from '../../services/api.service';
 
 @Component({
   templateUrl: './settings.component.html',
@@ -29,16 +29,15 @@ import { FooterComponent } from '../../common/footer/footer.component';
   ],
 })
 export class SettingsComponent implements OnDestroy {
-  private apiService = inject(ApiService);
   private router = inject(Router);
 
   @ViewChild(MatSidenav) sidenav: MatSidenav;
+  @Input({ required: true }) user!: User;
 
   readonly mobileQuery: MediaQueryList;
   readonly toolbarBreakpointQuery: MediaQueryList;
   private readonly _mediaQueryListener: () => void;
 
-  readonly user = this.apiService.user();
   readonly guilds = this.user.guilds.filter(guild => guild.role !== 'user');
 
   constructor() {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, signal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { pull } from 'lodash-es';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -10,25 +10,14 @@ import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
 import { DatePipe } from '@angular/common';
-import {
-  MatCell,
-  MatCellDef,
-  MatColumnDef,
-  MatHeaderCell,
-  MatHeaderCellDef,
-  MatHeaderRow,
-  MatHeaderRowDef,
-  MatRow,
-  MatRowDef,
-  MatTable,
-} from '@angular/material/table';
+import { MatCell, MatColumnDef, MatHeaderCell, MatHeaderRow, MatRow, MatTable } from '@angular/material/table';
 import { MatSelect } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { MatOption } from '@angular/material/core';
 import { DataLoadDirective } from '../../common/data-load/data-load.directive';
 import { HeaderComponent } from '../../common/header/header.component';
 import { Sound, SoundsService } from '../../services/sounds.service';
-import { ApiService, AuthToken } from '../../services/api.service';
+import { ApiService, AuthToken, User } from '../../services/api.service';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { FooterComponent } from '../../common/footer/footer.component';
 import { KeyCombination, KeyCombinationInputComponent } from './keycombination-input/key-combination-input.component';
@@ -39,7 +28,7 @@ export type KeyCommand = Sound | 'stop' | 'record';
 interface Keybind {
   keyCombination: KeyCombination;
   command: KeyCommand | null;
-  guildId: string;
+  guildId: string | null;
 }
 
 const STORAGE_KEY = 'keybinds';
@@ -58,9 +47,7 @@ const STORAGE_KEY = 'keybinds';
     MatTable,
     CdkDropList,
     MatColumnDef,
-    MatHeaderCellDef,
     MatHeaderCell,
-    MatCellDef,
     MatCell,
     CdkDragHandle,
     KeyCombinationInputComponent,
@@ -69,9 +56,7 @@ const STORAGE_KEY = 'keybinds';
     MatOption,
     SearchableSoundSelectComponent,
     MatIconButton,
-    MatHeaderRowDef,
     MatHeaderRow,
-    MatRowDef,
     MatRow,
     CdkDrag,
     FooterComponent,
@@ -87,7 +72,7 @@ export class KeybindGeneratorComponent {
 
   readonly displayedColumns = ['dragDrop', 'keyCombination', 'discordServer', 'command', 'actions'];
 
-  readonly user = this.apiService.user();
+  @Input({ required: true }) user!: User;
 
   readonly data$ = forkJoin([
     this.soundsService.loadSounds(),
@@ -101,7 +86,7 @@ export class KeybindGeneratorComponent {
   ]);
   readonly dataLoaded$ = new Subject<[Array<Sound>, AuthToken | null]>();
 
-  readonly sounds = signal<Sound[]>(null);
+  readonly sounds = signal<Sound[]>([]);
   readonly authToken = signal<AuthToken | null>(null);
   keybinds: Keybind[];
 
@@ -194,8 +179,11 @@ export class KeybindGeneratorComponent {
   }
 
   onImportFileChange(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
     const fileReader = new FileReader();
-    fileReader.readAsText((event.target as HTMLInputElement).files[0], 'UTF-8');
+    fileReader.readAsText(file, 'UTF-8');
     fileReader.onload = () => {
       const keybinds = JSON.parse(fileReader.result as string);
       this.cleanupKeybinds(keybinds, this.sounds());
@@ -239,7 +227,7 @@ export class KeybindGeneratorComponent {
         script += 'ExecCommand(' + bind.guildId + ', "record")\n';
       } else if (bind.command === 'stop') {
         script += 'ExecCommand(' + bind.guildId + ', "stop")\n';
-      } else {
+      } else if (bind.command != null) {
         script += 'PlaySound(' + bind.guildId + ', "' + bind.command.encodeId() + '")\n';
       }
       script += 'return\n';

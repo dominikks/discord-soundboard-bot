@@ -1,5 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { AppInfo } from '../services/api.service';
+import { AppInfo } from './api.service';
 
 @Injectable({ providedIn: 'root' })
 export class AppInfoState {

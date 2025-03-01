@@ -1,16 +1,18 @@
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
-import { catchError } from 'rxjs/operators';
-import { EMPTY } from 'rxjs';
+import { Component, EventEmitter, inject, Input, Output, Signal } from '@angular/core';
+import { catchError, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
 import { NgTemplateOutlet } from '@angular/common';
 import { MatAnchor, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatRipple } from '@angular/material/core';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatDivider } from '@angular/material/divider';
-import { ApiService } from '../../services/api.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ApiService, User } from '../../services/api.service';
+import { AppInfoState } from '../../services/app-info.state';
 
 @Component({
   selector: 'app-header',
@@ -35,16 +37,21 @@ import { ApiService } from '../../services/api.service';
 })
 export class HeaderComponent {
   protected apiService = inject(ApiService);
+  protected appInfoState = inject(AppInfoState);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   @Input({ required: true }) pageTitle!: string;
   @Input() showSidenavToggle = false;
 
   @Output() toggleSidenav = new EventEmitter<void>();
 
+  protected user: Signal<User | undefined> = toSignal(this.route.data.pipe(map(data => data['user'])));
+
   logout() {
     this.apiService
       .logout()
-      .pipe(catchError(() => EMPTY))
-      .subscribe();
+      .pipe(catchError(() => of(null)))
+      .subscribe(() => this.router.navigate(['login']));
   }
 }

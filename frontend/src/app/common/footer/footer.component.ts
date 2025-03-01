@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatTooltip } from '@angular/material/tooltip';
 import { DatePipe } from '@angular/common';
-import { ApiService } from '../../services/api.service';
+import { AppInfoState } from '../../services/app-info.state';
 
 @Component({
   selector: 'app-footer',
@@ -11,9 +11,9 @@ import { ApiService } from '../../services/api.service';
   imports: [MatTooltip, DatePipe],
 })
 export class FooterComponent {
-  private apiService = inject(ApiService);
+  protected appInfoState = inject(AppInfoState);
 
   get info() {
-    return this.apiService.appInfo();
+    return this.appInfoState.data();
   }
 }

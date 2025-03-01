@@ -1,6 +1,7 @@
 import { effect, inject, Injectable, signal, WritableSignal } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
-import { ApiService } from './api.service';
+import { filter, map } from 'rxjs/operators';
+import { NavigationEnd, Router } from '@angular/router';
+import { User } from './api.service';
 
 const STORAGE_KEY = 'soundboard-settings';
 
@@ -38,8 +39,11 @@ export class AppSettingsService {
       } catch {}
     });
 
-    const apiService = inject(ApiService);
-    toObservable(apiService.user).subscribe(user => {
+    const router = inject(Router);
+    router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(() => router.routerState.snapshot.root.data['user'] as User | undefined)
+    ).subscribe(user => {
       const guildId = this.settings.guildId();
       if (guildId == null && user?.guilds && user.guilds.length > 0) {
         this.settings.guildId.set(user.guilds[0].id);

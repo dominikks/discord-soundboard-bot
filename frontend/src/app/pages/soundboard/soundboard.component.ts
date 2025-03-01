@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, signal } from '@angular/core';
 import { clamp, sample, sortBy, uniq } from 'lodash-es';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import Fuse from 'fuse.js';
@@ -20,7 +20,7 @@ import { DataLoadDirective } from '../../common/data-load/data-load.directive';
 import { HeaderComponent } from '../../common/header/header.component';
 import { EventsService } from '../../services/events.service';
 import { Sound, SoundsService } from '../../services/sounds.service';
-import { ApiService, RandomInfix } from '../../services/api.service';
+import { ApiService, RandomInfix, User } from '../../services/api.service';
 import { AppSettingsService } from '../../services/app-settings.service';
 import { VolumeSliderComponent } from '../../common/volume-slider/volume-slider.component';
 import { FooterComponent } from '../../common/footer/footer.component';
@@ -68,7 +68,7 @@ export class SoundboardComponent {
     return this.settingsService.settings;
   }
 
-  readonly user = this.apiService.user();
+  @Input({ required: true }) user!: User;
 
   readonly data$ = forkJoin([this.apiService.loadRandomInfixes(), this.soundsService.loadSounds()]);
   readonly loadedData = signal<[RandomInfix[], Sound[]] | null>(null);
@@ -122,8 +122,11 @@ export class SoundboardComponent {
   }
 
   playSound(sound: Sound) {
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
     this.stopLocalSound();
-    this.soundsService.playSound(sound, this.settings.guildId(), this.settings.autoJoin()).subscribe({
+    this.soundsService.playSound(sound, guildId, this.settings.autoJoin()).subscribe({
       next: () => {
         if (this.settings.debug()) {
           let volString =
@@ -184,9 +187,10 @@ export class SoundboardComponent {
   }
 
   stopSound() {
-    this.soundsService
-      .stopSound(this.settings.guildId())
-      .subscribe({ error: () => this.snackBar.open('Failed to stop playback.') });
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
+    this.soundsService.stopSound(guildId).subscribe({ error: () => this.snackBar.open('Failed to stop playback.') });
   }
 
   stopLocalSound() {
@@ -201,7 +205,10 @@ export class SoundboardComponent {
   }
 
   joinChannel() {
-    this.apiService.joinCurrentChannel(this.settings.guildId()).subscribe({
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
+    this.apiService.joinCurrentChannel(guildId).subscribe({
       next: () => this.snackBar.open('Joined channel!', undefined, { duration: 2000 }),
       error: (error: HttpErrorResponse) => {
         if (error.status === 400) {
@@ -214,7 +221,10 @@ export class SoundboardComponent {
   }
 
   leaveChannel() {
-    this.apiService.leaveChannel(this.settings.guildId()).subscribe({
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
+    this.apiService.leaveChannel(guildId).subscribe({
       next: () => this.snackBar.open('Left channel!', undefined, { duration: 2000 }),
       error: (error: HttpErrorResponse) => {
         if (error.status === 503) {

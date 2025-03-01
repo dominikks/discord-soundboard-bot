@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   inject,
+  Input,
   QueryList,
   signal,
   ViewChild,
@@ -46,7 +47,7 @@ import { DataLoadDirective } from '../../common/data-load/data-load.directive';
 import { HeaderComponent } from '../../common/header/header.component';
 import { RecorderService, Recording as SrvRecording, RecordingUser } from '../../services/recorder.service';
 import { AppSettingsService } from '../../services/app-settings.service';
-import { ApiService } from '../../services/api.service';
+import { ApiService, User } from '../../services/api.service';
 import { FooterComponent } from '../../common/footer/footer.component';
 
 interface Recording extends SrvRecording {
@@ -105,29 +106,29 @@ export class RecorderComponent {
     return this.settingsService.settings;
   }
 
-  readonly user = this.apiService.user();
+  @Input({ required: true }) user!: User;
 
-  data$: Observable<Recording[]>;
-
-  readonly recordings = signal<Recording[]>(null);
+  readonly recordings = signal<Recording[]>([]);
   readonly shownRecordings = computed(() => {
     const guildId = this.settings.guildId();
     return this.recordings().filter(recording => recording.guildId === guildId);
   });
 
-  @ViewChildren(WebAudioBufferSource) audioBufferSources: QueryList<WebAudioBufferSource>;
-  @ViewChild(WebAudioGain) gainNode: WebAudioGain;
-  @ViewChild(WebAudioContext) contextNode: WebAudioContext;
+  @ViewChildren(WebAudioBufferSource) audioBufferSources!: QueryList<WebAudioBufferSource>;
+  @ViewChild(WebAudioGain) gainNode!: WebAudioGain;
+  @ViewChild(WebAudioContext) contextNode!: WebAudioContext;
 
   readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
-  readonly currentlyPlaying = signal<Recording>(null);
+  readonly currentlyPlaying = signal<Recording | null>(null);
 
-  constructor() {
-    this.reload();
-  }
+  data$ = this.getRecordingsObservable();
 
   reload() {
-    this.data$ = this.recorderService.loadRecordings().pipe(
+    this.data$ = this.getRecordingsObservable();
+  }
+
+  private getRecordingsObservable(): Observable<Recording[]> {
+    return this.recorderService.loadRecordings().pipe(
       map(recordings =>
         recordings
           .sort((a, b) => b.timestamp - a.timestamp)
@@ -155,8 +156,11 @@ export class RecorderComponent {
   }
 
   record() {
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
     this.snackBar.open(`Preparing recording. This may take up to one minute.`);
-    this.recorderService.record(this.settings.guildId()).subscribe({
+    this.recorderService.record(guildId).subscribe({
       next: () => {
         this.snackBar.open(`Recording saved!`, undefined, { duration: 1500 });
         this.reload();

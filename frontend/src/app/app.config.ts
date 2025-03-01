@@ -13,7 +13,7 @@ import { map } from 'rxjs/operators';
 import { APP_ROUTES } from './app.routes';
 import { authInterceptor } from './services/auth-interceptor';
 import { ApiService } from './services/api.service';
-import { AppInfoState } from './state/app-info.state';
+import { AppInfoState } from './services/app-info.state';
 
 export const APP_CONFIG: ApplicationConfig = {
   providers: [
