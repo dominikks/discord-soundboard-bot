@@ -4,7 +4,9 @@
       href="https://github.com/dominikks/discord-soundboard-bot"
       target="_blank"
       rel="noopener"
-      matTooltip="Build id: {{ info.buildId }} &mdash; Build date: {{ info.buildTimestamp ? (info.buildTimestamp * 1000 | date: 'medium') : 'unknown' }}"
+      matTooltip="Build id: {{ info.buildId }} &mdash; Build date: {{
+        info.buildTimestamp ? (info.buildTimestamp * 1000 | date: 'medium') : 'unknown'
+      }}"
       [matTooltipDisabled]="!info.buildId || !info.buildTimestamp"
     >
       discord-soundboard-bot {{ info.version }}

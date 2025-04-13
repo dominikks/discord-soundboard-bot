@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, RedirectCommand, Router } from '@angular/router';
 import { User } from '../services/api.service';
 
 export const guildPermissionGuard: CanActivateFn = (route, _state) => {
@@ -24,9 +24,9 @@ export const guildPermissionGuard: CanActivateFn = (route, _state) => {
   }
 
   if (!user) {
-    return router.parseUrl('/login');
+    return new RedirectCommand(router.parseUrl('/login'));
   }
 
   const guild = user.guilds.find(g => g.id === guildId);
-  return guild && guild.role !== 'user' ? true : router.parseUrl('/settings');
+  return guild && guild.role !== 'user' ? true : new RedirectCommand(router.parseUrl('/settings'));
 };

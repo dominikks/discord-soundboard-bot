@@ -4,7 +4,10 @@
       <mat-card-content>
         <div class="text-wrapper mat-h3">You have unsaved changes</div>
         <div class="flex-filler"></div>
-        <button mat-button [disabled]="isSaving() || disabled()" (click)="!isSaving() && !disabled() && discardChanges.emit()"
+        <button
+          mat-button
+          [disabled]="isSaving() || disabled()"
+          (click)="!isSaving() && !disabled() && discardChanges.emit()"
           >Reset</button
         >
         <div class="save-button-container">
