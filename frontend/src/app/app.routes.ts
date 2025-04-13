@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { guildPermissionGuard } from './guards/guild-permission.guard';
 import { canDeactivateSoundManagerGuard } from './pages/settings/sound-manager/can-deactivate-sound-manager.guard';
 import { canDeactivateGuildSettingsGuard } from './pages/settings/guild-settings/can-deactivate-guild-settings.guard';
 import { LoginComponent } from './pages/login/login.component';
 import { notLoggedInGuard } from './guards/not-logged-in.guard';
+import { guildPermissionGuard } from './guards/guild-permission.guard';
 import { userResolver } from './resolvers/user.resolver';
 
 export const APP_ROUTES: Routes = [
@@ -72,10 +72,10 @@ export const APP_ROUTES: Routes = [
           },
         ],
       },
+      {
+        path: '**',
+        redirectTo: 'soundboard',
+      },
     ],
-  },
-  {
-    path: '**',
-    redirectTo: 'soundboard',
   },
 ];

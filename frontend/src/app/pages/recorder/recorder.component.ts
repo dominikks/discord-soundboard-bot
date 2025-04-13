@@ -47,7 +47,7 @@ import { DataLoadDirective } from '../../common/data-load/data-load.directive';
 import { HeaderComponent } from '../../common/header/header.component';
 import { RecorderService, Recording as SrvRecording, RecordingUser } from '../../services/recorder.service';
 import { AppSettingsService } from '../../services/app-settings.service';
-import { ApiService, User } from '../../services/api.service';
+import { User } from '../../services/api.service';
 import { FooterComponent } from '../../common/footer/footer.component';
 
 interface Recording extends SrvRecording {
@@ -96,7 +96,6 @@ interface Recording extends SrvRecording {
   ],
 })
 export class RecorderComponent {
-  private apiService = inject(ApiService);
   private recorderService = inject(RecorderService);
   private settingsService = inject(AppSettingsService);
   private snackBar = inject(MatSnackBar);
@@ -189,6 +188,7 @@ export class RecorderComponent {
 
       this.audioBufferSources.forEach(source => {
         source.start(playTime, recording.start, duration);
+        source.ended?.subscribe(() => this.stop());
       });
     });
   }

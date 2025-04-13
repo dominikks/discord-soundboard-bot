@@ -1,30 +1,36 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { User } from '../services/api.service';
 
 @Pipe({ name: 'guildName', pure: false })
 export class GuildNamePipe implements PipeTransform {
-  private route = inject(ActivatedRoute);
-  private currentUser: User | undefined;
+  private router = inject(Router);
+  private user: User | undefined;
 
   constructor() {
-    // Try to get the user from the route data
-    this.route.root.data
-      .pipe(
-        map(data => data['user'] as User | undefined),
-        takeUntilDestroyed(),
-      )
-      .subscribe(user => {
-        this.currentUser = user;
-      });
+    this.updateUserFromRoute();
+  }
+
+  private updateUserFromRoute(): void {
+    // Try to find user data in any of the activated routes
+    let route = this.router.routerState.snapshot.root;
+    while (route) {
+      if (route.data['user']) {
+        this.user = route.data['user'] as User;
+        break;
+      }
+      if (route.firstChild) {
+        route = route.firstChild;
+      } else {
+        break;
+      }
+    }
   }
 
   transform(guildId: string): string {
-    if (!this.currentUser) return guildId;
+    if (!this.user) return guildId;
 
-    const guild = this.currentUser.guilds.find(guild => guild.id === guildId);
-    return guild ? guild.name : guildId;
+    const guild = this.user.guilds.find(guild => guild.id === guildId);
+    return guild?.name || guildId;
   }
 }

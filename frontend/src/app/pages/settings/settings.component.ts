@@ -1,5 +1,14 @@
 import { MediaMatcher } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnDestroy, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  computed,
+  inject,
+  input,
+  OnDestroy,
+  ViewChild,
+} from '@angular/core';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -32,13 +41,13 @@ export class SettingsComponent implements OnDestroy {
   private router = inject(Router);
 
   @ViewChild(MatSidenav) sidenav!: MatSidenav;
-  @Input({ required: true }) user!: User;
+  readonly user = input.required<User>();
 
   readonly mobileQuery: MediaQueryList;
   readonly toolbarBreakpointQuery: MediaQueryList;
   private readonly _mediaQueryListener: () => void;
 
-  readonly guilds = this.user.guilds.filter(guild => guild.role !== 'user');
+  readonly guilds = computed(() => this.user().guilds.filter(guild => guild.role !== 'user'));
 
   constructor() {
     const changeDetectorRef = inject(ChangeDetectorRef);

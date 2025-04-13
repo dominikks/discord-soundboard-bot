@@ -15,11 +15,11 @@
     >
       <mat-nav-list class="sidenav-list">
         <mat-list-item routerLink="/settings/user" routerLinkActive="active-nav-link">
-          <img matListItemIcon [src]="user.avatarUrl" alt="The user's Discord avatar" />
+          <img matListItemIcon [src]="user().avatarUrl" alt="The user's Discord avatar" />
           <div>User settings</div>
         </mat-list-item>
 
-        @for (guild of guilds; track guild) {
+        @for (guild of guilds(); track guild) {
           <mat-list-item [routerLink]="'/settings/guilds/' + guild.id">
             @if (guild.iconUrl) {
               <img matListItemIcon [src]="guild.iconUrl" alt="The Discord server's avatar" />
@@ -43,12 +43,12 @@
             <div matListItemTitle>{{ guild.name }}</div>
             <div matListItemLine>{{ guild.role === 'admin' ? 'Admin' : 'Moderator' }}</div>
           </mat-list-item>
-          <mat-list-item [routerLink]="'/settings/guilds/' + guild.id + '/settings'" routerLinkActive="active-nav-link"
-            ><div class="guild-menu-item">Settings</div></mat-list-item
-          >
-          <mat-list-item [routerLink]="'/settings/guilds/' + guild.id + '/sounds'" routerLinkActive="active-nav-link"
-            ><div class="guild-menu-item">Sounds</div></mat-list-item
-          >
+          <mat-list-item [routerLink]="'/settings/guilds/' + guild.id + '/settings'" routerLinkActive="active-nav-link">
+            <div class="guild-menu-item">Settings</div>
+          </mat-list-item>
+          <mat-list-item [routerLink]="'/settings/guilds/' + guild.id + '/sounds'" routerLinkActive="active-nav-link">
+            <div class="guild-menu-item">Sounds</div>
+          </mat-list-item>
         }
       </mat-nav-list>
     </mat-sidenav>

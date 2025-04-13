@@ -12,8 +12,13 @@
         </mat-select>
       </mat-form-field>
       <app-volume-slider></app-volume-slider>
-      <button mat-raised-button (click)="record()"><mat-icon>voicemail</mat-icon> Record last 60s</button>
-      <button mat-icon-button (click)="reload()" matTooltip="Reload recordings"><mat-icon>refresh</mat-icon></button>
+      <button mat-raised-button (click)="record()">
+        <mat-icon>voicemail</mat-icon>
+        Record last 60s
+      </button>
+      <button mat-icon-button (click)="reload()" matTooltip="Reload recordings">
+        <mat-icon>refresh</mat-icon>
+      </button>
     </div>
   </mat-toolbar>
 
@@ -43,9 +48,9 @@
                 <div class="sound-channel-controls">
                   Select audio tracks
                   @for (user of recording.users; track user; let userIndex = $index) {
-                    <mat-checkbox color="primary" [(ngModel)]="recording.selected[userIndex]">{{
-                      user.username
-                    }}</mat-checkbox>
+                    <mat-checkbox color="primary" [(ngModel)]="recording.selected[userIndex]"
+                      >{{ user.username }}
+                    </mat-checkbox>
                   }
                 </div>
                 <div>
@@ -57,16 +62,26 @@
                 </div>
                 <mat-divider></mat-divider>
                 <div class="button-row">
-                  <button mat-raised-button color="primary" (click)="downloadMix(recording)"
-                    ><mat-icon>download</mat-icon> Download</button
-                  >
+                  <button mat-raised-button color="primary" (click)="downloadMix(recording)">
+                    <mat-icon>download</mat-icon>
+                    Download
+                  </button>
                   @if (currentlyPlaying() === recording) {
-                    <button mat-raised-button (click)="stop()"><mat-icon>pause</mat-icon> Stop</button>
+                    <button mat-raised-button (click)="stop()">
+                      <mat-icon>pause</mat-icon>
+                      Stop
+                    </button>
                   } @else {
-                    <button mat-raised-button (click)="play(recording)"><mat-icon>play_arrow</mat-icon> Play</button>
+                    <button mat-raised-button (click)="play(recording)">
+                      <mat-icon>play_arrow</mat-icon>
+                      Play
+                    </button>
                   }
                   <div class="filler"></div>
-                  <button mat-button (click)="deleteRecording(recording)"><mat-icon>delete</mat-icon> Delete</button>
+                  <button mat-button (click)="deleteRecording(recording)">
+                    <mat-icon>delete</mat-icon>
+                    Delete
+                  </button>
                 </div>
                 <!-- Audio playback -->
                 @if (currentlyPlaying() === recording) {
@@ -76,12 +91,7 @@
                     </ng-container>
                     @for (user of recording.users; track user; let userIndex = $index) {
                       @if (recording.selected[userIndex]) {
-                        <ng-container
-                          [buffer]="user.url"
-                          [waOutput]="gainNode"
-                          (ended)="stop()"
-                          waAudioBufferSourceNode
-                        ></ng-container>
+                        <ng-container [buffer]="user.url" [waOutput]="gainNode" waAudioBufferSourceNode></ng-container>
                       }
                     }
                   </ng-container>

@@ -40,10 +40,30 @@ export class AppSettingsService {
     });
 
     const router = inject(Router);
+    // Set default guild ID from user data when available
     router.events.pipe(
       filter(event => event instanceof NavigationEnd),
-      map(() => router.routerState.snapshot.root.data['user'] as User | undefined)
+      map(() => {
+        // Check current route and its ancestors for user data
+        let route = router.routerState.snapshot.root;
+        let userData: User | undefined;
+        
+        while (route) {
+          if (route.data['user']) {
+            userData = route.data['user'] as User;
+            break;
+          }
+          if (route.firstChild) {
+            route = route.firstChild;
+          } else {
+            break;
+          }
+        }
+        
+        return userData;
+      })
     ).subscribe(user => {
+      // Only set default guildId if not already set
       const guildId = this.settings.guildId();
       if (guildId == null && user?.guilds && user.guilds.length > 0) {
         this.settings.guildId.set(user.guilds[0].id);

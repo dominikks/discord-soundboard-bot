@@ -1,4 +1,4 @@
-import { ApplicationConfig, inject, LOCALE_ID, provideAppInitializer } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, inject, LOCALE_ID, provideAppInitializer } from '@angular/core';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { map } from 'rxjs/operators';
+import { TimeagoModule } from 'ngx-timeago';
 import { APP_ROUTES } from './app.routes';
 import { authInterceptor } from './services/auth-interceptor';
 import { ApiService } from './services/api.service';
@@ -29,11 +30,12 @@ export const APP_CONFIG: ApplicationConfig = {
       provide: LOCALE_ID,
       useValue: 'en-US',
     },
+    importProvidersFrom(TimeagoModule.forRoot()),
     provideRouter(
       APP_ROUTES,
       withComponentInputBinding(),
-      withPreloading(PreloadAllModules),
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+      withPreloading(PreloadAllModules),
     ),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
