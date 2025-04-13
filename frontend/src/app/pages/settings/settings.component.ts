@@ -31,7 +31,7 @@ import { User } from '../../services/api.service';
 export class SettingsComponent implements OnDestroy {
   private router = inject(Router);
 
-  @ViewChild(MatSidenav) sidenav: MatSidenav;
+  @ViewChild(MatSidenav) sidenav!: MatSidenav;
   @Input({ required: true }) user!: User;
 
   readonly mobileQuery: MediaQueryList;

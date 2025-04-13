@@ -42,11 +42,11 @@ export class RandomInfixesComponent implements OnChanges {
   private guildSettingsService = inject(GuildSettingsService);
   private cdRef = inject(ChangeDetectorRef);
 
-  @Input({ required: true }) guildId: string;
-  @Input({ required: true }) randomInfixes: RandomInfix[];
+  @Input({ required: true }) guildId!: string;
+  @Input({ required: true }) randomInfixes!: RandomInfix[];
   @Output() hasChanges = new EventEmitter<boolean>();
 
-  infixes: RandomInfix[];
+  infixes: RandomInfix[] = [];
 
   addRandomInfix() {
     this.infixes.push({ guildId: this.guildId, displayName: '', infix: '' });
@@ -61,7 +61,7 @@ export class RandomInfixesComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if ('randomInfixes' in changes && this.infixes == null) {
+    if ('randomInfixes' in changes && this.infixes.length === 0) {
       this.discardChanges();
     }
   }

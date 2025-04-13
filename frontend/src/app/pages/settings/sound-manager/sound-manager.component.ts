@@ -70,7 +70,7 @@ export class SoundManagerComponent {
     return this.settingsService.settings;
   }
 
-  _guildId: string;
+  _guildId!: string;
   @Input({ required: true }) set guildId(guildId: string) {
     this._guildId = guildId;
 
@@ -83,13 +83,13 @@ export class SoundManagerComponent {
       );
   }
 
-  data$: Observable<SoundEntry[]>;
+  data$!: Observable<SoundEntry[]>;
 
-  readonly sounds = signal<SoundEntry[]>(null);
+  readonly sounds = signal<SoundEntry[]>([]);
   readonly soundsWithChanges = computed(() => {
     const sounds = this.sounds();
 
-    if (sounds == null || sounds.length === 0) return [];
+    if (sounds.length === 0) return [];
 
     return sounds.filter(sound => sound.hasChanges());
   });
@@ -101,8 +101,17 @@ export class SoundManagerComponent {
       keys: ['name', 'category'],
       getFn: (obj, path) => {
         const sound = obj.sound();
-        if (Array.isArray(path)) return path.map(p => sound[p]);
-        else return sound[path];
+        if (Array.isArray(path)) {
+          return path.map(p => {
+            if (p === 'name') return sound.name;
+            if (p === 'category') return sound.category;
+            return '';
+          });
+        } else {
+          if (path === 'name') return sound.name;
+          if (path === 'category') return sound.category;
+          return '';
+        }
       },
     });
   });
@@ -126,7 +135,7 @@ export class SoundManagerComponent {
 
   readonly hasChanges = computed(() => this.soundsWithChanges().length > 0);
 
-  readonly currentAudio = signal<HTMLAudioElement>(null);
+  readonly currentAudio = signal<HTMLAudioElement | null>(null);
 
   constructor() {
     effect(() => {
@@ -176,9 +185,11 @@ export class SoundManagerComponent {
   }
 
   onImportFileChange(event: Event) {
-    const files = Array.from((event.target as HTMLInputElement).files);
+    const fileList = (event.target as HTMLInputElement).files;
+    if (!fileList) return;
+
     this.isUploading.set(true);
-    from(files)
+    from(Array.from(fileList))
       .pipe(
         mergeMap(file => {
           const endingIndex = file.name.lastIndexOf('.');

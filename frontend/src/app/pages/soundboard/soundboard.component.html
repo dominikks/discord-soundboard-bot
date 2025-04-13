@@ -42,7 +42,7 @@
         <mat-select [ngModel]="target()" (ngModelChange)="target.set($event)">
           @for (guild of user.guilds; track guild) {
             <mat-option [value]="guild.id">
-              {{ guild.name ?? guild.id }}
+              {{ guild.name || guild.id }}
             </mat-option>
           }
         </mat-select>

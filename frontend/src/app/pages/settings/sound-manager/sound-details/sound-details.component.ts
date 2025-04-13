@@ -53,9 +53,9 @@ type VolumeAdjustmentMode = 'auto' | 'manual';
   ],
 })
 export class SoundDetailsComponent {
-  @Input({ required: true }) soundEntry: SoundEntry;
-  @Input({ required: true }) isBusy: boolean;
-  @Input({ required: true }) isPlaying: boolean;
+  @Input({ required: true }) soundEntry!: SoundEntry;
+  @Input({ required: true }) isBusy!: boolean;
+  @Input({ required: true }) isPlaying!: boolean;
 
   @Output() playClick = new EventEmitter<void>();
   @Output() deleteClick = new EventEmitter<void>();
@@ -71,7 +71,7 @@ export class SoundDetailsComponent {
 
   updateVolumeAdjustmentMode(mode: VolumeAdjustmentMode) {
     if (mode === 'auto') {
-      this.soundEntry.mutateSound({ volumeAdjustment: null });
+      this.soundEntry.mutateSound({ volumeAdjustment: undefined });
     } else {
       this.soundEntry.mutateSound({ volumeAdjustment: 0 });
     }
@@ -79,7 +79,7 @@ export class SoundDetailsComponent {
 
   onImportFileChange(event: Event) {
     const files = (event.target as HTMLInputElement).files;
-    if (files.length === 1) {
+    if (files && files.length === 1) {
       this.replaceSoundFile.emit(files[0]);
     }
   }

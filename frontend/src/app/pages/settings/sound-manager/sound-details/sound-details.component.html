@@ -63,25 +63,26 @@
           <div>Created</div>
           <div timeago [date]="sound().createdAt * 1000" [matTooltip]="sound().createdAt * 1000 | date: 'medium'"></div>
         </div>
-        @if (sound().soundFile != null) {
+        @let soundFile = sound().soundFile;
+        @if (soundFile) {
           <div>
             <div>Max Volume</div>
-            <div>{{ sound().soundFile.maxVolume | number: '1.1-1' }} dB</div>
+            <div>{{ soundFile.maxVolume | number: '1.1-1' }} dB</div>
           </div>
           <div>
             <div>Mean Volume</div>
-            <div>{{ sound().soundFile.meanVolume | number: '1.1-1' }} dB</div>
+            <div>{{ soundFile.meanVolume | number: '1.1-1' }} dB</div>
           </div>
           <div>
             <div>Length</div>
-            <div>{{ sound().soundFile.length | number: '1.3-3' }} s</div>
+            <div>{{ soundFile.length | number: '1.3-3' }} s</div>
           </div>
           <div>
             <div>Uploaded</div>
             <div
               timeago
-              [date]="sound().soundFile.uploadedAt * 1000"
-              [matTooltip]="sound().soundFile.uploadedAt * 1000 | date: 'medium'"
+              [date]="soundFile.uploadedAt * 1000"
+              [matTooltip]="soundFile.uploadedAt * 1000 | date: 'medium'"
             ></div>
           </div>
         } @else {
@@ -94,12 +95,14 @@
   <mat-action-row>
     <input class="hidden" type="file" accept=".mp3" (change)="onImportFileChange($event)" #fileImport />
     <button mat-stroked-button (click)="playClick.emit()">
-      <mat-icon>{{ isPlaying ? 'pause' : 'play_arrow' }}</mat-icon> {{ isPlaying ? 'Stop' : 'Play' }}
+      <mat-icon>{{ isPlaying ? 'pause' : 'play_arrow' }}</mat-icon>
+      {{ isPlaying ? 'Stop' : 'Play' }}
     </button>
     <div class="spinner-button-container">
-      <button mat-stroked-button [disabled]="isBusy" (click)="!isBusy && fileImport.click()"
-        ><mat-icon>file_upload</mat-icon> {{ sound().soundFile == null ? 'Upload' : 'Replace' }} sound</button
-      >
+      <button mat-stroked-button [disabled]="isBusy" (click)="!isBusy && fileImport.click()">
+        <mat-icon>file_upload</mat-icon>
+        {{ sound().soundFile == null ? 'Upload' : 'Replace' }} sound
+      </button>
       @if (isBusy) {
         <div class="spinner-container">
           <mat-spinner diameter="24"></mat-spinner>
@@ -107,9 +110,10 @@
       }
     </div>
     <div class="spinner-button-container">
-      <button mat-stroked-button color="warn" [disabled]="isBusy" (click)="!isBusy && deleteClick.next()"
-        ><mat-icon>delete</mat-icon> Delete sound</button
-      >
+      <button mat-stroked-button color="warn" [disabled]="isBusy" (click)="!isBusy && deleteClick.next()">
+        <mat-icon>delete</mat-icon>
+        Delete sound
+      </button>
       @if (isBusy) {
         <div class="spinner-container">
           <mat-spinner diameter="24"></mat-spinner>

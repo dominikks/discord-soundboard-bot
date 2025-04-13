@@ -185,8 +185,10 @@ export class RecorderComponent {
 
     setTimeout(() => {
       const playTime = this.contextNode.currentTime + 0.1;
+      const duration = recording.end - recording.start;
+
       this.audioBufferSources.forEach(source => {
-        source.start(playTime, recording.start, recording.end - recording.start);
+        source.start(playTime, recording.start, duration);
       });
     });
   }
