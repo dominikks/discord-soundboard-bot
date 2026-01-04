@@ -19,7 +19,6 @@ use tokio::sync::Mutex;
 pub enum ClientError {
     NotInAChannel,
     UserNotFound,
-    DecodingError(songbird::input::error::Error),
     ConnectionError,
     GuildNotFound,
 }
@@ -106,29 +105,20 @@ impl Client {
             .ok_or(ClientError::NotInAChannel)?;
         let mut call = call_lock.lock().await;
 
-        let volume_adjustment_string = format!("volume={}dB", volume_adjustment);
-        let source = songbird::input::ffmpeg_optioned(
-            sound_path,
-            &[],
-            &[
-                "-f",
-                "s16le",
-                "-ar",
-                "48000",
-                "-acodec",
-                "pcm_f32le",
-                "-filter:a",
-                &volume_adjustment_string,
-                "-",
-            ],
-        )
-        .await
-        .map_err(|why| {
-            warn!("Err starting source: {:?}", why);
-            ClientError::DecodingError(why)
-        })?;
+        // Create input from file using songbird's File source
+        let source = songbird::input::File::new(sound_path.clone());
 
-        call.play_source(source);
+        // Play the source and get the track handle
+        let track_handle = call.play_input(source.into());
+
+        // Convert dB to linear volume scale: linear = 10^(dB/20)
+        let linear_volume = 10_f32.powf(volume_adjustment / 20.0);
+        
+        // Apply volume adjustment to the track
+        if let Err(e) = track_handle.set_volume(linear_volume) {
+            warn!("Failed to set volume: {:?}", e);
+        }
+
         Ok(())
     }
 
