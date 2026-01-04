@@ -63,7 +63,10 @@ impl Connector {
             .expect("Error creating client");
 
         Self {
-            cache_http: CacheHttp::from(&serenity_client.cache_and_http),
+            cache_http: CacheHttp {
+                cache: serenity_client.cache.clone(),
+                http: serenity_client.http.clone(),
+            },
             serenity_client,
             client,
         }

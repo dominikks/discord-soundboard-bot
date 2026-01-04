@@ -59,9 +59,6 @@ impl From<ClientError> for CommandError {
             ClientError::ConnectionError => {
                 CommandError::InternalError(String::from("Error communicating with Discord API"))
             }
-            ClientError::DecodingError(_) => CommandError::InternalError(String::from(
-                "Error decoding soundfile, the file might be corrupted.",
-            )),
         }
     }
 }

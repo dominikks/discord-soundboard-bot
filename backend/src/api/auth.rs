@@ -358,7 +358,7 @@ async fn login_post(
     }
 
     let http_client = reqwest::Client::new();
-    let token_result = oauth.inner()
+    let token_result = (**oauth)
         .exchange_code(AuthorizationCode::new(code))
         .set_pkce_verifier(PkceCodeVerifier::new(login_cookie.pkce_verifier))
         .request_async(&http_client)
@@ -372,7 +372,7 @@ async fn login_post(
         .await?
         .json()
         .await?;
-    let user_id = UserId(user_info.id.0);
+    let user_id = UserId(user_info.id.get());
 
     let m_user = BigDecimal::from_u64(user_id.0)
         .map(|uid| models::User {
@@ -412,7 +412,7 @@ fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redi
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
     // Generate the full authorization URL.
-    let (auth_url, csrf_state) = oauth
+    let (auth_url, csrf_state) = (**oauth)
         .authorize_url(CsrfToken::new_random)
         .add_scope(Scope::new("identify".to_string()))
         .set_pkce_challenge(pkce_challenge)

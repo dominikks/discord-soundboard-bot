@@ -167,7 +167,7 @@ async fn list_sounds(
         .await?
         .into_iter()
         .map(|(guildinfo, _)| {
-            BigDecimal::from_u64(guildinfo.id.0).ok_or_else(SoundsError::bigdecimal_error)
+            BigDecimal::from_u64(guildinfo.id.get()).ok_or_else(SoundsError::bigdecimal_error)
         })
         .collect::<Result<Vec<_>, _>>()?;
 

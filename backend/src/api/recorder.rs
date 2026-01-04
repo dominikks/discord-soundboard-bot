@@ -146,7 +146,7 @@ async fn get_recordings(
     let guilds = get_guilds_for_user(cache_http.inner(), &db, user.into()).await?;
     let mut results = vec![];
     for (guild, _) in guilds.iter() {
-        results.append(&mut file_handling::get_recordings_for_guild(guild.id.0).await?);
+        results.append(&mut file_handling::get_recordings_for_guild(guild.id.get()).await?);
     }
     let results: Result<Vec<_>, _> = results.into_iter().map(Recording::try_from).collect();
     Ok(Json(results?))
@@ -198,7 +198,7 @@ async fn mix_recording(
         )));
     }
     let folder = (*RECORDINGS_FOLDER)
-        .join(guild_id.0.to_string())
+        .join(guild_id.get().to_string())
         .join(timestamp.to_string());
     if !folder.exists() {
         return Err(RecorderError::NotFound(format!(
@@ -228,7 +228,7 @@ async fn mix_recording(
     }
 
     let file_name = format!("{}.mp3", random::<u32>());
-    let out_dir = (*MIXES_FOLDER).join(guild_id.0.to_string());
+    let out_dir = (*MIXES_FOLDER).join(guild_id.get().to_string());
     fs::create_dir_all(&out_dir).await?;
     let out_file = out_dir.join(&file_name);
 
@@ -307,7 +307,7 @@ async fn get_recording(
 
     CachedFile::open(
         (*RECORDINGS_FOLDER)
-            .join(guild_id.0.to_string())
+            .join(guild_id.get().to_string())
             .join(timestamp.to_string())
             .join(sanitize_filename::sanitize(filename)),
     )
@@ -330,7 +330,7 @@ async fn get_mix(
 
     CachedFile::open(
         (*MIXES_FOLDER)
-            .join(guild_id.0.to_string())
+            .join(guild_id.get().to_string())
             .join(sanitize_filename::sanitize(filename)),
     )
     .await

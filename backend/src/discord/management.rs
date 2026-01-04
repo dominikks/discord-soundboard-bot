@@ -106,7 +106,7 @@ pub async fn get_permission_level(
         });
     }
 
-    let gid = BigDecimal::from_u64(guild_id.0).ok_or(PermissionError::BigDecimalError)?;
+    let gid = BigDecimal::from_u64(guild_id.get()).ok_or(PermissionError::BigDecimalError)?;
     let (user_role_id, moderator_role_id) = db
         .run(move |c| {
             use crate::db::schema::guildsettings::dsl::*;
