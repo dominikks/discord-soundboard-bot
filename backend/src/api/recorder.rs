@@ -183,7 +183,7 @@ async fn mix_recording(
     db: DbConn,
     user: UserId,
 ) -> Result<Json<MixingResult>, RecorderError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     let params = params.0;
@@ -277,7 +277,7 @@ async fn delete_recording(
     db: DbConn,
     user: UserId,
 ) -> Result<(), RecorderError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     let folder = (*RECORDINGS_FOLDER)
@@ -300,7 +300,7 @@ async fn get_recording(
     db: DbConn,
     user: UserId,
 ) -> Option<CachedFile> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     check_guild_user(cache_http.inner(), &db, user.into(), guild_id)
         .await
         .ok()?;
@@ -323,7 +323,7 @@ async fn get_mix(
     db: DbConn,
     user: UserId,
 ) -> Option<CachedFile> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     check_guild_user(cache_http.inner(), &db, user.into(), guild_id)
         .await
         .ok()?;

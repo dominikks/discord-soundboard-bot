@@ -64,15 +64,17 @@ impl Client {
         user_id: UserId,
         cache_and_http: &CacheHttp,
     ) -> Result<(ChannelId, Arc<Mutex<songbird::Call>>), ClientError> {
-        let guild = guild_id
-            .to_guild_cached(cache_and_http)
-            .ok_or(ClientError::GuildNotFound)?;
+        let channel_id = {
+            let guild = guild_id
+                .to_guild_cached(cache_and_http)
+                .ok_or(ClientError::GuildNotFound)?;
 
-        let channel_id = guild
-            .voice_states
-            .get(&user_id)
-            .and_then(|voice_state| voice_state.channel_id)
-            .ok_or(ClientError::UserNotFound)?;
+            guild
+                .voice_states
+                .get(&user_id)
+                .and_then(|voice_state| voice_state.channel_id)
+                .ok_or(ClientError::UserNotFound)?
+        };
 
         debug!(?channel_id, "Joining user in channel");
 

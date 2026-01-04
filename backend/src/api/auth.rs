@@ -8,7 +8,6 @@ use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use oauth2::basic::BasicClient;
-use oauth2::reqwest::async_http_client;
 use oauth2::ClientId;
 use oauth2::ClientSecret;
 use oauth2::RedirectUrl;
@@ -92,7 +91,7 @@ pub struct UserId(pub u64);
 
 impl From<UserId> for SerenityUserId {
     fn from(user: UserId) -> Self {
-        SerenityUserId(user.0)
+        SerenityUserId::new(user.0)
     }
 }
 
@@ -147,7 +146,7 @@ pub struct TokenUserId(u64);
 
 impl From<TokenUserId> for SerenityUserId {
     fn from(user: TokenUserId) -> Self {
-        SerenityUserId(user.0)
+        SerenityUserId::new(user.0)
     }
 }
 
@@ -298,7 +297,7 @@ async fn user(
 
     for (guild, perm) in user_guilds.into_iter() {
         guilds.push(GuildInfo {
-            id: Snowflake(guild.id.0),
+            id: Snowflake(guild.id.get()),
             icon_url: guild.icon_url(),
             name: guild.name,
             role: perm,
@@ -306,9 +305,9 @@ async fn user(
     }
 
     Ok(Json(User {
-        id: Snowflake(s_user.id.0),
+        id: Snowflake(s_user.id.get()),
         username: s_user.name,
-        discriminator: s_user.discriminator,
+        discriminator: s_user.discriminator.unwrap_or(0),
         avatar_url,
         guilds,
     }))
@@ -358,10 +357,11 @@ async fn login_post(
         )));
     }
 
-    let token_result = oauth
+    let http_client = reqwest::Client::new();
+    let token_result = oauth.inner()
         .exchange_code(AuthorizationCode::new(code))
         .set_pkce_verifier(PkceCodeVerifier::new(login_cookie.pkce_verifier))
-        .request_async(async_http_client)
+        .request_async(&http_client)
         .await?;
 
     let access_token = token_result.access_token().secret();

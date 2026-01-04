@@ -212,7 +212,7 @@ async fn get_sound(
         .await?;
 
     // Check permission
-    let guild_id = GuildId(
+    let guild_id = GuildId::new(
         guild_id
             .to_u64()
             .ok_or_else(SoundsError::bigdecimal_error)?,
@@ -245,7 +245,7 @@ async fn create_sound(
         cache_http.inner(),
         &db,
         user.clone().into(),
-        GuildId(params.guild_id.0),
+        GuildId::new(params.guild_id.0),
     )
     .await?;
 
@@ -316,7 +316,7 @@ async fn update_sound(
         cache_http.inner(),
         &db,
         user.clone().into(),
-        GuildId(guild_id),
+        GuildId::new(guild_id),
     )
     .await?;
 
@@ -346,7 +346,7 @@ async fn delete_sound(
     user: UserId,
 ) -> Result<(), SoundsError> {
     let (guild_id, file_name) = fetch_guild_and_file(sound_id, &db).await?;
-    check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId(guild_id)).await?;
+    check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId::new(guild_id)).await?;
 
     if let Some(file_name) = file_name {
         if let Err(err) = fs::remove_file(file_handling::get_full_sound_path(&file_name)).await {
@@ -391,7 +391,7 @@ async fn upload_sound(
         cache_http.inner(),
         &db,
         user.clone().into(),
-        GuildId(guild_id),
+        GuildId::new(guild_id),
     )
     .await?;
 

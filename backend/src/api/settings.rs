@@ -139,7 +139,7 @@ async fn set_random_infixes(
     cache_http: &State<CacheHttp>,
     params: Json<Vec<RandomInfixParameter>>,
 ) -> Result<(), SettingsError> {
-    check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId(guild_id)).await?;
+    check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId::new(guild_id)).await?;
 
     let gid = BigDecimal::from_u64(guild_id).ok_or_else(SettingsError::bigdecimal_error)?;
     let random_infixes = params
@@ -186,7 +186,7 @@ async fn get_guild_settings(
     db: DbConn,
     cache_http: &State<CacheHttp>,
 ) -> Result<Json<GuildSettings>, SettingsError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
 
     let gid = BigDecimal::from_u64(guild_id.0).ok_or_else(SettingsError::bigdecimal_error)?;
@@ -251,7 +251,7 @@ async fn set_guild_settings(
     cache_http: &State<CacheHttp>,
     params: Json<GuildSettingsParameter>,
 ) -> Result<(), SettingsError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
 
     let gid = BigDecimal::from_u64(guild_id.0).ok_or_else(SettingsError::bigdecimal_error)?;
