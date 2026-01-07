@@ -1,6 +1,6 @@
 ############################################################
 ### Stage 1: Build
-FROM clux/muslrust:stable as builder
+FROM clux/muslrust:stable AS builder
 WORKDIR /app
 
 # Install CMAKE for audiopus_sys
@@ -28,7 +28,7 @@ RUN cargo build --release
 
 ############################################################
 ### Stage 2: Compose
-FROM debian:12-slim as composer
+FROM debian:12-slim AS composer
 
 # Get ffmpeg
 RUN apt-get update && apt-get install -y curl tar xz-utils \
@@ -44,7 +44,7 @@ RUN addgroup --gid 1000 discordbot \
   && chown -R discordbot:discordbot /app
 
 COPY --chown=discordbot:discordbot --from=builder /app/target/x86_64-unknown-linux-musl/release/discord-soundboard-bot /app/Rocket.toml /app/
-ADD --chown=discordbot:discordbot frontend/dist/discord-soundboard-bot/browser frontend/dist/discord-soundboard-bot/3rdpartylicenses.txt /app/static/
+COPY --chown=discordbot:discordbot frontend/dist/discord-soundboard-bot/browser frontend/dist/discord-soundboard-bot/3rdpartylicenses.txt /app/static/
 
 ############################################################
 ### Stage 3: Final image
