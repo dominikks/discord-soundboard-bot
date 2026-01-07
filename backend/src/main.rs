@@ -1,6 +1,3 @@
-// Needed for Diesel Postgres linking for MUSL
-// https://github.com/emk/rust-musl-builder#making-diesel-work
-extern crate openssl;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
