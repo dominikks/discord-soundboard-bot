@@ -164,8 +164,7 @@ async fn stop(
     Ok(String::from("Stopped playback"))
 }
 
-#[allow(unused)]
-#[allow(clippy::too_many_arguments)]
+#[allow(unused, clippy::too_many_arguments)]
 #[post("/<guild_id>/play/<sound_id>?<autojoin>")]
 async fn play(
     guild_id: u64,
