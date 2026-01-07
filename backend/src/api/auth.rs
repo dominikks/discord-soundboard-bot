@@ -26,7 +26,6 @@ use rocket::http::CookieJar;
 use rocket::http::Status;
 use rocket::http::{Cookie, SameSite};
 use rocket::outcome::try_outcome;
-use rocket::outcome::IntoOutcome;
 use rocket::request;
 use rocket::request::FromRequest;
 use rocket::request::Outcome;
@@ -111,7 +110,7 @@ impl<'r> FromRequest<'r> for UserId {
     /// Protected api endpoints can inject `UserId`.
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let cookies = request.cookies();
-        cookies
+        match cookies
             .get_private(SESSION_COOKIE)
             .and_then(|cookie| serde_json::from_str::<SessionInfo>(cookie.value()).ok())
             .and_then(|cookie| {
@@ -136,7 +135,10 @@ impl<'r> FromRequest<'r> for UserId {
                 Some(cookie)
             })
             .map(|session| Self(session.user_id.0))
-            .into_outcome((Status::Unauthorized, ()))
+        {
+            Some(user_id) => Outcome::Success(user_id),
+            None => Outcome::Error((Status::Unauthorized, ())),
+        }
     }
 }
 
@@ -317,9 +319,9 @@ async fn user(
 #[get("/auth/login?<error>&<error_description>")]
 fn login_error(error: String, error_description: String) -> status::Unauthorized<String> {
     warn!(?error, "Oauth2 request failed: {}", error_description);
-    status::Unauthorized(Some(String::from(
+    status::Unauthorized(String::from(
         "OAuth2 Request to Discord API failed. Could not authenticate you.",
-    )))
+    ))
 }
 
 /// Login cookie data
@@ -350,7 +352,7 @@ async fn login_post(
         .get_private(LOGIN_COOKIE)
         .and_then(|cookie| serde_json::from_str::<LoginInfo>(cookie.value()).ok())
         .ok_or_else(|| AuthError::MissingLoginCookie(String::from("Unknown login session")))?;
-    cookies.remove_private(Cookie::named(LOGIN_COOKIE));
+    cookies.remove_private(Cookie::from(LOGIN_COOKIE));
 
     if state != login_cookie.csrf_state {
         return Err(AuthError::CsrfMissmatch(String::from(
@@ -420,7 +422,7 @@ fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redi
 
     // Place the csrf token and pkce verifier as secure cookies on the client, expiring in 5 minutes
     cookies.add_private(
-        Cookie::build(
+        Cookie::build((
             LOGIN_COOKIE,
             serde_json::to_string(&LoginInfo {
                 csrf_state: csrf_state.secret().clone(),
@@ -429,10 +431,10 @@ fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redi
             .map_err(|_| {
                 AuthError::InternalError(String::from("Failed to set temporary cookie."))
             })?,
-        )
+        ))
         .expires(OffsetDateTime::now_utc() + Duration::from_secs(5 * 60))
         .same_site(SameSite::Lax)
-        .finish(),
+        .build(),
     );
 
     // Send redirect
@@ -441,7 +443,7 @@ fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redi
 
 #[post("/auth/logout")]
 fn logout(cookies: &CookieJar<'_>) -> String {
-    cookies.remove_private(Cookie::named(SESSION_COOKIE));
+    cookies.remove_private(Cookie::from(SESSION_COOKIE));
     String::from("User logged out")
 }
 

@@ -9,6 +9,7 @@ use serenity::model::guild::Guild;
 use serenity::model::guild::Member;
 use serenity::model::id::GuildId;
 use serenity::model::id::UserId;
+use thiserror::Error;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum UserPermission {
@@ -23,16 +24,14 @@ pub struct PermissionResponse {
     pub member: Member,
 }
 
+#[derive(Debug, Error)]
 pub enum PermissionError {
+    #[error("Insufficient permission")]
     InsufficientPermission,
-    DieselError(DieselError),
+    #[error("Database error: {0}")]
+    DieselError(#[from] DieselError),
+    #[error("BigDecimal conversion error")]
     BigDecimalError,
-}
-
-impl From<DieselError> for PermissionError {
-    fn from(err: DieselError) -> Self {
-        PermissionError::DieselError(err)
-    }
 }
 
 pub async fn check_guild_user(

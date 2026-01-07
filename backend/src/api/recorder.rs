@@ -1,5 +1,5 @@
 use crate::api::auth::UserId;
-use crate::api::CachedFile;
+use crate::api::utils::CachedFile;
 use crate::api::Snowflake;
 use crate::db::DbConn;
 use crate::discord::management::check_guild_user;
