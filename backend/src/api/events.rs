@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use crate::api::auth::TokenUserId;
 use crate::api::utils::AvatarOrDefault;
 use crate::api::Snowflake;
@@ -137,6 +139,7 @@ impl EventData {
     }
 }
 
+#[allow(unused)]
 #[get("/<guild_id>/events")]
 async fn events(
     guild_id: u64,

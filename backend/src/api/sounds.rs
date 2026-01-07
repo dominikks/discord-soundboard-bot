@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::convert::TryFrom;
 use std::num::TryFromIntError;
 use std::path::PathBuf;
@@ -157,6 +159,7 @@ impl TryFrom<(models::Sound, Option<models::Soundfile>)> for Sound {
     }
 }
 
+#[allow(unused)]
 #[get("/")]
 async fn list_sounds(
     cache_http: &State<CacheHttp>,
@@ -191,6 +194,7 @@ async fn list_sounds(
     ))
 }
 
+#[allow(unused)]
 #[get("/<sound_id>")]
 async fn get_sound(
     sound_id: i32,
@@ -232,6 +236,7 @@ struct CreateSoundParameter {
     volume_adjustment: Option<f32>,
 }
 
+#[allow(unused)]
 #[post("/", format = "json", data = "<params>")]
 async fn create_sound(
     cache_http: &State<CacheHttp>,
@@ -290,6 +295,7 @@ impl From<UpdateSoundParameter> for models::SoundChangeset {
     }
 }
 
+#[allow(unused)]
 #[put("/<sound_id>", format = "json", data = "<params>")]
 async fn update_sound(
     sound_id: i32,
@@ -338,6 +344,7 @@ async fn update_sound(
     Ok(())
 }
 
+#[allow(unused)]
 #[delete("/<sound_id>")]
 async fn delete_sound(
     sound_id: i32,
@@ -378,6 +385,7 @@ async fn delete_sound(
     }
 }
 
+#[allow(unused)]
 #[post("/<sound_id>", format = "audio/mpeg", data = "<file>")]
 async fn upload_sound(
     sound_id: i32,

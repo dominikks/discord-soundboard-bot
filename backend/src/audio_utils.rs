@@ -20,7 +20,7 @@ pub async fn detect_volume(path: &PathBuf) -> Option<VolumeInformation> {
 
     let out = Command::new("ffmpeg")
         .kill_on_drop(true)
-        .args(&args)
+        .args(args)
         .arg(path)
         .stdin(Stdio::null())
         .output()
@@ -54,7 +54,7 @@ pub async fn get_length(path: &PathBuf) -> Option<f32> {
 
     let out = Command::new("ffprobe")
         .kill_on_drop(true)
-        .args(&args)
+        .args(args)
         .arg(path)
         .stdin(Stdio::null())
         .output()

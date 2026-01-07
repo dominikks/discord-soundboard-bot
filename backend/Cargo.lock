@@ -584,6 +584,7 @@ dependencies = [
  "serde_with",
  "serenity",
  "songbird",
+ "thiserror",
  "tokio",
  "tracing",
  "tracing-futures",

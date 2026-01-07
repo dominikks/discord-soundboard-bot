@@ -23,6 +23,7 @@ serde_derive = "1.0"
 serde_with = "3.3"
 serenity = { version = "0.11", features = ["cache", "standard_framework", "voice", "voice-model", "rustls_backend"] }
 songbird = { version = "0.3" }
+thiserror = "1.0"
 tokio = { version = "1.32", features = ["rt", "rt-multi-thread", "macros", "process"] }
 tracing = "0.1"
 tracing-futures = "0.2"

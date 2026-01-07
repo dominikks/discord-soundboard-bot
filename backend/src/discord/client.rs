@@ -13,14 +13,20 @@ use songbird::SerenityInit;
 use songbird::Songbird;
 use std::path::PathBuf;
 use std::sync::Arc;
+use thiserror::Error;
 use tokio::sync::Mutex;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ClientError {
+    #[error("Bot is not in a voice channel")]
     NotInAChannel,
+    #[error("User not found in a voice channel")]
     UserNotFound,
-    DecodingError(songbird::input::error::Error),
+    #[error("Error decoding audio: {0}")]
+    DecodingError(#[from] songbird::input::error::Error),
+    #[error("Connection error")]
     ConnectionError,
+    #[error("Guild not found")]
     GuildNotFound,
 }
 

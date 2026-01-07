@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::error::Error;
 use std::iter;
 use std::time::{Duration, SystemTime};
@@ -277,6 +279,7 @@ impl Serialize for UserPermission {
     }
 }
 
+#[allow(unused)]
 #[get("/user")]
 async fn user(
     user: UserId,
@@ -314,6 +317,7 @@ async fn user(
     }))
 }
 
+#[allow(unused)]
 #[get("/auth/login?<error>&<error_description>")]
 fn login_error(error: String, error_description: String) -> status::Unauthorized<String> {
     warn!(?error, "Oauth2 request failed: {}", error_description);
@@ -337,6 +341,7 @@ struct DiscordUser {
 }
 
 /// This is the callback of the oauth request
+#[allow(unused)]
 #[instrument(skip(cookies, oauth, db, code))]
 #[get("/auth/login?<code>&<state>", rank = 2)]
 async fn login_post(
@@ -406,6 +411,7 @@ async fn login_post(
 }
 
 /// This initializes the oauth request
+#[allow(unused)]
 #[instrument(skip(cookies, oauth))]
 #[get("/auth/login", rank = 3)]
 fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redirect, AuthError> {
@@ -439,6 +445,7 @@ fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redi
     Ok(Redirect::to(auth_url.as_str().to_string()))
 }
 
+#[allow(unused)]
 #[post("/auth/logout")]
 fn logout(cookies: &CookieJar<'_>) -> String {
     cookies.remove_private(Cookie::named(SESSION_COOKIE));
@@ -464,6 +471,7 @@ impl From<models::AuthToken> for AuthToken {
 }
 
 /// Beware: this replaces the current auth token with a new one. The old one becomes invalid.
+#[allow(unused)]
 #[post("/auth/token")]
 async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
     let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
@@ -498,6 +506,7 @@ async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, 
     Ok(Json(auth_token.into()))
 }
 
+#[allow(unused)]
 #[get("/auth/token")]
 async fn get_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
     let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;

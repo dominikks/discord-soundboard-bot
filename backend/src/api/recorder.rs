@@ -1,5 +1,7 @@
+#![allow(unused)]
+
 use crate::api::auth::UserId;
-use crate::api::CachedFile;
+use crate::api::utils::CachedFile;
 use crate::api::Snowflake;
 use crate::db::DbConn;
 use crate::discord::management::check_guild_user;
@@ -136,6 +138,7 @@ impl TryFrom<file_handling::Recording> for Recording {
     }
 }
 
+#[allow(unused)]
 #[instrument(skip(cache_http, db, user))]
 #[get("/recordings")]
 async fn get_recordings(
@@ -175,6 +178,7 @@ struct MixingResult {
     format = "json",
     data = "<params>"
 )]
+#[allow(unused)]
 async fn mix_recording(
     guild_id: u64,
     timestamp: u64,
@@ -269,6 +273,7 @@ async fn mix_recording(
     }))
 }
 
+#[allow(unused)]
 #[delete("/guilds/<guild_id>/recordings/<timestamp>")]
 async fn delete_recording(
     guild_id: u64,
@@ -291,6 +296,7 @@ async fn delete_recording(
     Ok(())
 }
 
+#[allow(unused)]
 #[get("/guilds/<guild_id>/recordings/<timestamp>/<filename>")]
 async fn get_recording(
     guild_id: u64,
@@ -315,6 +321,7 @@ async fn get_recording(
     .ok()
 }
 
+#[allow(unused)]
 #[get("/guilds/<guild_id>/mixes/<filename>")]
 async fn get_mix(
     guild_id: u64,

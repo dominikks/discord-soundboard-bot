@@ -16,13 +16,13 @@ use songbird::EventHandler as VoiceEventHandler;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::env::var;
-use std::fmt;
 use std::num::Wrapping;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::Arc;
 use std::time::SystemTime;
+use thiserror::Error;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
@@ -50,25 +50,12 @@ fn nanos_to_samples(nanos: u128) -> usize {
     (nanos as f64 * 1e-9 * SAMPLE_RATE * CHANNEL_COUNT as f64).round() as usize
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum RecordingError {
-    IoError(std::io::Error),
+    #[error("I/O error: {0}")]
+    IoError(#[from] std::io::Error),
+    #[error("No data available to record")]
     NoData,
-}
-
-impl fmt::Display for RecordingError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        match self {
-            RecordingError::NoData => write!(f, "RecordingError: no data to record"),
-            RecordingError::IoError(err) => write!(f, "RecordingError: IoError occurred. {}", err),
-        }
-    }
-}
-
-impl From<std::io::Error> for RecordingError {
-    fn from(err: std::io::Error) -> Self {
-        RecordingError::IoError(err)
-    }
 }
 
 #[derive(Clone)]
