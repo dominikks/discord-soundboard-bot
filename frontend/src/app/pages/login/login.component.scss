@@ -1,0 +1,46 @@
+@use 'variables';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.filler {
+  flex: 1;
+}
+
+mat-card {
+  min-width: 300px;
+  padding: 0;
+  overflow: hidden; // force rounded corners onto children
+}
+
+.login-title {
+  background-color: variables.$primary;
+  color: rgba(black, 0.87);
+  height: 3em;
+  display: flex;
+  align-items: center;
+}
+
+.login-title,
+.login-content {
+  padding: 0 10px;
+}
+
+.login-button {
+  width: 100%;
+  margin-bottom: 10px;
+
+  .button-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  svg {
+    height: 2em;
+  }
+}

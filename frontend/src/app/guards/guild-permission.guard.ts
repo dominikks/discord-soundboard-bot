@@ -1,10 +1,32 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { ApiService } from '../services/api.service';
+import { CanActivateFn, RedirectCommand, Router } from '@angular/router';
+import { User } from '../services/api.service';
 
 export const guildPermissionGuard: CanActivateFn = (route, _state) => {
   const guildId = route.params.guildId;
-  const user = inject(ApiService).user();
+  const router = inject(Router);
 
-  return user?.guilds.find(guild => guild.id === guildId).role !== 'user' ? true : inject(Router).parseUrl('/settings');
+  // Find user data in route snapshot
+  let currentRoute = route.root;
+  let user: User | undefined;
+
+  while (currentRoute) {
+    if (currentRoute.data['user']) {
+      user = currentRoute.data['user'] as User;
+      break;
+    }
+
+    if (currentRoute.firstChild) {
+      currentRoute = currentRoute.firstChild;
+    } else {
+      break;
+    }
+  }
+
+  if (!user) {
+    return new RedirectCommand(router.parseUrl('/login'));
+  }
+
+  const guild = user.guilds.find(g => g.id === guildId);
+  return guild && guild.role !== 'user' ? true : new RedirectCommand(router.parseUrl('/settings'));
 };

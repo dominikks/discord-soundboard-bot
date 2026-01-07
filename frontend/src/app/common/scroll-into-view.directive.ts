@@ -1,9 +1,9 @@
-import { AfterViewInit, Directive, ElementRef, Input } from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, Input, inject } from '@angular/core';
 
-@Directive({
-  selector: '[appScrollIntoView]',
-})
+@Directive({ selector: '[appScrollIntoView]' })
 export class ScrollIntoViewDirective implements AfterViewInit {
+  private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
   private _enabled = false;
 
   @Input()
@@ -14,8 +14,6 @@ export class ScrollIntoViewDirective implements AfterViewInit {
       this.elementRef.nativeElement.scrollIntoView({ behavior: 'smooth' });
     }
   }
-
-  constructor(private elementRef: ElementRef<HTMLElement>) {}
 
   ngAfterViewInit() {
     this._enabled = true;

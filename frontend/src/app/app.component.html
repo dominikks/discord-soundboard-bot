@@ -1,4 +1,1 @@
-<ng-container *appDataLoad="data$; callback: loadedData$" [ngSwitch]="apiService.user() != null">
-  <router-outlet *ngSwitchCase="true"></router-outlet>
-  <app-login *ngSwitchCase="false"></app-login>
-</ng-container>
+<router-outlet></router-outlet>

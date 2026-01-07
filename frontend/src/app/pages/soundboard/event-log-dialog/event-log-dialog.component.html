@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>Event Log</h2>
+<mat-dialog-content>
+  @if (events().length === 0) {
+    <div class="no-events">No events to display</div>
+  }
+  <table mat-table [dataSource]="events()">
+    <ng-container matColumnDef="timestamp">
+      <td mat-cell *matCellDef="let event">{{ event.timestamp * 1000 | date: 'mediumTime' }}</td>
+    </ng-container>
+    <ng-container matColumnDef="icon">
+      <td mat-cell *matCellDef="let event">
+        @switch (event.type) {
+          @case ('PlaybackStarted') {
+            <mat-icon>play_arrow</mat-icon>
+          }
+          @case ('PlaybackStopped') {
+            <mat-icon>stop</mat-icon>
+          }
+          @case ('RecordingSaved') {
+            <mat-icon>fiber_manual_record</mat-icon>
+          }
+          @case ('JoinedChannel') {
+            <mat-icon>login</mat-icon>
+          }
+          @case ('LeftChannel') {
+            <mat-icon>logout</mat-icon>
+          }
+        }
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="user">
+      <td mat-cell *matCellDef="let event">{{ event.userName }}</td>
+    </ng-container>
+    <ng-container matColumnDef="description">
+      <td mat-cell *matCellDef="let event">{{ event | eventDescription }}</td>
+    </ng-container>
+
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns"
+      [appScrollIntoView]="true"
+      [appScrollIntoViewOnAdd]="true"
+    ></tr>
+  </table>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>

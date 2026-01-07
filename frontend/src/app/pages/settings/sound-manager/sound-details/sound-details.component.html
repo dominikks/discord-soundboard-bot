@@ -1,0 +1,124 @@
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      {{ sound().name }}{{ soundEntry.hasChanges() ? '*' : '' }}
+      @if (sound().soundFile == null) {
+        <mat-icon matTooltip="No sound file uploaded. Click the upload button below.">error_outline</mat-icon>
+      }
+    </mat-panel-title>
+    <mat-panel-description>{{ sound().category }}</mat-panel-description>
+  </mat-expansion-panel-header>
+
+  <ng-template matExpansionPanelContent>
+    <div>
+      <mat-form-field>
+        <mat-label>Name</mat-label>
+        <input
+          matInput
+          [ngModel]="sound().name"
+          (ngModelChange)="soundEntry.mutateSound({ name: $event })"
+          maxlength="64"
+        />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Category</mat-label>
+        <input
+          matInput
+          [ngModel]="sound().category"
+          (ngModelChange)="soundEntry.mutateSound({ category: $event })"
+          maxlength="64"
+        />
+      </mat-form-field>
+    </div>
+
+    <div>
+      <mat-form-field>
+        <mat-label>Volume adjustment</mat-label>
+        <mat-select [ngModel]="volumeAdjustmentMode()" (ngModelChange)="updateVolumeAdjustmentMode($event)">
+          <mat-option value="auto">Automatic</mat-option>
+          <mat-option value="manual">Manual</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Adjustment value</mat-label>
+        <input
+          matInput
+          type="number"
+          step="1"
+          [ngModel]="sound().volumeAdjustment"
+          (ngModelChange)="soundEntry.mutateSound({ volumeAdjustment: $event })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+          [disabled]="volumeAdjustmentMode() === 'auto'"
+        />
+        <span matTextSuffix>dB</span>
+      </mat-form-field>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="statistics-wrapper">
+      <h3>Statistics</h3>
+      <div class="statistics-container">
+        <div>
+          <div>Created</div>
+          <div timeago [date]="sound().createdAt * 1000" [matTooltip]="sound().createdAt * 1000 | date: 'medium'"></div>
+        </div>
+        @let soundFile = sound().soundFile;
+        @if (soundFile) {
+          <div>
+            <div>Max Volume</div>
+            <div>{{ soundFile.maxVolume | number: '1.1-1' }} dB</div>
+          </div>
+          <div>
+            <div>Mean Volume</div>
+            <div>{{ soundFile.meanVolume | number: '1.1-1' }} dB</div>
+          </div>
+          <div>
+            <div>Length</div>
+            <div>{{ soundFile.length | number: '1.3-3' }} s</div>
+          </div>
+          <div>
+            <div>Uploaded</div>
+            <div
+              timeago
+              [date]="soundFile.uploadedAt * 1000"
+              [matTooltip]="soundFile.uploadedAt * 1000 | date: 'medium'"
+            ></div>
+          </div>
+        } @else {
+          <div>No sound file uploaded</div>
+        }
+      </div>
+    </div>
+  </ng-template>
+
+  <mat-action-row>
+    <input class="hidden" type="file" accept=".mp3" (change)="onImportFileChange($event)" #fileImport />
+    <button mat-stroked-button (click)="playClick.emit()">
+      <mat-icon>{{ isPlaying ? 'pause' : 'play_arrow' }}</mat-icon>
+      {{ isPlaying ? 'Stop' : 'Play' }}
+    </button>
+    <div class="spinner-button-container">
+      <button mat-stroked-button [disabled]="isBusy" (click)="!isBusy && fileImport.click()">
+        <mat-icon>file_upload</mat-icon>
+        {{ sound().soundFile == null ? 'Upload' : 'Replace' }} sound
+      </button>
+      @if (isBusy) {
+        <div class="spinner-container">
+          <mat-spinner diameter="24"></mat-spinner>
+        </div>
+      }
+    </div>
+    <div class="spinner-button-container">
+      <button mat-stroked-button color="warn" [disabled]="isBusy" (click)="!isBusy && deleteClick.next()">
+        <mat-icon>delete</mat-icon>
+        Delete sound
+      </button>
+      @if (isBusy) {
+        <div class="spinner-container">
+          <mat-spinner diameter="24"></mat-spinner>
+        </div>
+      }
+    </div>
+  </mat-action-row>
+</mat-expansion-panel>

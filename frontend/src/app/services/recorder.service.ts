@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Guild } from './api.service';
@@ -40,7 +40,7 @@ export interface MixingResult {
   providedIn: 'root',
 })
 export class RecorderService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   record(guild: Guild | string) {
     const guildId = typeof guild === 'string' ? guild : guild.id;
@@ -56,8 +56,8 @@ export class RecorderService {
             ...user,
             url: `/api/guilds/${recording.guildId}/recordings/${recording.timestamp}/${user.id}`,
           })),
-        }))
-      )
+        })),
+      ),
     );
   }
 

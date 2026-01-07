@@ -56,12 +56,11 @@ To deploy, you need to create an application in the
 To run the app, create a docker-compose file:
 
 ```
-version: "3"
 services:
   soundboard:
     image: ghcr.io/dominikks/discord-soundboard-bot
     ports:
-      - 8000:8000
+      - "8000:8000"
     environment:
       - DISCORD_TOKEN=<bottoken>
       - DISCORD_CLIENT_ID=<clientid>
@@ -97,7 +96,7 @@ The website should now be up, so that you can add the bot to your Discord server
 ### Configuration
 
 | Environment Variable  | Meaning                                                                                                                                                                      | Example                        |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
 | DISCORD_TOKEN         | **Required.** Can be obtained in the Discord developer portal. Should be kept private.                                                                                       | `ABCDE...dg`                   |
 | DISCORD_CLIENT_ID     | **Required.** Can be obtained in the Discord developer portal.                                                                                                               | `ABCDE...dg`                   |
 | DISCORD_CLIENT_SECRET | **Required.** Can be obtained in the Discord developer portal. Should be kept private.                                                                                       | `ABCDE...dg`                   |
@@ -110,7 +109,7 @@ The website should now be up, so that you can add the bot to your Discord server
 ### Docker Volumes
 
 | Volume               | Explanation                                             |
-| -------------------- | ------------------------------------------------------- |
+|----------------------|---------------------------------------------------------|
 | `/app/data/sounds`   | Sounds are saved here.                                  |
 | `/app/data/recorder` | Contains recordings made by the sound-recorder feature. |
 

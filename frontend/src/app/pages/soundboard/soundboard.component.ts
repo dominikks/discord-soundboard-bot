@@ -1,0 +1,246 @@
+import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, signal } from '@angular/core';
+import { clamp, sample, sortBy, uniq } from 'lodash-es';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import Fuse from 'fuse.js';
+import { EMPTY, forkJoin } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatSelect } from '@angular/material/select';
+import { AsyncPipe, DatePipe, UpperCasePipe } from '@angular/common';
+import { MatOption } from '@angular/material/core';
+import { DataLoadDirective } from '../../common/data-load/data-load.directive';
+import { HeaderComponent } from '../../common/header/header.component';
+import { EventsService } from '../../services/events.service';
+import { Sound, SoundsService } from '../../services/sounds.service';
+import { ApiService, RandomInfix, User } from '../../services/api.service';
+import { AppSettingsService } from '../../services/app-settings.service';
+import { VolumeSliderComponent } from '../../common/volume-slider/volume-slider.component';
+import { FooterComponent } from '../../common/footer/footer.component';
+import { EventDescriptionPipe } from '../../common/event-description.pipe';
+import { EventLogDialogComponent } from './event-log-dialog/event-log-dialog.component';
+import { SoundboardButtonComponent } from './soundboard-button/soundboard-button.component';
+
+@Component({
+  templateUrl: './soundboard.component.html',
+  styleUrls: ['./soundboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    HeaderComponent,
+    DataLoadDirective,
+    MatToolbar,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    FormsModule,
+    MatIconButton,
+    MatSuffix,
+    MatIcon,
+    MatTooltip,
+    MatSelect,
+    MatOption,
+    VolumeSliderComponent,
+    MatButton,
+    SoundboardButtonComponent,
+    FooterComponent,
+    AsyncPipe,
+    UpperCasePipe,
+    DatePipe,
+    EventDescriptionPipe,
+  ],
+})
+export class SoundboardComponent {
+  private apiService = inject(ApiService);
+  private soundsService = inject(SoundsService);
+  private settingsService = inject(AppSettingsService);
+  private eventsService = inject(EventsService);
+  private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
+
+  get settings() {
+    return this.settingsService.settings;
+  }
+
+  @Input({ required: true }) user!: User;
+
+  readonly data$ = forkJoin([this.apiService.loadRandomInfixes(), this.soundsService.loadSounds()]);
+  readonly loadedData = signal<[RandomInfix[], Sound[]] | null>(null);
+
+  readonly randomInfixes = computed(() => this.loadedData()?.[0]);
+  readonly sounds = computed<[Sound[], Fuse<Sound>]>(() => {
+    const data = this.loadedData();
+    if (!data) return [[], new Fuse([], { keys: ['name'] })];
+
+    const sounds = data[1];
+    return [sounds, new Fuse(sounds, { keys: ['name'] })];
+  });
+  readonly soundCategories = computed(() => {
+    const sounds = this.sounds()[0];
+    return sortBy(uniq(sounds.map(sound => sound.category)), category => category.toLowerCase());
+  });
+  readonly filteredSounds = computed(() => {
+    const sounds = this.sounds();
+
+    const searchFilter = this.soundSearchFilter();
+    const categories = this.settings.soundCategories();
+
+    if (searchFilter.length > 0) {
+      return sounds[1].search(searchFilter).map(res => res.item);
+    } else if (categories.length > 0) {
+      return sounds[0].filter(sound => categories.includes(sound.category));
+    } else {
+      return sounds[0];
+    }
+  });
+
+  readonly currentAudio = signal<HTMLAudioElement | null>(null);
+  readonly currentLocalSound = signal<Sound | null>(null);
+  readonly soundSearchFilter = signal('');
+
+  readonly target = this.settings.guildId;
+
+  readonly events$ = computed(() => {
+    const target = this.target();
+    return target ? this.eventsService.getEventStream(target).pipe(shareReplay(100)) : EMPTY;
+  });
+
+  constructor() {
+    // Update volume of HTMLAudioElement
+    effect(() => {
+      const audio = this.currentAudio();
+      if (audio) {
+        audio.volume = clamp(this.settings.localVolume() / 100, 0, 1);
+      }
+    });
+  }
+
+  playSound(sound: Sound) {
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
+    this.stopLocalSound();
+    this.soundsService.playSound(sound, guildId, this.settings.autoJoin()).subscribe({
+      next: () => {
+        if (this.settings.debug()) {
+          let volString =
+            sound.soundFile != null
+              ? `Volume: Max ${sound.soundFile.maxVolume.toFixed(1)} dB, Average ${sound.soundFile.meanVolume.toFixed(1)} dB, `
+              : '';
+          volString +=
+            sound.volumeAdjustment != null ? `Manual adjustment ${sound.volumeAdjustment} dB` : 'Automatic adjustment';
+          this.snackBar.open(volString, 'Ok');
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 400) {
+          this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?');
+        } else if (error.status === 503) {
+          this.snackBar.open('The bot is currently not in a voice channel!');
+        } else if (error.status === 404) {
+          this.snackBar.open('Sound not found. It might have been deleted or renamed.');
+        } else if (error.status >= 300) {
+          this.snackBar.open('Unknown error playing the sound file.');
+        }
+      },
+    });
+  }
+
+  playLocalSound(sound: Sound) {
+    this.stopLocalSound();
+    const audio = new Audio();
+    this.currentAudio.set(audio);
+    this.currentLocalSound.set(sound);
+    audio.src = sound.getDownloadUrl();
+    audio.load();
+    audio.addEventListener('ended', () => this.stopLocalSound());
+    audio.play();
+  }
+
+  playInfix(infix: RandomInfix) {
+    // Play random sound
+    const matchingSounds = this.sounds()[0].filter(
+      sound => sound.name.toLowerCase().includes(infix.infix) && sound.guildId === infix.guildId,
+    );
+    if (matchingSounds.length > 0) {
+      const randomSound = sample(matchingSounds);
+      if (randomSound) {
+        this.playSound(randomSound);
+      }
+    } else {
+      this.snackBar.open('No matching sounds for this random button.');
+    }
+  }
+
+  playFirstMatch() {
+    // Play the first search match
+    const filteredSounds = this.filteredSounds();
+    if (filteredSounds.length > 0) {
+      this.playSound(filteredSounds[0]);
+    }
+  }
+
+  stopSound() {
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
+    this.soundsService.stopSound(guildId).subscribe({ error: () => this.snackBar.open('Failed to stop playback.') });
+  }
+
+  stopLocalSound() {
+    const currentAudio = this.currentAudio();
+    if (currentAudio != null) {
+      currentAudio.removeAllListeners?.();
+      currentAudio.pause();
+      currentAudio.remove();
+      this.currentAudio.set(null);
+      this.currentLocalSound.set(null);
+    }
+  }
+
+  joinChannel() {
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
+    this.apiService.joinCurrentChannel(guildId).subscribe({
+      next: () => this.snackBar.open('Joined channel!', undefined, { duration: 2000 }),
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 400) {
+          this.snackBar.open('Failed to join you. Are you in a voice channel that is visible to the bot?');
+        } else {
+          this.snackBar.open('Unknown error joining the voice channel.');
+        }
+      },
+    });
+  }
+
+  leaveChannel() {
+    const guildId = this.settings.guildId();
+    if (!guildId) return;
+
+    this.apiService.leaveChannel(guildId).subscribe({
+      next: () => this.snackBar.open('Left channel!', undefined, { duration: 2000 }),
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 503) {
+          this.snackBar.open('The bot is not in a voice channel.');
+        } else {
+          this.snackBar.open('Unknown error leaving the voice channel.');
+        }
+      },
+    });
+  }
+
+  trackById(_position: number, item: Sound) {
+    return item?.id;
+  }
+
+  openEventLog() {
+    this.dialog.open(EventLogDialogComponent, { data: this.events$() });
+  }
+}

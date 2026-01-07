@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RandomInfix } from './api.service';
 
@@ -12,10 +12,12 @@ export interface GuildSettings {
 
 @Injectable({ providedIn: 'root' })
 export class GuildSettingsService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   updateRandomInfixes(guildId: string, infixes: Omit<RandomInfix, 'guildId'>[]) {
-    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/random-infixes`, infixes, { responseType: 'text' });
+    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/random-infixes`, infixes, {
+      responseType: 'text',
+    });
   }
 
   loadGuildSettings(guildId: string) {
@@ -23,6 +25,8 @@ export class GuildSettingsService {
   }
 
   updateGuildSettings(guildId: string, guildSettings: Partial<Omit<GuildSettings, 'roles'>>) {
-    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/settings`, guildSettings, { responseType: 'text' });
+    return this.http.put(`/api/guilds/${encodeURIComponent(guildId)}/settings`, guildSettings, {
+      responseType: 'text',
+    });
   }
 }

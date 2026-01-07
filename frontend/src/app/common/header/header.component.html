@@ -1,0 +1,71 @@
+<mat-toolbar color="primary">
+  <mat-toolbar-row>
+    @if (showSidenavToggle) {
+      <button mat-icon-button (click)="toggleSidenav.emit()">
+        <mat-icon>menu</mat-icon>
+      </button>
+    }
+    <a class="app-title" routerLink="/soundboard">📢 {{ pageTitle }}</a>
+    <div class="spacer"></div>
+
+    <div class="first-row-navigation">
+      <ng-container [ngTemplateOutlet]="toolbarButtons"></ng-container>
+    </div>
+
+    <div class="avatar-button-wrapper">
+      @let currentUser = user();
+      <div
+        class="avatar-button mat-elevation-z3"
+        [matTooltip]="currentUser ? 'Logged in as ' + currentUser.username + '#' + currentUser.discriminator : 'User'"
+        [matMenuTriggerFor]="userMenu"
+        matRipple
+      >
+        <img [src]="currentUser?.avatarUrl" alt="The user's avatar" />
+      </div>
+    </div>
+
+    <mat-menu #userMenu="matMenu">
+      <a mat-menu-item routerLink="/settings">
+        <mat-icon>settings</mat-icon>
+        Settings</a
+      >
+      <a mat-menu-item routerLink="/keybind-generator">
+        <mat-icon>keyboard</mat-icon>
+        Keybinds</a
+      >
+      <mat-divider></mat-divider>
+      @let appInfo = appInfoState.data();
+      <a
+        mat-menu-item
+        [href]="
+          'https://discordapp.com/oauth2/authorize?client_id=' +
+          appInfo.discordClientId +
+          '&scope=bot&permissions=3147776'
+        "
+        target="_blank"
+      >
+        <mat-icon>add</mat-icon>
+        Add bot to server</a
+      >
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>exit_to_app</mat-icon>
+        Logout
+      </button>
+    </mat-menu>
+  </mat-toolbar-row>
+  <mat-toolbar-row class="second-row">
+    <ng-container [ngTemplateOutlet]="toolbarButtons"></ng-container>
+  </mat-toolbar-row>
+</mat-toolbar>
+
+<ng-template #toolbarButtons>
+  <a mat-button routerLink="/soundboard" routerLinkActive="active">
+    <mat-icon>speaker</mat-icon>
+    Soundboard
+  </a>
+  <a mat-button routerLink="/recorder" routerLinkActive="active">
+    <mat-icon>voicemail</mat-icon>
+    Recorder</a
+  >
+</ng-template>

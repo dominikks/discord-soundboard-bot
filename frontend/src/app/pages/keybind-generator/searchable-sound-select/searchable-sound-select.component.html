@@ -1,0 +1,34 @@
+<mat-select [(ngModel)]="selectedCommand" panelClass="mat-primary">
+  <mat-option>
+    <ngx-mat-select-search [(ngModel)]="soundSearchFilter"></ngx-mat-select-search>
+  </mat-option>
+
+  @let filterEmpty = filteredSounds().length === sounds().length;
+  @if (filterEmpty) {
+    <mat-option value="stop">
+      <mat-icon>stop</mat-icon>
+      Stop
+    </mat-option>
+    <mat-option value="record">
+      <mat-icon>voicemail</mat-icon>
+      Record last 60s
+    </mat-option>
+  }
+  @for (sound of filteredSounds(); track sound) {
+    <mat-option [value]="sound">{{ sound.name }}</mat-option>
+  }
+
+  <mat-select-trigger>
+    @switch (selectedCommand()) {
+      @case ('stop') {
+        <mat-icon>stop</mat-icon> Stop
+      }
+      @case ('record') {
+        <mat-icon>voicemail</mat-icon> Record last 60s
+      }
+      @default {
+        {{ getSoundName(selectedCommand()) }}
+      }
+    }
+  </mat-select-trigger>
+</mat-select>

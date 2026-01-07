@@ -1,16 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { map } from 'rxjs';
 import { sortBy } from 'lodash-es';
-import { tap } from 'rxjs/operators';
-
-export interface AppInfo {
-  version: string;
-  buildId?: string;
-  buildTimestamp?: number;
-  discordClientId: string;
-  legalUrl?: string;
-}
 
 export type UserRole = 'admin' | 'moderator' | 'user';
 
@@ -40,14 +31,19 @@ export interface AuthToken {
   createdAt: number;
 }
 
+export interface AppInfo {
+  version: string;
+  buildId?: string;
+  buildTimestamp?: number;
+  discordClientId: string;
+  legalUrl?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class ApiService {
-  readonly user = signal<User | null>(null);
-  readonly appInfo = signal<AppInfo>(null);
-
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   loadAppInfo() {
     return this.http.get<AppInfo>('/api/info');
@@ -72,7 +68,7 @@ export class ApiService {
   }
 
   logout() {
-    return this.http.post('/api/auth/logout', {}, { responseType: 'text' }).pipe(tap(() => this.user.set(null)));
+    return this.http.post('/api/auth/logout', {}, { responseType: 'text' });
   }
 
   generateAuthToken() {
