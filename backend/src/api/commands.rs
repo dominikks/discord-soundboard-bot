@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use crate::api::auth::TokenUserId;
 use crate::api::EventBus;
 use crate::db::models;
@@ -98,7 +96,6 @@ impl From<DieselError> for CommandError {
     }
 }
 
-#[allow(unused)]
 #[post("/<guild_id>/join")]
 async fn join(
     guild_id: u64,
@@ -123,7 +120,6 @@ async fn join(
     Ok(String::from("Joined channel"))
 }
 
-#[allow(unused)]
 #[post("/<guild_id>/leave")]
 async fn leave(
     guild_id: u64,
@@ -142,7 +138,6 @@ async fn leave(
     Ok(String::from("Left channel"))
 }
 
-#[allow(unused)]
 #[post("/<guild_id>/stop")]
 async fn stop(
     guild_id: u64,
@@ -164,7 +159,7 @@ async fn stop(
     Ok(String::from("Stopped playback"))
 }
 
-#[allow(unused, clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)]
 #[post("/<guild_id>/play/<sound_id>?<autojoin>")]
 async fn play(
     guild_id: u64,
@@ -248,7 +243,6 @@ async fn play(
     Ok(())
 }
 
-#[allow(unused)]
 #[instrument(skip(client, cache_http, event_bus, db, user))]
 #[post("/<guild_id>/record")]
 async fn record(

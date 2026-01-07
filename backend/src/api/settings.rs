@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use core::convert::TryFrom;
 use std::collections::HashMap;
 
@@ -92,7 +90,6 @@ impl TryFrom<models::RandomInfix> for RandomInfix {
     }
 }
 
-#[allow(unused)]
 #[get("/random-infixes")]
 async fn get_all_random_infixes(
     user: UserId,
@@ -135,7 +132,6 @@ struct RandomInfixParameter {
     format = "json",
     data = "<params>"
 )]
-#[allow(unused)]
 async fn set_random_infixes(
     guild_id: u64,
     user: UserId,
@@ -183,7 +179,6 @@ struct GuildSettings {
     roles: HashMap<Snowflake, String>,
 }
 
-#[allow(unused)]
 #[get("/guilds/<guild_id>/settings")]
 async fn get_guild_settings(
     guild_id: u64,
@@ -248,7 +243,6 @@ pub struct GuildSettingsParameter {
     target_mean_volume: Option<f32>,
 }
 
-#[allow(unused)]
 #[put("/guilds/<guild_id>/settings", format = "json", data = "<params>")]
 async fn set_guild_settings(
     guild_id: u64,

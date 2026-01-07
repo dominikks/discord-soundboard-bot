@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use crate::api::auth::UserId;
 use crate::api::events::EventBus;
 use crate::db;
@@ -68,7 +66,6 @@ pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>
         .await
 }
 
-#[allow(unused)]
 #[get("/<path..>", rank = 100)]
 async fn frontend(path: PathBuf) -> Option<CachedFile> {
     let mut file = Path::new("static").join(path);
@@ -89,7 +86,6 @@ struct InfoResponse {
     legal_url: Option<String>,
 }
 
-#[allow(unused)]
 #[get("/api/info")]
 async fn info() -> Json<InfoResponse> {
     Json(InfoResponse {
