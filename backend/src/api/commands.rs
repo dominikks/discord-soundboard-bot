@@ -37,11 +37,7 @@ enum CommandError {
     InternalError(String),
 }
 
-impl CommandError {
-    fn bigdecimal_error() -> Self {
-        Self::InternalError(String::from("Number handling error"))
-    }
-}
+impl CommandError {}
 
 impl From<ClientError> for CommandError {
     fn from(error: ClientError) -> Self {
@@ -192,10 +188,11 @@ async fn play(
     let sound_gid = sound
         .guild_id
         .to_u64()
-        .ok_or_else(CommandError::bigdecimal_error)?;
+        .ok_or_else(|| CommandError::InternalError(String::from("Number handling error")))?;
     check_guild_user(cache_http.inner(), &db, serenity_user, GuildId(sound_gid)).await?;
 
-    let gid = BigDecimal::from_u64(guild_id).ok_or_else(CommandError::bigdecimal_error)?;
+    let gid = BigDecimal::from_u64(guild_id)
+        .ok_or_else(|| CommandError::InternalError(String::from("Number handling error")))?;
     let guild_settings = db
         .run(move |c| {
             use crate::db::schema::guildsettings::dsl::*;

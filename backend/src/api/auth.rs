@@ -211,11 +211,7 @@ enum AuthError {
     InternalError(String),
 }
 
-impl AuthError {
-    fn bigdecimal_error() -> Self {
-        Self::InternalError(String::from("Number handling error"))
-    }
-}
+impl AuthError {}
 
 impl<RE: Error, T: oauth2::ErrorResponse> From<RequestTokenError<RE, T>> for AuthError {
     fn from(err: RequestTokenError<RE, T>) -> Self {
@@ -381,7 +377,7 @@ async fn login_post(
             id: uid,
             last_login: SystemTime::now(),
         })
-        .ok_or_else(AuthError::bigdecimal_error)?;
+        .ok_or_else(|| AuthError::InternalError(String::from("Number handling error")))?;
     db.run(move |c| {
         use crate::db::schema::users::dsl::*;
 
@@ -468,7 +464,8 @@ impl From<models::AuthToken> for AuthToken {
 /// Beware: this replaces the current auth token with a new one. The old one becomes invalid.
 #[post("/auth/token")]
 async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
-    let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
+    let uid = BigDecimal::from_u64(user.0)
+        .ok_or_else(|| AuthError::InternalError(String::from("Number handling error")))?;
 
     let random_token: String = iter::repeat(())
         .map(|_| OsRng.sample(Alphanumeric))
@@ -502,7 +499,8 @@ async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, 
 
 #[get("/auth/token")]
 async fn get_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
-    let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
+    let uid = BigDecimal::from_u64(user.0)
+        .ok_or_else(|| AuthError::InternalError(String::from("Number handling error")))?;
 
     let token = db
         .run(move |c| {
