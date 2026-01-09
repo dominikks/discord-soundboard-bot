@@ -12,7 +12,6 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "ESNext",
-    "lib": ["ES2022", "dom"],
     "useDefineForClassFields": false,
     "strict": true
   },
