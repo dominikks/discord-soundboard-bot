@@ -206,14 +206,20 @@ enum AuthError {
     #[error("Not found: {0}")]
     NotFound(String),
 
-    #[error("OAuth2 error: failed to fetch access token from Discord API: {0}")]
-    RequestTokenError(String),
+    #[error("OAuth2 error: failed to fetch access token from Discord API")]
+    RequestTokenError(#[source] Box<dyn StdError + Send + Sync>),
 
     #[error("Failed to fetch user data from Discord API: {0}")]
     UserDataError(#[from] reqwest::Error),
 
     #[error("Internal error: {0}")]
     InternalError(String),
+
+    #[error("Failed to serialize session cookie")]
+    SetSessionCookieError(#[source] serde_json::Error),
+
+    #[error("Failed to serialize login cookie")]
+    SetLoginCookieError(#[source] serde_json::Error),
 
     #[error("Database error: {0}")]
     DieselError(#[from] DieselError),
@@ -223,6 +229,14 @@ enum AuthError {
 
     #[error("Number handling error")]
     BigDecimalError,
+}
+
+impl<RE: StdError + Send + Sync + 'static, T: oauth2::ErrorResponse + Send + Sync + 'static>
+    From<RequestTokenError<RE, T>> for AuthError
+{
+    fn from(err: RequestTokenError<RE, T>) -> Self {
+        Self::RequestTokenError(Box::new(err))
+    }
 }
 
 impl From<serenity::Error> for AuthError {
@@ -240,17 +254,12 @@ impl AuthError {
             Self::RequestTokenError(_) => Status::InternalServerError,
             Self::UserDataError(_) => Status::InternalServerError,
             Self::InternalError(_) => Status::InternalServerError,
+            Self::SetSessionCookieError(_) => Status::InternalServerError,
+            Self::SetLoginCookieError(_) => Status::InternalServerError,
             Self::DieselError(_) => Status::InternalServerError,
             Self::SerenityError(_) => Status::InternalServerError,
             Self::BigDecimalError => Status::InternalServerError,
         }
-    }
-}
-
-impl<RE: StdError, T: oauth2::ErrorResponse> From<RequestTokenError<RE, T>> for AuthError {
-    fn from(err: RequestTokenError<RE, T>) -> Self {
-        error!(?err, "Request token error in OAuth2 Flow");
-        Self::RequestTokenError(format!("{err}"))
     }
 }
 
@@ -416,9 +425,7 @@ async fn login_post(
     };
     cookies.add_private(Cookie::new(
         SESSION_COOKIE,
-        serde_json::to_string(&session).map_err(|err| {
-            AuthError::InternalError(format!("Failed to set session cookie: {err}"))
-        })?,
+        serde_json::to_string(&session).map_err(AuthError::SetSessionCookieError)?,
     ));
 
     Ok(Redirect::to("/"))
@@ -445,9 +452,7 @@ fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redi
                 csrf_state: csrf_state.secret().clone(),
                 pkce_verifier: pkce_verifier.secret().clone(),
             })
-            .map_err(|err| {
-                AuthError::InternalError(format!("Failed to set temporary cookie: {err}"))
-            })?,
+            .map_err(AuthError::SetLoginCookieError)?,
         ))
         .expires(OffsetDateTime::now_utc() + Duration::from_secs(5 * 60))
         .same_site(SameSite::Lax)

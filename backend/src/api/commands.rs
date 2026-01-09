@@ -44,10 +44,15 @@ enum CommandError {
     NotInAVoiceChannel(String),
 
     #[error("Internal error: {0}")]
+    #[allow(dead_code)]
     InternalError(String),
 
+    #[error("Failed to stop playback: {0}")]
+    StopPlaybackError(#[from] ClientError),
+
     #[error("Discord client error: {0}")]
-    ClientError(#[from] ClientError),
+    #[allow(dead_code)]
+    ClientError(ClientError),
 
     #[error("Recording error: {0}")]
     RecordingError(#[from] RecordingError),
@@ -67,6 +72,7 @@ impl CommandError {
             Self::NotAMember(_) => Status::Forbidden,
             Self::NotInAVoiceChannel(_) => Status::BadRequest,
             Self::InternalError(_) => Status::InternalServerError,
+            Self::StopPlaybackError(_) => Status::InternalServerError,
             Self::ClientError(_) => Status::InternalServerError,
             Self::RecordingError(_) => Status::InternalServerError,
             Self::DieselError(_) => Status::InternalServerError,
@@ -140,9 +146,7 @@ async fn stop(
     let guild_id = GuildId(guild_id);
     let permission = check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
-    client.stop(guild_id).await.map_err(|err| {
-        CommandError::InternalError(format!("Failed to stop the playback: {err}"))
-    })?;
+    client.stop(guild_id).await?;
     event_bus.inner().playback_stopped(&permission.member);
 
     Ok(String::from("Stopped playback"))
