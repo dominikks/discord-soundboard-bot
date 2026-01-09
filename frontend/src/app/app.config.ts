@@ -1,4 +1,11 @@
-import { ApplicationConfig, importProvidersFrom, inject, LOCALE_ID, provideAppInitializer } from '@angular/core';
+import {
+  ApplicationConfig,
+  importProvidersFrom,
+  inject,
+  LOCALE_ID,
+  provideAppInitializer,
+  provideZoneChangeDetection,
+} from '@angular/core';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
@@ -18,6 +25,7 @@ import { AppInfoState } from './services/app-info.state';
 
 export const APP_CONFIG: ApplicationConfig = {
   providers: [
+    provideZoneChangeDetection(),
     {
       provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,
       useValue: {
