@@ -6,12 +6,16 @@ use bigdecimal::FromPrimitive;
 use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
+use rocket::http::Status;
+use rocket::response::{self, Responder, Response};
 use rocket::serde::json::Json;
+use rocket::Request;
 use rocket::Route;
 use rocket::State;
 use serde::Deserialize;
 use serde::Serialize;
 use serenity::model::id::GuildId;
+use thiserror::Error;
 
 use crate::api::Snowflake;
 use crate::api::UserId;
@@ -30,39 +34,40 @@ pub fn get_routes() -> Vec<Route> {
     ]
 }
 
-#[derive(Debug, Responder)]
+#[derive(Debug, Error)]
 enum SettingsError {
-    #[response(status = 500)]
-    NumericalError(String),
-    #[response(status = 500)]
-    DieselError(String),
-    #[response(status = 500)]
-    SerenityError(String),
-    #[response(status = 403)]
-    InsufficientPermission(String),
+    #[error("Number handling error")]
+    NumericalError,
+
+    #[error("Database error: {0}")]
+    DieselError(#[from] DieselError),
+
+    #[error("Discord API error: {0}")]
+    SerenityError(#[from] serenity::Error),
+
+    #[error("Insufficient permission: you do not have the permission to perform this action")]
+    InsufficientPermission(#[from] PermissionError),
 }
 
-impl SettingsError {}
-
-impl From<DieselError> for SettingsError {
-    fn from(err: DieselError) -> Self {
-        error!(?err, "Diesel error in Random Infix API.");
-        Self::DieselError(String::from("Failed to load data from database."))
+impl SettingsError {
+    fn status_code(&self) -> Status {
+        match self {
+            Self::NumericalError => Status::InternalServerError,
+            Self::DieselError(_) => Status::InternalServerError,
+            Self::SerenityError(_) => Status::InternalServerError,
+            Self::InsufficientPermission(_) => Status::Forbidden,
+        }
     }
 }
 
-impl From<serenity::Error> for SettingsError {
-    fn from(err: serenity::Error) -> Self {
-        error!(?err, "Failed to load data from the Discord API");
-        Self::SerenityError(String::from("Error fetching data from the Discord API."))
-    }
-}
+impl<'r> Responder<'r, 'static> for SettingsError {
+    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
+        let status = self.status_code();
+        let error_message = self.to_string();
 
-impl From<PermissionError> for SettingsError {
-    fn from(_: PermissionError) -> Self {
-        Self::InsufficientPermission(String::from(
-            "You do not have the permission to perform this action",
-        ))
+        Response::build_from(error_message.respond_to(req)?)
+            .status(status)
+            .ok()
     }
 }
 
@@ -99,7 +104,7 @@ async fn get_all_random_infixes(
         .into_iter()
         .map(|(guild, _)| BigDecimal::from_u64(guild.id.0))
         .collect::<Option<Vec<_>>>()
-        .ok_or_else(|| SettingsError::NumericalError(String::from("BigDecimal handling error.")))?;
+        .ok_or_else(|| SettingsError::NumericalError)?;
 
     let infixes = db
         .run(move |c| {
@@ -111,7 +116,7 @@ async fn get_all_random_infixes(
         .into_iter()
         .map(RandomInfix::try_from)
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| SettingsError::NumericalError(String::from("BigDecimal handling error.")))?;
+        .map_err(|_| SettingsError::NumericalError)?;
 
     Ok(Json(infixes))
 }
@@ -137,8 +142,7 @@ async fn set_random_infixes(
 ) -> Result<(), SettingsError> {
     check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId(guild_id)).await?;
 
-    let gid = BigDecimal::from_u64(guild_id)
-        .ok_or_else(|| SettingsError::NumericalError(String::from("BigDecimal handling error.")))?;
+    let gid = BigDecimal::from_u64(guild_id).ok_or_else(|| SettingsError::NumericalError)?;
     let random_infixes = params
         .into_inner()
         .into_iter()
@@ -186,8 +190,7 @@ async fn get_guild_settings(
     let guild_id = GuildId(guild_id);
     check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
 
-    let gid = BigDecimal::from_u64(guild_id.0)
-        .ok_or_else(|| SettingsError::NumericalError(String::from("BigDecimal handling error.")))?;
+    let gid = BigDecimal::from_u64(guild_id.0).ok_or_else(|| SettingsError::NumericalError)?;
     let guild_settings = db
         .run(move |c| {
             use crate::db::schema::guildsettings::dsl::*;
@@ -205,18 +208,18 @@ async fn get_guild_settings(
     let user_role_id = guild_settings
         .user_role_id
         .map(|role_id| {
-            role_id.to_u64().ok_or_else(|| {
-                SettingsError::NumericalError(String::from("BigDecimal handling error."))
-            })
+            role_id
+                .to_u64()
+                .ok_or_else(|| SettingsError::NumericalError)
         })
         .map_or(Ok(None), |r| r.map(Some))?
         .map(Snowflake);
     let moderator_role_id = guild_settings
         .moderator_role_id
         .map(|role_id| {
-            role_id.to_u64().ok_or_else(|| {
-                SettingsError::NumericalError(String::from("BigDecimal handling error."))
-            })
+            role_id
+                .to_u64()
+                .ok_or_else(|| SettingsError::NumericalError)
         })
         .map_or(Ok(None), |r| r.map(Some))?
         .map(Snowflake);
@@ -260,8 +263,7 @@ async fn set_guild_settings(
     let guild_id = GuildId(guild_id);
     check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
 
-    let gid = BigDecimal::from_u64(guild_id.0)
-        .ok_or_else(|| SettingsError::NumericalError(String::from("BigDecimal handling error.")))?;
+    let gid = BigDecimal::from_u64(guild_id.0).ok_or_else(|| SettingsError::NumericalError)?;
     let params = params.into_inner();
 
     // We assume that the data is already present in the database at that point (queried at least once)
@@ -271,11 +273,7 @@ async fn set_guild_settings(
 
         if let Some(user_role_id) = params.user_role_id {
             let role_id = user_role_id
-                .map(|rid| {
-                    BigDecimal::from_u64(rid.0).ok_or_else(|| {
-                        SettingsError::NumericalError(String::from("BigDecimal handling error."))
-                    })
-                })
+                .map(|rid| BigDecimal::from_u64(rid.0).ok_or_else(|| SettingsError::NumericalError))
                 .map_or(Ok(None), |r| r.map(Some))?;
 
             diesel::update(guildsettings::table)
@@ -286,11 +284,7 @@ async fn set_guild_settings(
 
         if let Some(moderator_role_id) = params.moderator_role_id {
             let role_id = moderator_role_id
-                .map(|rid| {
-                    BigDecimal::from_u64(rid.0).ok_or_else(|| {
-                        SettingsError::NumericalError(String::from("BigDecimal handling error."))
-                    })
-                })
+                .map(|rid| BigDecimal::from_u64(rid.0).ok_or_else(|| SettingsError::NumericalError))
                 .map_or(Ok(None), |r| r.map(Some))?;
 
             diesel::update(guildsettings::table)

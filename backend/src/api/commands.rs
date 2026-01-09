@@ -14,81 +14,75 @@ use bigdecimal::FromPrimitive;
 use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
-use rocket::response::Responder;
+use rocket::http::Status;
+use rocket::response::{self, Responder, Response};
+use rocket::Request;
 use rocket::Route;
 use rocket::State;
 use serenity::model::id::GuildId;
+use thiserror::Error;
 
 pub fn get_routes() -> Vec<Route> {
     routes![join, leave, stop, play, record]
 }
 
-#[derive(Debug, Responder)]
+#[derive(Debug, Error)]
 enum CommandError {
-    #[response(status = 404)]
+    #[error("Not found: {0}")]
+    #[allow(dead_code)]
     NotFound(String),
-    #[response(status = 503)]
-    ServiceUnavailable(String),
-    #[response(status = 403)]
-    NotAMember(String),
-    #[response(status = 400)]
+
+    #[error("Service unavailable: bot is not in a voice channel")]
+    #[allow(dead_code)]
+    ServiceUnavailable,
+
+    #[error("Not a member: you must be a member of the guild to perform this task")]
+    NotAMember(#[from] PermissionError),
+
+    #[error("Not in a voice channel: {0}")]
+    #[allow(dead_code)]
     NotInAVoiceChannel(String),
-    #[response(status = 500)]
+
+    #[error("Internal error: {0}")]
     InternalError(String),
+
+    #[error("Discord client error: {0}")]
+    ClientError(#[from] ClientError),
+
+    #[error("Recording error: {0}")]
+    RecordingError(#[from] RecordingError),
+
+    #[error("Database error: {0}")]
+    DieselError(#[from] DieselError),
+
+    #[error("Number handling error")]
+    BigDecimalError,
 }
 
-impl CommandError {}
-
-impl From<ClientError> for CommandError {
-    fn from(error: ClientError) -> Self {
-        error!(?error, "Error in discord client");
-        match error {
-            ClientError::GuildNotFound => CommandError::InternalError(String::from(
-                "Failed to find guild in cache. The internal cache might be corrupted.",
-            )),
-            ClientError::UserNotFound => CommandError::NotInAVoiceChannel(String::from(
-                "User is not in a (visible) voice channel in this guild",
-            )),
-            ClientError::NotInAChannel => {
-                CommandError::ServiceUnavailable(String::from("Bot is not in a voice channel"))
-            }
-            ClientError::ConnectionError => {
-                CommandError::InternalError(String::from("Error communicating with Discord API"))
-            }
-            ClientError::DecodingError(_) => CommandError::InternalError(String::from(
-                "Error decoding soundfile, the file might be corrupted.",
-            )),
+impl CommandError {
+    fn status_code(&self) -> Status {
+        match self {
+            Self::NotFound(_) => Status::NotFound,
+            Self::ServiceUnavailable => Status::ServiceUnavailable,
+            Self::NotAMember(_) => Status::Forbidden,
+            Self::NotInAVoiceChannel(_) => Status::BadRequest,
+            Self::InternalError(_) => Status::InternalServerError,
+            Self::ClientError(_) => Status::InternalServerError,
+            Self::RecordingError(_) => Status::InternalServerError,
+            Self::DieselError(_) => Status::InternalServerError,
+            Self::BigDecimalError => Status::InternalServerError,
         }
     }
 }
 
-impl From<RecordingError> for CommandError {
-    fn from(error: RecordingError) -> Self {
-        error!(?error, "Error in discord recorder");
-        match error {
-            RecordingError::IoError(err) => {
-                Self::InternalError(format!("Internal I/O error: {}", err))
-            }
-            RecordingError::NoData => Self::NotFound(String::from("No data available to record")),
-        }
-    }
-}
+impl<'r> Responder<'r, 'static> for CommandError {
+    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
+        let status = self.status_code();
+        let error_message = self.to_string();
 
-impl From<PermissionError> for CommandError {
-    fn from(_: PermissionError) -> Self {
-        Self::NotAMember(String::from(
-            "You must be a member of the guild to perform this task",
-        ))
-    }
-}
-
-impl From<DieselError> for CommandError {
-    fn from(err: DieselError) -> Self {
-        if err == DieselError::NotFound {
-            Self::NotFound(String::from("Data not found in database"))
-        } else {
-            Self::InternalError(String::from("Database error"))
-        }
+        Response::build_from(error_message.respond_to(req)?)
+            .status(status)
+            .ok()
     }
 }
 
@@ -146,10 +140,9 @@ async fn stop(
     let guild_id = GuildId(guild_id);
     let permission = check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
-    client
-        .stop(guild_id)
-        .await
-        .map_err(|_| CommandError::InternalError(String::from("Failed to stop the playback")))?;
+    client.stop(guild_id).await.map_err(|err| {
+        CommandError::InternalError(format!("Failed to stop the playback: {err}"))
+    })?;
     event_bus.inner().playback_stopped(&permission.member);
 
     Ok(String::from("Stopped playback"))
@@ -188,11 +181,10 @@ async fn play(
     let sound_gid = sound
         .guild_id
         .to_u64()
-        .ok_or_else(|| CommandError::InternalError(String::from("Number handling error")))?;
+        .ok_or_else(|| CommandError::BigDecimalError)?;
     check_guild_user(cache_http.inner(), &db, serenity_user, GuildId(sound_gid)).await?;
 
-    let gid = BigDecimal::from_u64(guild_id)
-        .ok_or_else(|| CommandError::InternalError(String::from("Number handling error")))?;
+    let gid = BigDecimal::from_u64(guild_id).ok_or_else(|| CommandError::BigDecimalError)?;
     let guild_settings = db
         .run(move |c| {
             use crate::db::schema::guildsettings::dsl::*;
