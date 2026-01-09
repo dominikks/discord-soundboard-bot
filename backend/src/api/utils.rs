@@ -71,7 +71,8 @@ impl AvatarOrDefault for SerenityUser {
 impl AvatarOrDefault for SerenityMember {
     fn avatar_url_or_default(&self) -> String {
         self.avatar
-            .clone()
+            .as_ref()
+            .map(|a| a.to_string())
             .unwrap_or_else(|| self.user.avatar_url_or_default())
     }
 }

@@ -10,9 +10,11 @@ use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use rocket::fs::NamedFile;
 use rocket::fs::TempFile;
-use rocket::response::Responder;
+use rocket::http::Status;
+use rocket::response::{self, Responder, Response};
 use rocket::routes;
 use rocket::serde::json::Json;
+use rocket::Request;
 use rocket::Route;
 use rocket::State;
 use serde::Deserialize;
@@ -20,6 +22,7 @@ use serde::Serialize;
 use serde_with::serde_as;
 use serde_with::TimestampSeconds;
 use serenity::model::id::GuildId;
+use thiserror::Error;
 use tokio::fs;
 
 use crate::api::auth::TokenUserId;
@@ -46,28 +49,34 @@ pub fn get_routes() -> Vec<Route> {
     ]
 }
 
-#[derive(Debug, Responder)]
+#[derive(Debug, Error)]
 enum SoundsError {
-    #[response(status = 500)]
-    IoError(String),
-    #[response(status = 500)]
-    SerenityError(String),
-    #[response(status = 500)]
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+    
+    #[error("Discord API error: {0}")]
+    SerenityError(#[from] serenity::Error),
+    
+    #[error("Internal error: {0}")]
     InternalError(String),
-    #[response(status = 500)]
-    DieselError(String),
-    #[response(status = 403)]
-    InsufficientPermission(String),
-    #[response(status = 404)]
+    
+    #[error("Database error: {0}")]
+    DieselError(DieselError),
+    
+    #[error("Insufficient permissions: you do not have the permission to perform this action")]
+    InsufficientPermission(#[from] PermissionError),
+    
+    #[error("Not found: {0}")]
     NotFound(String),
-    #[response(status = 400)]
+    
+    #[error("Invalid sound file: {0}")]
     InvalidSoundfile(String),
-}
-
-impl SoundsError {
-    fn bigdecimal_error() -> Self {
-        Self::InternalError(String::from("Number handling error"))
-    }
+    
+    #[error("Number conversion error: {0}")]
+    NumberConversion(#[from] TryFromIntError),
+    
+    #[error("Number handling error")]
+    BigDecimalError,
 }
 
 impl From<DieselError> for SoundsError {
@@ -75,34 +84,39 @@ impl From<DieselError> for SoundsError {
         if err == DieselError::NotFound {
             Self::NotFound(String::from("A sound with the given id does not exist"))
         } else {
-            Self::DieselError(String::from("Failed to load data from database."))
+            Self::DieselError(err)
         }
     }
 }
 
-impl From<std::io::Error> for SoundsError {
-    fn from(_: std::io::Error) -> Self {
-        Self::IoError(String::from("Internal IO Error"))
+impl SoundsError {
+    fn bigdecimal_error() -> Self {
+        Self::BigDecimalError
+    }
+    
+    fn status_code(&self) -> Status {
+        match self {
+            Self::IoError(_) => Status::InternalServerError,
+            Self::SerenityError(_) => Status::InternalServerError,
+            Self::InternalError(_) => Status::InternalServerError,
+            Self::DieselError(_) => Status::InternalServerError,
+            Self::InsufficientPermission(_) => Status::Forbidden,
+            Self::NotFound(_) => Status::NotFound,
+            Self::InvalidSoundfile(_) => Status::BadRequest,
+            Self::NumberConversion(_) => Status::InternalServerError,
+            Self::BigDecimalError => Status::InternalServerError,
+        }
     }
 }
 
-impl From<serenity::Error> for SoundsError {
-    fn from(_: serenity::Error) -> Self {
-        Self::SerenityError(String::from("Error fetching Discord API"))
-    }
-}
-
-impl From<TryFromIntError> for SoundsError {
-    fn from(_: TryFromIntError) -> Self {
-        Self::InternalError(String::from("Number conversion failed"))
-    }
-}
-
-impl From<PermissionError> for SoundsError {
-    fn from(_: PermissionError) -> Self {
-        Self::InsufficientPermission(String::from(
-            "You do not have the permission to perform this action",
-        ))
+impl<'r> Responder<'r, 'static> for SoundsError {
+    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
+        let status = self.status_code();
+        let error_message = self.to_string();
+        
+        Response::build_from(error_message.respond_to(req)?)
+            .status(status)
+            .ok()
     }
 }
 

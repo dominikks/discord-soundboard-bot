@@ -1,7 +1,15 @@
 use regex::Regex;
-use std::path::PathBuf;
-use std::process::Stdio;
+use std::path::Path;
+use std::sync::LazyLock;
 use tokio::process::Command;
+use std::process::Stdio;
+
+static RE_MAX: LazyLock<Regex> = LazyLock::new(|| 
+    Regex::new("max_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap()
+);
+static RE_MEAN: LazyLock<Regex> = LazyLock::new(|| 
+    Regex::new("mean_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap()
+);
 
 #[derive(Clone, Debug)]
 pub struct VolumeInformation {
@@ -10,18 +18,13 @@ pub struct VolumeInformation {
 }
 
 #[instrument]
-pub async fn detect_volume(path: &PathBuf) -> Option<VolumeInformation> {
-    lazy_static! {
-        static ref RE_MAX: Regex = Regex::new("max_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap();
-        static ref RE_MEAN: Regex = Regex::new("mean_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap();
-    }
-
+pub async fn detect_volume(path: impl AsRef<Path>) -> Option<VolumeInformation> {
     let args = ["-af", "volumedetect", "-f", "null", "/dev/null", "-i"];
 
     let out = Command::new("ffmpeg")
         .kill_on_drop(true)
         .args(args)
-        .arg(path)
+        .arg(path.as_ref())
         .stdin(Stdio::null())
         .output()
         .await
@@ -41,7 +44,7 @@ pub async fn detect_volume(path: &PathBuf) -> Option<VolumeInformation> {
 }
 
 #[instrument]
-pub async fn get_length(path: &PathBuf) -> Option<f32> {
+pub async fn get_length(path: impl AsRef<Path>) -> Option<f32> {
     let args = [
         "-show_entries",
         "format=duration",
@@ -55,7 +58,7 @@ pub async fn get_length(path: &PathBuf) -> Option<f32> {
     let out = Command::new("ffprobe")
         .kill_on_drop(true)
         .args(args)
-        .arg(path)
+        .arg(path.as_ref())
         .stdin(Stdio::null())
         .output()
         .await;
