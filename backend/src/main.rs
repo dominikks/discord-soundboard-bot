@@ -1,3 +1,10 @@
+#[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate rocket;
+#[macro_use]
+extern crate tracing;
+
 mod api;
 mod audio_utils;
 mod db;

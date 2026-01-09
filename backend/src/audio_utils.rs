@@ -17,7 +17,7 @@ pub struct VolumeInformation {
     pub mean_volume: f32,
 }
 
-#[instrument]
+#[instrument(skip(path))]
 pub async fn detect_volume(path: impl AsRef<Path>) -> Option<VolumeInformation> {
     let args = ["-af", "volumedetect", "-f", "null", "/dev/null", "-i"];
 
@@ -43,7 +43,7 @@ pub async fn detect_volume(path: impl AsRef<Path>) -> Option<VolumeInformation> 
     })
 }
 
-#[instrument]
+#[instrument(skip(path))]
 pub async fn get_length(path: impl AsRef<Path>) -> Option<f32> {
     let args = [
         "-show_entries",

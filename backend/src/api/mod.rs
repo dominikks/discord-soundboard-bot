@@ -19,6 +19,7 @@ use serde_with::DisplayFromStr;
 use std::env::var;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 use utils::CachedFile;
 
 mod auth;
@@ -35,13 +36,15 @@ mod utils;
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 struct Snowflake(#[serde_as(as = "DisplayFromStr")] pub u64);
 
-lazy_static! {
-  // Settings for frontend
-  static ref LEGAL_URL: Option<String> = var("LEGAL_URL").ok();
-  // Discord data found in env
-  static ref DISCORD_CLIENT_ID: String = var("DISCORD_CLIENT_ID").expect("Expected DISCORD_CLIENT_ID as env");
-  static ref DISCORD_CLIENT_SECRET: String = var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env");
-}
+// Settings for frontend
+static LEGAL_URL: LazyLock<Option<String>> = LazyLock::new(|| var("LEGAL_URL").ok());
+// Discord data found in env
+static DISCORD_CLIENT_ID: LazyLock<String> = LazyLock::new(|| 
+    var("DISCORD_CLIENT_ID").expect("Expected DISCORD_CLIENT_ID as env")
+);
+static DISCORD_CLIENT_SECRET: LazyLock<String> = LazyLock::new(|| 
+    var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env")
+);
 
 pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>, RocketError> {
     rocket::build()

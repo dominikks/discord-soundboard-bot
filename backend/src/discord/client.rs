@@ -105,7 +105,7 @@ impl Client {
             })
     }
 
-    #[instrument(skip(self))]
+    #[instrument(skip(self, sound_path))]
     pub async fn play(
         &self,
         sound_path: impl AsRef<Path>,

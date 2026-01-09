@@ -1,19 +1,18 @@
 use crate::audio_utils;
 use std::ffi::OsString;
-use std::fmt;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 use std::time::Duration;
 use std::time::SystemTime;
+use thiserror::Error;
 use tokio::fs;
 use tokio::fs::ReadDir;
 use tokio::io;
 
-lazy_static! {
-    static ref SOUNDS_FOLDER: &'static Path = Path::new("data/sounds");
-    pub static ref RECORDINGS_FOLDER: &'static Path = Path::new("data/recorder");
-    pub static ref MIXES_FOLDER: &'static Path = Path::new("data/mixes");
-}
+static SOUNDS_FOLDER: LazyLock<&Path> = LazyLock::new(|| Path::new("data/sounds"));
+pub static RECORDINGS_FOLDER: LazyLock<&Path> = LazyLock::new(|| Path::new("data/recorder"));
+pub static MIXES_FOLDER: LazyLock<&Path> = LazyLock::new(|| Path::new("data/mixes"));
 
 pub async fn create_folders() -> Result<(), io::Error> {
     fs::create_dir_all(*SOUNDS_FOLDER).await?;
@@ -31,23 +30,10 @@ pub fn get_full_sound_path(filename: &str) -> PathBuf {
     (*SOUNDS_FOLDER).join(filename)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum FileError {
-    IoError(io::Error),
-}
-
-impl From<io::Error> for FileError {
-    fn from(err: io::Error) -> Self {
-        FileError::IoError(err)
-    }
-}
-
-impl fmt::Display for FileError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        match self {
-            FileError::IoError(err) => write!(f, "FileError: IoError occurred. {}", err),
-        }
-    }
+    #[error("IO error: {0}")]
+    IoError(#[from] io::Error),
 }
 
 #[derive(Debug)]
