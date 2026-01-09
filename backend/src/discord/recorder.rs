@@ -33,12 +33,12 @@ use tokio::time::Duration;
 use tracing::Instrument;
 use tracing::Level;
 
-static RECORDING_LENGTH: LazyLock<u64> = LazyLock::new(|| 
+static RECORDING_LENGTH: LazyLock<u64> = LazyLock::new(|| {
     var("RECORDING_LENGTH")
         .ok()
         .and_then(|content| content.parse::<u64>().ok())
         .unwrap_or(60)
-);
+});
 
 /// The sample rate and channel count the voice stream is assumed to have
 pub const SAMPLE_RATE: f64 = 48_000.0;

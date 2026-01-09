@@ -39,12 +39,10 @@ struct Snowflake(#[serde_as(as = "DisplayFromStr")] pub u64);
 // Settings for frontend
 static LEGAL_URL: LazyLock<Option<String>> = LazyLock::new(|| var("LEGAL_URL").ok());
 // Discord data found in env
-static DISCORD_CLIENT_ID: LazyLock<String> = LazyLock::new(|| 
-    var("DISCORD_CLIENT_ID").expect("Expected DISCORD_CLIENT_ID as env")
-);
-static DISCORD_CLIENT_SECRET: LazyLock<String> = LazyLock::new(|| 
-    var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env")
-);
+static DISCORD_CLIENT_ID: LazyLock<String> =
+    LazyLock::new(|| var("DISCORD_CLIENT_ID").expect("Expected DISCORD_CLIENT_ID as env"));
+static DISCORD_CLIENT_SECRET: LazyLock<String> =
+    LazyLock::new(|| var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env"));
 
 pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>, RocketError> {
     rocket::build()

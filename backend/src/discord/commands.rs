@@ -31,7 +31,9 @@ struct General;
 #[command]
 #[only_in(guilds)]
 async fn join(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild_id = msg.guild_id.expect("Guild ID should exist in guild context");
+    let guild_id = msg
+        .guild_id
+        .expect("Guild ID should exist in guild context");
 
     let client = client::get(ctx)
         .await
@@ -58,7 +60,9 @@ async fn join(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 #[only_in(guilds)]
 async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild_id = msg.guild_id.expect("Guild ID should exist in guild context");
+    let guild_id = msg
+        .guild_id
+        .expect("Guild ID should exist in guild context");
 
     let client = client::get(ctx)
         .await
@@ -84,7 +88,9 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 #[only_in(guilds)]
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild_id = msg.guild_id.expect("Guild ID should exist in guild context");
+    let guild_id = msg
+        .guild_id
+        .expect("Guild ID should exist in guild context");
 
     let client = client::get(ctx)
         .await
@@ -110,7 +116,9 @@ async fn record(ctx: &Context, msg: &Message) -> CommandResult {
         .react(&ctx.http, ReactionType::try_from("⏬").unwrap())
         .await;
 
-    let guild_id = msg.guild_id.expect("Guild ID should exist in guild context");
+    let guild_id = msg
+        .guild_id
+        .expect("Guild ID should exist in guild context");
     let client = client::get(ctx)
         .await
         .expect("Recorder placed in at initialization");
@@ -146,7 +154,9 @@ async fn record(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 #[only_in(guilds)]
 async fn guildid(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild_id = msg.guild_id.expect("Guild ID should exist in guild context");
+    let guild_id = msg
+        .guild_id
+        .expect("Guild ID should exist in guild context");
 
     check_msg(
         msg.channel_id

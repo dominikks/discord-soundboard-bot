@@ -20,9 +20,8 @@ use tokio::select;
 use tracing_subscriber::{fmt, EnvFilter};
 
 // URL under which the app is reachable
-static BASE_URL: LazyLock<String> = LazyLock::new(|| 
-    env::var("BASE_URL").expect("BASE_URL must be supplied in env")
-);
+static BASE_URL: LazyLock<String> =
+    LazyLock::new(|| env::var("BASE_URL").expect("BASE_URL must be supplied in env"));
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const BUILD_ID: Option<&'static str> = option_env!("BUILD_ID");

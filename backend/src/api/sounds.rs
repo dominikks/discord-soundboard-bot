@@ -53,28 +53,28 @@ pub fn get_routes() -> Vec<Route> {
 enum SoundsError {
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
-    
+
     #[error("Discord API error: {0}")]
     SerenityError(#[from] serenity::Error),
-    
+
     #[error("Internal error: {0}")]
     InternalError(String),
-    
+
     #[error("Database error: {0}")]
     DieselError(DieselError),
-    
+
     #[error("Insufficient permissions: you do not have the permission to perform this action")]
     InsufficientPermission(#[from] PermissionError),
-    
+
     #[error("Not found: {0}")]
     NotFound(String),
-    
+
     #[error("Invalid sound file: {0}")]
     InvalidSoundfile(String),
-    
+
     #[error("Number conversion error: {0}")]
     NumberConversion(#[from] TryFromIntError),
-    
+
     #[error("Number handling error")]
     BigDecimalError,
 }
@@ -93,7 +93,7 @@ impl SoundsError {
     fn bigdecimal_error() -> Self {
         Self::BigDecimalError
     }
-    
+
     fn status_code(&self) -> Status {
         match self {
             Self::IoError(_) => Status::InternalServerError,
@@ -113,7 +113,7 @@ impl<'r> Responder<'r, 'static> for SoundsError {
     fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
         let status = self.status_code();
         let error_message = self.to_string();
-        
+
         Response::build_from(error_message.respond_to(req)?)
             .status(status)
             .ok()

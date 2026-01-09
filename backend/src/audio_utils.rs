@@ -1,15 +1,13 @@
 use regex::Regex;
 use std::path::Path;
+use std::process::Stdio;
 use std::sync::LazyLock;
 use tokio::process::Command;
-use std::process::Stdio;
 
-static RE_MAX: LazyLock<Regex> = LazyLock::new(|| 
-    Regex::new("max_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap()
-);
-static RE_MEAN: LazyLock<Regex> = LazyLock::new(|| 
-    Regex::new("mean_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap()
-);
+static RE_MAX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new("max_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap());
+static RE_MEAN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new("mean_volume: ([-]?[\\d]+.[\\d]+) dB").unwrap());
 
 #[derive(Clone, Debug)]
 pub struct VolumeInformation {

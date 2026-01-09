@@ -48,25 +48,25 @@ pub fn get_routes() -> Vec<Route> {
 enum RecorderError {
     #[error("Internal error: {0}")]
     InternalError(String),
-    
+
     #[error("IO error: {0}")]
     IoError(#[from] io::Error),
-    
+
     #[error("Request error: {0}")]
     RequestError(String),
-    
+
     #[error("Not found: {0}")]
     NotFound(String),
-    
+
     #[error("Not a member: you must be a member of the guild to perform this task")]
     NotAMember(#[from] PermissionError),
-    
+
     #[error("Failed to encode file name: {0:?}")]
     FileNameEncoding(OsString),
-    
+
     #[error("Error handling recordings: {0}")]
     FileHandling(#[from] file_handling::FileError),
-    
+
     #[error("Discord API error: {0}")]
     SerenityError(#[from] serenity::Error),
 }
@@ -96,7 +96,7 @@ impl<'r> Responder<'r, 'static> for RecorderError {
     fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
         let status = self.status_code();
         let error_message = self.to_string();
-        
+
         Response::build_from(error_message.respond_to(req)?)
             .status(status)
             .ok()
