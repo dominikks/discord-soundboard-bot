@@ -90,10 +90,6 @@ impl From<DieselError> for SoundsError {
 }
 
 impl SoundsError {
-    fn bigdecimal_error() -> Self {
-        Self::BigDecimalError
-    }
-
     fn status_code(&self) -> Status {
         match self {
             Self::IoError(_) => Status::InternalServerError,
@@ -155,7 +151,7 @@ impl TryFrom<(models::Sound, Option<models::Soundfile>)> for Sound {
             guild_id: Snowflake(
                 s.guild_id
                     .to_u64()
-                    .ok_or_else(SoundsError::bigdecimal_error)?,
+                    .ok_or_else(|| SoundsError::BigDecimalError)?,
             ),
             name: s.name,
             category: s.category,
@@ -181,7 +177,7 @@ async fn list_sounds(
         .await?
         .into_iter()
         .map(|(guildinfo, _)| {
-            BigDecimal::from_u64(guildinfo.id.0).ok_or_else(SoundsError::bigdecimal_error)
+            BigDecimal::from_u64(guildinfo.id.0).ok_or_else(|| SoundsError::BigDecimalError)
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -229,7 +225,7 @@ async fn get_sound(
     let guild_id = GuildId(
         guild_id
             .to_u64()
-            .ok_or_else(SoundsError::bigdecimal_error)?,
+            .ok_or_else(|| SoundsError::BigDecimalError)?,
     );
     check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
@@ -263,8 +259,9 @@ async fn create_sound(
     )
     .await?;
 
-    let uid = BigDecimal::from_u64(user.0).ok_or_else(SoundsError::bigdecimal_error)?;
-    let gid = BigDecimal::from_u64(params.guild_id.0).ok_or_else(SoundsError::bigdecimal_error)?;
+    let uid = BigDecimal::from_u64(user.0).ok_or_else(|| SoundsError::BigDecimalError)?;
+    let gid =
+        BigDecimal::from_u64(params.guild_id.0).ok_or_else(|| SoundsError::BigDecimalError)?;
     let sound = db
         .run(move |c| {
             use crate::db::schema::sounds;
@@ -324,7 +321,7 @@ async fn update_sound(
         .await?;
     let guild_id = guild_id
         .to_u64()
-        .ok_or_else(SoundsError::bigdecimal_error)?;
+        .ok_or_else(|| SoundsError::BigDecimalError)?;
 
     check_guild_moderator(
         cache_http.inner(),
@@ -334,7 +331,7 @@ async fn update_sound(
     )
     .await?;
 
-    let uid = BigDecimal::from_u64(user.0).ok_or_else(SoundsError::bigdecimal_error)?;
+    let uid = BigDecimal::from_u64(user.0).ok_or_else(|| SoundsError::BigDecimalError)?;
     let params = params.into_inner();
     db.run(move |c| {
         use crate::db::schema::sounds;
@@ -409,7 +406,7 @@ async fn upload_sound(
     )
     .await?;
 
-    let uid = BigDecimal::from_u64(user.0).ok_or_else(SoundsError::bigdecimal_error)?;
+    let uid = BigDecimal::from_u64(user.0).ok_or_else(|| SoundsError::BigDecimalError)?;
     let file_name = file_name.unwrap_or(format!("{}_{}.mp3", guild_id, sound_id));
     let file_path = file_handling::get_full_sound_path(&file_name);
 
@@ -505,7 +502,7 @@ async fn fetch_guild_and_file(
     Ok((
         guild_id
             .to_u64()
-            .ok_or_else(SoundsError::bigdecimal_error)?,
+            .ok_or_else(|| SoundsError::BigDecimalError)?,
         file_name,
     ))
 }
