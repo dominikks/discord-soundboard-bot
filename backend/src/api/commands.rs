@@ -28,31 +28,11 @@ pub fn get_routes() -> Vec<Route> {
 
 #[derive(Debug, Error)]
 enum CommandError {
-    #[error("Not found: {0}")]
-    #[allow(dead_code)]
-    NotFound(String),
-
-    #[error("Service unavailable: bot is not in a voice channel")]
-    #[allow(dead_code)]
-    ServiceUnavailable,
-
     #[error("Not a member: you must be a member of the guild to perform this task")]
     NotAMember(#[from] PermissionError),
 
-    #[error("Not in a voice channel: {0}")]
-    #[allow(dead_code)]
-    NotInAVoiceChannel(String),
-
-    #[error("Internal error: {0}")]
-    #[allow(dead_code)]
-    InternalError(String),
-
     #[error("Failed to stop playback: {0}")]
     StopPlaybackError(#[from] ClientError),
-
-    #[error("Discord client error: {0}")]
-    #[allow(dead_code)]
-    ClientError(ClientError),
 
     #[error("Recording error: {0}")]
     RecordingError(#[from] RecordingError),
@@ -67,13 +47,8 @@ enum CommandError {
 impl CommandError {
     fn status_code(&self) -> Status {
         match self {
-            Self::NotFound(_) => Status::NotFound,
-            Self::ServiceUnavailable => Status::ServiceUnavailable,
             Self::NotAMember(_) => Status::Forbidden,
-            Self::NotInAVoiceChannel(_) => Status::BadRequest,
-            Self::InternalError(_) => Status::InternalServerError,
             Self::StopPlaybackError(_) => Status::InternalServerError,
-            Self::ClientError(_) => Status::InternalServerError,
             Self::RecordingError(_) => Status::InternalServerError,
             Self::DieselError(_) => Status::InternalServerError,
             Self::BigDecimalError => Status::InternalServerError,
