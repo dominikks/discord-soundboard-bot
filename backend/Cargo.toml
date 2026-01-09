@@ -9,7 +9,6 @@ bigdecimal = "0.4"
 diesel = { version = "2.2", default-features = false, features = ["postgres", "numeric"] }
 diesel_migrations = "2.2"
 dotenv = "0.15"
-lazy_static = "1.4"
 oauth2 = "4.4"
 rand = "0.8"
 regex = "1.9"

@@ -21,6 +21,7 @@ use std::ops::Deref;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::Arc;
+use std::sync::LazyLock;
 use std::time::SystemTime;
 use thiserror::Error;
 use tokio::fs;
@@ -32,12 +33,12 @@ use tokio::time::Duration;
 use tracing::Instrument;
 use tracing::Level;
 
-lazy_static! {
-    static ref RECORDING_LENGTH: u64 = var("RECORDING_LENGTH")
+static RECORDING_LENGTH: LazyLock<u64> = LazyLock::new(|| {
+    var("RECORDING_LENGTH")
         .ok()
         .and_then(|content| content.parse::<u64>().ok())
-        .unwrap_or(60);
-}
+        .unwrap_or(60)
+});
 
 /// The sample rate and channel count the voice stream is assumed to have
 pub const SAMPLE_RATE: f64 = 48_000.0;

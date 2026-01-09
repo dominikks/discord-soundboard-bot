@@ -569,7 +569,6 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "dotenv",
- "lazy_static",
  "oauth2",
  "pq-sys",
  "rand",

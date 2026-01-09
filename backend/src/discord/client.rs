@@ -11,7 +11,7 @@ use songbird::error::JoinError;
 use songbird::Config as DriverConfig;
 use songbird::SerenityInit;
 use songbird::Songbird;
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::Mutex;
@@ -34,6 +34,12 @@ pub enum ClientError {
 pub struct Client {
     songbird: Arc<Songbird>,
     pub recorder: Arc<Recorder>,
+}
+
+impl Default for Client {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Client {
@@ -99,10 +105,10 @@ impl Client {
             })
     }
 
-    #[instrument(skip(self))]
+    #[instrument(skip(self, sound_path))]
     pub async fn play(
         &self,
-        sound_path: &PathBuf,
+        sound_path: impl AsRef<Path>,
         volume_adjustment: f32,
         guild_id: GuildId,
     ) -> Result<(), ClientError> {
@@ -114,7 +120,7 @@ impl Client {
 
         let volume_adjustment_string = format!("volume={}dB", volume_adjustment);
         let source = songbird::input::ffmpeg_optioned(
-            sound_path,
+            sound_path.as_ref(),
             &[],
             &[
                 "-f",

@@ -11,8 +11,10 @@ use crate::file_handling::RECORDINGS_FOLDER;
 use crate::CacheHttp;
 use crate::BASE_URL;
 use rand::random;
-use rocket::response::Responder;
+use rocket::http::Status;
+use rocket::response::{self, Responder, Response};
 use rocket::serde::json::Json;
+use rocket::Request;
 use rocket::Route;
 use rocket::State;
 use serde::Deserialize;
@@ -23,6 +25,7 @@ use std::ffi::OsString;
 use std::path::Path;
 use std::process::Stdio;
 use std::time::SystemTime;
+use thiserror::Error;
 use tokio::fs;
 use tokio::io;
 use tokio::process::Command;
@@ -41,49 +44,62 @@ pub fn get_routes() -> Vec<Route> {
     ]
 }
 
-#[derive(Debug, Responder)]
+#[derive(Debug, Error)]
 enum RecorderError {
-    #[response(status = 500)]
+    #[error("Internal error: {0}")]
     InternalError(String),
-    #[response(status = 500)]
-    IoError(String),
-    #[response(status = 400)]
+
+    #[error("IO error: {0}")]
+    IoError(#[from] io::Error),
+
+    #[error("Request error: {0}")]
     RequestError(String),
-    #[response(status = 404)]
+
+    #[error("Not found: {0}")]
     NotFound(String),
-    #[response(status = 401)]
-    NotAMember(String),
+
+    #[error("Not a member: you must be a member of the guild to perform this task")]
+    NotAMember(#[from] PermissionError),
+
+    #[error("Failed to encode file name: {0:?}")]
+    FileNameEncoding(OsString),
+
+    #[error("Error handling recordings: {0}")]
+    FileHandling(#[from] file_handling::FileError),
+
+    #[error("Discord API error: {0}")]
+    SerenityError(#[from] serenity::Error),
 }
 
-impl From<io::Error> for RecorderError {
-    fn from(_: io::Error) -> Self {
-        RecorderError::IoError(String::from("IO Error"))
+impl RecorderError {
+    fn status_code(&self) -> Status {
+        match self {
+            Self::InternalError(_) => Status::InternalServerError,
+            Self::IoError(_) => Status::InternalServerError,
+            Self::RequestError(_) => Status::BadRequest,
+            Self::NotFound(_) => Status::NotFound,
+            Self::NotAMember(_) => Status::Unauthorized,
+            Self::FileNameEncoding(_) => Status::InternalServerError,
+            Self::FileHandling(_) => Status::InternalServerError,
+            Self::SerenityError(_) => Status::InternalServerError,
+        }
     }
 }
 
 impl From<OsString> for RecorderError {
-    fn from(_: OsString) -> Self {
-        RecorderError::IoError(String::from("Failed to encode file name"))
+    fn from(err: OsString) -> Self {
+        Self::FileNameEncoding(err)
     }
 }
 
-impl From<serenity::Error> for RecorderError {
-    fn from(_: serenity::Error) -> Self {
-        RecorderError::InternalError(String::from("Error fetching Discord API"))
-    }
-}
+impl<'r> Responder<'r, 'static> for RecorderError {
+    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
+        let status = self.status_code();
+        let error_message = self.to_string();
 
-impl From<file_handling::FileError> for RecorderError {
-    fn from(_: file_handling::FileError) -> Self {
-        RecorderError::IoError(String::from("Error handling recordings"))
-    }
-}
-
-impl From<PermissionError> for RecorderError {
-    fn from(_: PermissionError) -> Self {
-        Self::NotAMember(String::from(
-            "You must be a member of the guild to perform this task",
-        ))
+        Response::build_from(error_message.respond_to(req)?)
+            .status(status)
+            .ok()
     }
 }
 

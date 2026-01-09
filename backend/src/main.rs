@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate diesel;
 #[macro_use]
-extern crate lazy_static;
-#[macro_use]
 extern crate rocket;
 #[macro_use]
 extern crate tracing;
@@ -17,13 +15,13 @@ use discord::connector::Connector as DiscordConnector;
 use discord::CacheHttp;
 use dotenv::dotenv;
 use std::env;
+use std::sync::LazyLock;
 use tokio::select;
 use tracing_subscriber::{fmt, EnvFilter};
 
-lazy_static! {
-  // URL under which the app is reachable
-  static ref BASE_URL: String = env::var("BASE_URL").expect("BASE_URL must be supplied in env");
-}
+// URL under which the app is reachable
+static BASE_URL: LazyLock<String> =
+    LazyLock::new(|| env::var("BASE_URL").expect("BASE_URL must be supplied in env"));
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const BUILD_ID: Option<&'static str> = option_env!("BUILD_ID");

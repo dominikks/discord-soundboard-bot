@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::error::Error as StdError;
 use std::iter;
 use std::time::{Duration, SystemTime};
 
@@ -27,9 +27,8 @@ use rocket::http::Status;
 use rocket::http::{Cookie, SameSite};
 use rocket::outcome::try_outcome;
 use rocket::request;
-use rocket::request::FromRequest;
-use rocket::request::Outcome;
-use rocket::response::Responder;
+use rocket::request::{FromRequest, Outcome};
+use rocket::response::{self, Responder, Response};
 use rocket::response::{status, Redirect};
 use rocket::serde::json::Json;
 use rocket::time::OffsetDateTime;
@@ -42,6 +41,7 @@ use serde::Serializer;
 use serde_with::serde_as;
 use serde_with::TimestampSeconds;
 use serenity::model::id::UserId as SerenityUserId;
+use thiserror::Error;
 
 use crate::api::utils::AvatarOrDefault;
 use crate::api::Snowflake;
@@ -195,55 +195,82 @@ impl<'r> FromRequest<'r> for TokenUserId {
     }
 }
 
-#[derive(Responder, Debug)]
+#[derive(Debug, Error)]
 enum AuthError {
-    #[response(status = 403)]
-    CsrfMissmatch(String),
-    #[response(status = 403)]
-    MissingLoginCookie(String),
-    #[response(status = 404)]
+    #[error("CSRF token mismatch")]
+    CsrfMissmatch,
+
+    #[error("Missing login cookie")]
+    MissingLoginCookie,
+
+    #[error("Not found: {0}")]
     NotFound(String),
-    #[response(status = 500)]
-    RequestTokenError(String),
-    #[response(status = 500)]
-    UserDataError(String),
-    #[response(status = 500)]
+
+    #[error("OAuth2 error: failed to fetch access token from Discord API")]
+    RequestTokenError(#[source] Box<dyn StdError + Send + Sync>),
+
+    #[error("Failed to fetch user data from Discord API: {0}")]
+    UserDataError(#[from] reqwest::Error),
+
+    #[error("Internal error: {0}")]
     InternalError(String),
+
+    #[error("Failed to serialize session cookie")]
+    SetSessionCookieError(#[source] serde_json::Error),
+
+    #[error("Failed to serialize login cookie")]
+    SetLoginCookieError(#[source] serde_json::Error),
+
+    #[error("Database error: {0}")]
+    DieselError(#[from] DieselError),
+
+    #[error("Discord API error: {0}")]
+    SerenityError(#[source] Box<serenity::Error>),
+
+    #[error("Number handling error")]
+    BigDecimalError,
 }
 
-impl AuthError {
-    fn bigdecimal_error() -> Self {
-        Self::InternalError(String::from("Number handling error"))
-    }
-}
-
-impl<RE: Error, T: oauth2::ErrorResponse> From<RequestTokenError<RE, T>> for AuthError {
+impl<RE: StdError + Send + Sync + 'static, T: oauth2::ErrorResponse + Send + Sync + 'static>
+    From<RequestTokenError<RE, T>> for AuthError
+{
     fn from(err: RequestTokenError<RE, T>) -> Self {
-        error!(?err, "Request token error in OAuth2 Flow");
-        Self::RequestTokenError(String::from(
-            "Error in OAuth2 Flow. Failed to fetch access token from Discord API.",
-        ))
-    }
-}
-
-impl From<reqwest::Error> for AuthError {
-    fn from(err: reqwest::Error) -> Self {
-        error!(?err, "Reqwest error in API call");
-        Self::UserDataError(String::from("Failed to fetch user data from Discord API."))
-    }
-}
-
-impl From<DieselError> for AuthError {
-    fn from(err: DieselError) -> Self {
-        error!(?err, "Diesel error in API call");
-        Self::InternalError(String::from("Database operation failed."))
+        Self::RequestTokenError(Box::new(err))
     }
 }
 
 impl From<serenity::Error> for AuthError {
     fn from(err: serenity::Error) -> Self {
-        error!(?err, "Serenity request error in auth API call");
-        Self::InternalError(String::from("Error communicating with the Discord API."))
+        Self::SerenityError(Box::new(err))
+    }
+}
+
+impl AuthError {
+    fn status_code(&self) -> Status {
+        match self {
+            Self::CsrfMissmatch => Status::Forbidden,
+            Self::MissingLoginCookie => Status::Forbidden,
+            Self::NotFound(_) => Status::NotFound,
+            Self::RequestTokenError(_) => Status::InternalServerError,
+            Self::UserDataError(_) => Status::InternalServerError,
+            Self::InternalError(_) => Status::InternalServerError,
+            Self::SetSessionCookieError(_) => Status::InternalServerError,
+            Self::SetLoginCookieError(_) => Status::InternalServerError,
+            Self::DieselError(_) => Status::InternalServerError,
+            Self::SerenityError(_) => Status::InternalServerError,
+            Self::BigDecimalError => Status::InternalServerError,
+        }
+    }
+}
+
+impl<'r> Responder<'r, 'static> for AuthError {
+    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
+        let status = self.status_code();
+        let error_message = self.to_string();
+
+        Response::build_from(error_message.respond_to(req)?)
+            .status(status)
+            .ok()
     }
 }
 
@@ -351,13 +378,11 @@ async fn login_post(
     let login_cookie = cookies
         .get_private(LOGIN_COOKIE)
         .and_then(|cookie| serde_json::from_str::<LoginInfo>(cookie.value()).ok())
-        .ok_or_else(|| AuthError::MissingLoginCookie(String::from("Unknown login session")))?;
+        .ok_or_else(|| AuthError::MissingLoginCookie)?;
     cookies.remove_private(Cookie::from(LOGIN_COOKIE));
 
     if state != login_cookie.csrf_state {
-        return Err(AuthError::CsrfMissmatch(String::from(
-            "Possible Cross Site Request Forgery attack detected",
-        )));
+        return Err(AuthError::CsrfMissmatch);
     }
 
     let token_result = oauth
@@ -381,7 +406,7 @@ async fn login_post(
             id: uid,
             last_login: SystemTime::now(),
         })
-        .ok_or_else(AuthError::bigdecimal_error)?;
+        .ok_or_else(|| AuthError::BigDecimalError)?;
     db.run(move |c| {
         use crate::db::schema::users::dsl::*;
 
@@ -400,8 +425,7 @@ async fn login_post(
     };
     cookies.add_private(Cookie::new(
         SESSION_COOKIE,
-        serde_json::to_string(&session)
-            .map_err(|_| AuthError::InternalError(String::from("Failed to set session cookie.")))?,
+        serde_json::to_string(&session).map_err(AuthError::SetSessionCookieError)?,
     ));
 
     Ok(Redirect::to("/"))
@@ -428,9 +452,7 @@ fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redi
                 csrf_state: csrf_state.secret().clone(),
                 pkce_verifier: pkce_verifier.secret().clone(),
             })
-            .map_err(|_| {
-                AuthError::InternalError(String::from("Failed to set temporary cookie."))
-            })?,
+            .map_err(AuthError::SetLoginCookieError)?,
         ))
         .expires(OffsetDateTime::now_utc() + Duration::from_secs(5 * 60))
         .same_site(SameSite::Lax)
@@ -468,7 +490,7 @@ impl From<models::AuthToken> for AuthToken {
 /// Beware: this replaces the current auth token with a new one. The old one becomes invalid.
 #[post("/auth/token")]
 async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
-    let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
+    let uid = BigDecimal::from_u64(user.0).ok_or_else(|| AuthError::BigDecimalError)?;
 
     let random_token: String = iter::repeat(())
         .map(|_| OsRng.sample(Alphanumeric))
@@ -502,7 +524,7 @@ async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, 
 
 #[get("/auth/token")]
 async fn get_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
-    let uid = BigDecimal::from_u64(user.0).ok_or_else(AuthError::bigdecimal_error)?;
+    let uid = BigDecimal::from_u64(user.0).ok_or_else(|| AuthError::BigDecimalError)?;
 
     let token = db
         .run(move |c| {
