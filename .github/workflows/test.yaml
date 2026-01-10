@@ -2,6 +2,9 @@ name: Test app
 
 on: push
 
+permissions:
+  contents: read
+
 jobs:
   unit-tests:
     name: Unit tests
