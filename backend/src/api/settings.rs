@@ -102,7 +102,7 @@ async fn get_all_random_infixes(
     let guilds = get_guilds_for_user(cache_http.inner(), &db, user.into())
         .await?
         .into_iter()
-        .map(|(guild, _)| BigDecimal::from_u64(guild.id.0))
+        .map(|(guild, _)| BigDecimal::from_u64(guild.id.get()))
         .collect::<Option<Vec<_>>>()
         .ok_or_else(|| SettingsError::NumericalError)?;
 
@@ -140,7 +140,7 @@ async fn set_random_infixes(
     cache_http: &State<CacheHttp>,
     params: Json<Vec<RandomInfixParameter>>,
 ) -> Result<(), SettingsError> {
-    check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId(guild_id)).await?;
+    check_guild_moderator(cache_http.inner(), &db, user.into(), GuildId::new(guild_id)).await?;
 
     let gid = BigDecimal::from_u64(guild_id).ok_or_else(|| SettingsError::NumericalError)?;
     let random_infixes = params
@@ -187,10 +187,10 @@ async fn get_guild_settings(
     db: DbConn,
     cache_http: &State<CacheHttp>,
 ) -> Result<Json<GuildSettings>, SettingsError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
 
-    let gid = BigDecimal::from_u64(guild_id.0).ok_or_else(|| SettingsError::NumericalError)?;
+    let gid = BigDecimal::from_u64(guild_id.get()).ok_or_else(|| SettingsError::NumericalError)?;
     let guild_settings = db
         .run(move |c| {
             use crate::db::schema::guildsettings::dsl::*;
@@ -229,7 +229,7 @@ async fn get_guild_settings(
         .await?
         .roles
         .into_iter()
-        .map(|(role_id, role)| (Snowflake(role_id.0), role.name))
+        .map(|(role_id, role)| (Snowflake(role_id.get()), role.name))
         .collect::<HashMap<_, _>>();
 
     Ok(Json(GuildSettings {
@@ -260,10 +260,10 @@ async fn set_guild_settings(
     cache_http: &State<CacheHttp>,
     params: Json<GuildSettingsParameter>,
 ) -> Result<(), SettingsError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     check_guild_admin(cache_http.inner(), user.into(), guild_id).await?;
 
-    let gid = BigDecimal::from_u64(guild_id.0).ok_or_else(|| SettingsError::NumericalError)?;
+    let gid = BigDecimal::from_u64(guild_id.get()).ok_or_else(|| SettingsError::NumericalError)?;
     let params = params.into_inner();
 
     // We assume that the data is already present in the database at that point (queried at least once)

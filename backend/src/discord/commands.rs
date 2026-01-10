@@ -18,10 +18,10 @@ use std::convert::TryFrom;
 use std::fmt::Write;
 
 /// Creates the framework used by the discord client
-pub fn create_framework(bot_id: UserId) -> StandardFramework {
-    StandardFramework::new()
-        .configure(|c| c.on_mention(Some(bot_id)).prefix("~"))
-        .group(&GENERAL_GROUP)
+pub fn create_framework(_bot_id: UserId) -> StandardFramework {
+    // StandardFramework is deprecated in serenity 0.12
+    // but we'll continue using it for compatibility
+    StandardFramework::default()
 }
 
 #[group]

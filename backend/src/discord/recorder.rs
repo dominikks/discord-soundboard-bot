@@ -5,8 +5,7 @@ use serenity::model::prelude::GuildId;
 use serenity::model::voice_gateway::id::UserId;
 use serenity::prelude::Mutex;
 use serenity::prelude::RwLock;
-use songbird::events::context_data::SpeakingUpdateData;
-use songbird::events::context_data::VoiceData;
+use songbird::events::context_data::VoiceTick;
 use songbird::model::payload::Speaking;
 use songbird::Call;
 use songbird::CoreEvent;
@@ -93,7 +92,7 @@ impl Deref for GuildRecorderArc {
 
 #[async_trait]
 impl VoiceEventHandler for GuildRecorderArc {
-    #[instrument(skip(self, ctx), fields(guild_id = self.guild_id.0))]
+    #[instrument(skip(self, ctx), fields(guild_id = self.guild_id.get()))]
     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
         use EventContext as Ctx;
         match ctx {
@@ -131,81 +130,69 @@ impl VoiceEventHandler for GuildRecorderArc {
                     }
                 }
             }
-            Ctx::SpeakingUpdate(SpeakingUpdateData { ssrc, speaking, .. }) => {
-                trace!(
-                    "Source {} has {} speaking",
-                    ssrc,
-                    if *speaking { "started" } else { "stopped" },
-                );
+            Ctx::VoiceTick(voice_tick) => {
+                // VoiceTick event provides decoded voice data for all speaking users
+                // In songbird 0.5, the event structure changed significantly
+                // We process based on SSRC keys
+                for (ssrc, decoded_voice) in voice_tick.speaking.iter() {
+                    let audio = decoded_voice.decoded_voice.as_ref();
+                    
+                    if let Some(audio) = audio {
+                        trace!(
+                            ssrc = ssrc,
+                            "Audio data has {:04} bytes",
+                            audio.len() * std::mem::size_of::<i16>(),
+                        );
 
-                // Once a user stops speaking, we cleanup their recordings
-                if !*speaking {
-                    let user_lock;
-                    {
-                        let users = self.users.read().await;
-                        user_lock = users.get(ssrc).cloned()?;
+                        let user_lock;
+                        {
+                            let users = self.users.read().await;
+                            user_lock = users.get(ssrc).cloned();
+                        }
+
+                        if let Some(user_lock) = user_lock {
+                            let mut user = user_lock.lock().await;
+
+                            // In songbird 0.5, we don't have sequence numbers in VoiceTick
+                            // so we always append or create new recordings based on gaps
+                            if !user.recordings.is_empty() {
+                                // Always extend the last recording if it exists
+                                let recording = user
+                                    .recordings
+                                    .back_mut()
+                                    .expect("Recordings cannot be empty");
+                                recording.data.extend_from_slice(audio);
+
+                                trace!(
+                                    total_len = recording.data.len(),
+                                    "Extending existing recording"
+                                );
+                            } else {
+                                // If it is a new recording, we create a new entry
+                                user.recordings.push_back(VoiceRecording {
+                                    timestamp: SystemTime::now() - samples_to_duration(audio.len()),
+                                    data: audio.to_vec(),
+                                });
+                                trace!(
+                                    recording_count = user.recordings.len(),
+                                    len = audio.len(),
+                                    "Adding new recording"
+                                );
+                            }
+                            user.last_voice_activity = SystemTime::now();
+                            // Note: In songbird 0.5 VoiceTick, we don't have RTP timestamps/sequences
+                            // so we can't track them the same way
+                        }
                     }
-
-                    let mut user = user_lock.lock().await;
-                    self.cleanup_user_recordings(&mut user);
                 }
-            }
-            Ctx::VoicePacket(VoiceData { audio, packet, .. }) => {
-                // An event which fires for every received audio packet,
-                // containing the decoded data.
-                if let Some(audio) = audio {
-                    trace!(
-                        ssrc = packet.ssrc,
-                        timestamp = packet.timestamp.0,
-                        "Audio packet sequence {:05} has {:04} bytes",
-                        packet.sequence.0,
-                        audio.len() * std::mem::size_of::<i16>(),
-                    );
 
-                    let user_lock;
-                    {
-                        let users = self.users.read().await;
-                        user_lock = users.get(&packet.ssrc).cloned()?;
+                // Check for users who stopped speaking
+                let users = self.users.read().await;
+                for (ssrc, user_lock) in users.iter() {
+                    if !voice_tick.speaking.contains_key(ssrc) {
+                        let mut user = user_lock.lock().await;
+                        self.cleanup_user_recordings(&mut user);
                     }
-
-                    let mut user = user_lock.lock().await;
-
-                    if user.last_sequence == packet.sequence.0 {
-                        trace!("Received duplicate audio packet, ignoring");
-                    } else if usize::try_from((packet.timestamp.0 - user.last_rtp_timestamp).0)
-                        .ok()?
-                        * std::mem::size_of::<i16>()
-                        == audio.len()
-                        && !user.recordings.is_empty()
-                    {
-                        // If this recording is the continuation of the previous one, we simply append
-                        let recording = user
-                            .recordings
-                            .back_mut()
-                            .expect("Recordings cannot be empty");
-                        recording.data.extend(audio);
-
-                        trace!(
-                            total_len = recording.data.len(),
-                            "Extending existing recording"
-                        );
-                    } else {
-                        // If it is a new recording, we create a new entry
-                        user.recordings.push_back(VoiceRecording {
-                            timestamp: SystemTime::now() - samples_to_duration(audio.len()),
-                            data: audio.clone(),
-                        });
-                        trace!(
-                            recording_count = user.recordings.len(),
-                            len = audio.len(),
-                            "Adding new recording"
-                        );
-                    }
-                    user.last_voice_activity = SystemTime::now();
-                    user.last_rtp_timestamp = packet.timestamp.0;
-                    user.last_sequence = packet.sequence.0;
-                } else {
-                    error!("RTP packet, but no audio. Driver may not be configured to decode.");
                 }
             }
             _ => {
@@ -335,7 +322,7 @@ impl GuildRecorderArc {
             "Saving recordings"
         );
 
-        let folder = (*RECORDINGS_FOLDER).join(self.guild_id.0.to_string()).join(
+        let folder = (*RECORDINGS_FOLDER).join(self.guild_id.get().to_string()).join(
             SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .unwrap()
@@ -479,8 +466,7 @@ impl Recorder {
                 CoreEvent::SpeakingStateUpdate.into(),
                 guild_recorder.clone(),
             );
-            call.add_global_event(CoreEvent::SpeakingUpdate.into(), guild_recorder.clone());
-            call.add_global_event(CoreEvent::VoicePacket.into(), guild_recorder);
+            call.add_global_event(CoreEvent::VoiceTick.into(), guild_recorder);
         }
     }
 

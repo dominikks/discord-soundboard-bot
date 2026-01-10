@@ -23,7 +23,7 @@ pub enum ClientError {
     #[error("User not found in a voice channel")]
     UserNotFound,
     #[error("Error decoding audio: {0}")]
-    DecodingError(#[from] songbird::input::error::Error),
+    DecodingError(String),
     #[error("Connection error")]
     ConnectionError,
     #[error("Guild not found")]
@@ -60,8 +60,8 @@ impl Client {
         guild_id: GuildId,
         channel_id: ChannelId,
     ) -> Result<Arc<Mutex<songbird::Call>>, ClientError> {
-        let (call_lock, result) = self.songbird.join(guild_id, channel_id).await;
-        result.map_err(|_| ClientError::ConnectionError)?;
+        let call_lock = self.songbird.join(guild_id, channel_id).await
+            .map_err(|_| ClientError::ConnectionError)?;
 
         self.recorder
             .register_with_call(guild_id, call_lock.clone())
@@ -77,15 +77,17 @@ impl Client {
         user_id: UserId,
         cache_and_http: &CacheHttp,
     ) -> Result<(ChannelId, Arc<Mutex<songbird::Call>>), ClientError> {
-        let guild = guild_id
-            .to_guild_cached(cache_and_http)
-            .ok_or(ClientError::GuildNotFound)?;
+        let channel_id = {
+            let guild = guild_id
+                .to_guild_cached(cache_and_http)
+                .ok_or(ClientError::GuildNotFound)?;
 
-        let channel_id = guild
-            .voice_states
-            .get(&user_id)
-            .and_then(|voice_state| voice_state.channel_id)
-            .ok_or(ClientError::UserNotFound)?;
+            guild
+                .voice_states
+                .get(&user_id)
+                .and_then(|voice_state| voice_state.channel_id)
+                .ok_or(ClientError::UserNotFound)?
+        };
 
         debug!(?channel_id, "Joining user in channel");
 
@@ -118,29 +120,19 @@ impl Client {
             .ok_or(ClientError::NotInAChannel)?;
         let mut call = call_lock.lock().await;
 
-        let volume_adjustment_string = format!("volume={}dB", volume_adjustment);
-        let source = songbird::input::ffmpeg_optioned(
-            sound_path.as_ref(),
-            &[],
-            &[
-                "-f",
-                "s16le",
-                "-ar",
-                "48000",
-                "-acodec",
-                "pcm_f32le",
-                "-filter:a",
-                &volume_adjustment_string,
-                "-",
-            ],
-        )
-        .await
-        .map_err(|why| {
-            warn!("Err starting source: {:?}", why);
-            ClientError::DecodingError(why)
-        })?;
+        // Use File input which internally uses ffmpeg
+        use songbird::input::File;
+        
+        let source = File::new(sound_path.as_ref().to_path_buf());
 
-        call.play_source(source);
+        // Play the source
+        let handle = call.play(source.into());
+        
+        // Convert dB to linear scale for volume adjustment
+        // Formula: linear = 10^(dB/20)
+        let linear_volume = 10f32.powf(volume_adjustment / 20.0);
+        let _ = handle.set_volume(linear_volume);
+        
         Ok(())
     }
 

@@ -2,7 +2,6 @@ use serenity::client::Cache;
 use serenity::client::Context;
 use serenity::http::CacheHttp as SerenityCacheHttp;
 use serenity::http::Http;
-use serenity::CacheAndHttp;
 use std::sync::Arc;
 
 pub mod client;
@@ -32,15 +31,6 @@ impl From<&Context> for CacheHttp {
         CacheHttp {
             cache: ctx.cache.clone(),
             http: ctx.http.clone(),
-        }
-    }
-}
-
-impl From<&Arc<CacheAndHttp>> for CacheHttp {
-    fn from(cachehttp: &Arc<CacheAndHttp>) -> Self {
-        CacheHttp {
-            cache: cachehttp.cache.clone(),
-            http: cachehttp.http.clone(),
         }
     }
 }
