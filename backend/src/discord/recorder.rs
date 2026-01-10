@@ -45,9 +45,12 @@ pub const CHANNEL_COUNT: u8 = 2;
 /// Divided by 2 channels = 960 samples per channel per tick
 pub const SAMPLES_PER_TICK: usize = 960;
 
+#[allow(dead_code)]
 fn samples_to_duration(samples: usize) -> Duration {
     Duration::from_nanos((samples as f64 / SAMPLE_RATE / CHANNEL_COUNT as f64 * 1e9).round() as u64)
 }
+
+#[allow(dead_code)]
 fn nanos_to_samples(nanos: u128) -> usize {
     (nanos as f64 * 1e-9 * SAMPLE_RATE * CHANNEL_COUNT as f64).round() as usize
 }

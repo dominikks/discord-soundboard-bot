@@ -1,3 +1,5 @@
+#![allow(deprecated)] // StandardFramework is deprecated but we continue using it for compatibility
+
 use crate::discord::client;
 use crate::discord::recorder::RecordingError;
 use crate::BASE_URL;
@@ -18,10 +20,12 @@ use std::convert::TryFrom;
 use std::fmt::Write;
 
 /// Creates the framework used by the discord client
-pub fn create_framework(_bot_id: UserId) -> StandardFramework {
-    // StandardFramework is deprecated in serenity 0.12
-    // but we'll continue using it for compatibility
-    StandardFramework::default()
+pub fn create_framework(bot_id: UserId) -> StandardFramework {
+    use serenity::framework::standard::Configuration;
+
+    let framework = StandardFramework::new();
+    framework.configure(Configuration::new().on_mention(Some(bot_id)).prefix("~"));
+    framework.group(&GENERAL_GROUP)
 }
 
 #[group]
@@ -185,6 +189,7 @@ async fn info(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 /// Checks that a message successfully sent; if not, then logs why to stdout.
+#[allow(dead_code)]
 #[instrument]
 fn check_msg(result: SerenityResult<Message>) {
     if let Err(why) = result {

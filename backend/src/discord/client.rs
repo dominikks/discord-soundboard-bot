@@ -17,6 +17,7 @@ use thiserror::Error;
 use tokio::sync::Mutex;
 
 #[derive(Debug, Error)]
+#[allow(dead_code)]
 pub enum ClientError {
     #[error("Bot is not in a voice channel")]
     NotInAChannel,
@@ -177,6 +178,7 @@ impl TypeMapKey for ClientKey {
 
 /// Retrieve the Client State from a serenity context's
 /// shared key-value store.
+#[allow(dead_code)]
 pub async fn get(ctx: &Context) -> Option<Client> {
     let data = ctx.data.read().await;
 
