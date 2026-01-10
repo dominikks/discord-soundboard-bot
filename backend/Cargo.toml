@@ -5,6 +5,7 @@ authors = ["Dominik Kus <dominik@kus.software>"]
 edition = "2021"
 
 [dependencies]
+async-trait = "0.1"
 bigdecimal = "0.4"
 diesel = { version = "2.2", default-features = false, features = ["postgres", "numeric"] }
 diesel_migrations = "2.2"

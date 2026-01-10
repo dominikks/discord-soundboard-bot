@@ -10,6 +10,7 @@ mod audio_utils;
 mod db;
 mod discord;
 mod file_handling;
+mod traits;
 
 use discord::connector::Connector as DiscordConnector;
 use discord::CacheHttp;

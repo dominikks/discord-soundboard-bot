@@ -743,6 +743,7 @@ dependencies = [
 name = "discord-soundboard-bot"
 version = "0.4.0"
 dependencies = [
+ "async-trait",
  "bigdecimal",
  "diesel",
  "diesel_migrations",

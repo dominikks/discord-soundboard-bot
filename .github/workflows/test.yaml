@@ -1,0 +1,30 @@
+name: Test app
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  backend-test:
+    name: Test backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Run tests
+        run: cargo test --manifest-path backend/Cargo.toml
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: Run tests with all features
+        run: cargo test --manifest-path backend/Cargo.toml --all-features
+        env:
+          RUST_BACKTRACE: 1
