@@ -141,8 +141,13 @@ async fn play(
 ) -> Result<(), CommandError> {
     // Check permission to play on this guild
     let serenity_user = user.into();
-    let permission =
-        check_guild_user(cache_http.inner(), &db, serenity_user, GuildId::new(guild_id)).await?;
+    let permission = check_guild_user(
+        cache_http.inner(),
+        &db,
+        serenity_user,
+        GuildId::new(guild_id),
+    )
+    .await?;
 
     let (sound, soundfile) = db
         .run(move |c| {
@@ -161,7 +166,13 @@ async fn play(
         .guild_id
         .to_u64()
         .ok_or_else(|| CommandError::BigDecimalError)?;
-    check_guild_user(cache_http.inner(), &db, serenity_user, GuildId::new(sound_gid)).await?;
+    check_guild_user(
+        cache_http.inner(),
+        &db,
+        serenity_user,
+        GuildId::new(sound_gid),
+    )
+    .await?;
 
     let gid = BigDecimal::from_u64(guild_id).ok_or_else(|| CommandError::BigDecimalError)?;
     let guild_settings = db

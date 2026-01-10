@@ -60,7 +60,10 @@ impl Client {
         guild_id: GuildId,
         channel_id: ChannelId,
     ) -> Result<Arc<Mutex<songbird::Call>>, ClientError> {
-        let call_lock = self.songbird.join(guild_id, channel_id).await
+        let call_lock = self
+            .songbird
+            .join(guild_id, channel_id)
+            .await
             .map_err(|_| ClientError::ConnectionError)?;
 
         self.recorder
@@ -122,19 +125,19 @@ impl Client {
 
         // Use File input which internally uses ffmpeg
         use songbird::input::File;
-        
+
         let source = File::new(sound_path.as_ref().to_path_buf());
 
         // Play the source
         let handle = call.play(source.into());
-        
+
         // Convert dB to linear scale for volume adjustment
         // Formula: linear = 10^(dB/20)
         let linear_volume = 10f32.powf(volume_adjustment / 20.0);
         if let Err(e) = handle.set_volume(linear_volume) {
             warn!("Failed to set volume to {}: {:?}", linear_volume, e);
         }
-        
+
         Ok(())
     }
 

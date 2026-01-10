@@ -148,9 +148,14 @@ async fn events(
 ) -> Result<EventStream![], Status> {
     // Only users may get events from this guild
     let serenity_user = user.into();
-    check_guild_user(cache_http.inner(), &db, serenity_user, GuildId::new(guild_id))
-        .await
-        .map_err(|_| Status::Forbidden)?;
+    check_guild_user(
+        cache_http.inner(),
+        &db,
+        serenity_user,
+        GuildId::new(guild_id),
+    )
+    .await
+    .map_err(|_| Status::Forbidden)?;
 
     let mut rx = event_bus.subscribe();
     Ok(EventStream! {
