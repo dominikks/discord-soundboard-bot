@@ -10,6 +10,7 @@ use serenity::client::Context;
 use serenity::framework::standard::macros::command;
 use serenity::framework::standard::macros::group;
 use serenity::framework::standard::CommandResult;
+use serenity::framework::standard::Configuration;
 use serenity::framework::StandardFramework;
 use serenity::model::channel::Message;
 use serenity::model::prelude::ReactionType;
@@ -21,8 +22,6 @@ use std::fmt::Write;
 
 /// Creates the framework used by the discord client
 pub fn create_framework(bot_id: UserId) -> StandardFramework {
-    use serenity::framework::standard::Configuration;
-
     let framework = StandardFramework::new();
     framework.configure(Configuration::new().on_mention(Some(bot_id)).prefix("~"));
     framework.group(&GENERAL_GROUP)

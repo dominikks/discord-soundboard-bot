@@ -89,9 +89,8 @@ impl Deref for GuildRecorderArc {
 impl VoiceEventHandler for GuildRecorderArc {
     #[instrument(skip(self, ctx), fields(guild_id = self.guild_id.get()))]
     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
-        use EventContext as Ctx;
         match ctx {
-            Ctx::SpeakingStateUpdate(Speaking { ssrc, user_id, .. }) => {
+            EventContext::SpeakingStateUpdate(Speaking { ssrc, user_id, .. }) => {
                 if let Some(user_id) = user_id {
                     let is_new_user;
                     {
@@ -123,7 +122,7 @@ impl VoiceEventHandler for GuildRecorderArc {
                     }
                 }
             }
-            Ctx::VoiceTick(voice_tick) => {
+            EventContext::VoiceTick(voice_tick) => {
                 // VoiceTick event provides decoded voice data for all speaking users
                 // We use tick numbers for precise synchronization (1 tick = 20ms)
                 let current_tick = {
