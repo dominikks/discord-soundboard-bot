@@ -189,7 +189,6 @@ async fn info(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 /// Checks that a message successfully sent; if not, then logs why to stdout.
-#[allow(dead_code)]
 #[instrument]
 fn check_msg(result: SerenityResult<Message>) {
     if let Err(why) = result {
