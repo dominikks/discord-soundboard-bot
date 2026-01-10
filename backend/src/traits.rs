@@ -1,7 +1,6 @@
 /// Trait abstractions for testing Discord integration
 /// These traits allow us to mock Discord functionality in tests while keeping
 /// the production code unchanged.
-
 use crate::audio_utils::VolumeInformation;
 use async_trait::async_trait;
 use serenity::model::guild::{Guild, Member};

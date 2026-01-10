@@ -114,11 +114,11 @@ mod tests {
         // Test basic path construction
         let path = get_full_sound_path("123/456/test.mp3");
         assert_eq!(path, PathBuf::from("data/sounds/123/456/test.mp3"));
-        
+
         // Test with different filename
         let path = get_full_sound_path("789/sound.wav");
         assert_eq!(path, PathBuf::from("data/sounds/789/sound.wav"));
-        
+
         // Test with just filename
         let path = get_full_sound_path("simple.mp3");
         assert_eq!(path, PathBuf::from("data/sounds/simple.mp3"));
@@ -147,16 +147,13 @@ mod tests {
         // Test that paths can be constructed safely
         let guild_id = 123u64;
         let timestamp = 1234567890u64;
-        
+
         // Construct path like save_channel_recording does
         let folder = (*RECORDINGS_FOLDER)
             .join(guild_id.to_string())
             .join(timestamp.to_string());
-        
-        assert_eq!(
-            folder,
-            PathBuf::from("data/recorder/123/1234567890")
-        );
+
+        assert_eq!(folder, PathBuf::from("data/recorder/123/1234567890"));
     }
 
     #[test]
@@ -165,16 +162,16 @@ mod tests {
         // Note: @ is allowed in filenames by sanitize_filename
         let safe = sanitize_filename::sanitize("user@name.mp3");
         assert!(safe.contains('@')); // @ is a valid filename character
-        
+
         // Test path traversal prevention - slashes are removed/replaced
         let safe = sanitize_filename::sanitize("../../../etc/passwd");
         assert!(!safe.contains('/')); // No slashes allowed
-        // Note: sanitize_filename may keep dots if they don't form path separators
-        
+                                      // Note: sanitize_filename may keep dots if they don't form path separators
+
         // Test spaces are preserved
         let safe = sanitize_filename::sanitize("test file.mp3");
         assert_eq!(safe, "test file.mp3");
-        
+
         // Test that the result is not empty for problematic input
         let safe = sanitize_filename::sanitize("file/path");
         assert!(!safe.is_empty());

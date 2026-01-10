@@ -8,7 +8,6 @@
 /// - Rocket test client for API endpoint testing
 ///
 /// See TESTING.md for the full integration test implementation plan.
-
 mod common;
 
 #[cfg(test)]
@@ -22,17 +21,20 @@ mod tests {
         // 3. Autojoin to user's channel if requested
         // 4. Volume calculation from target and file metadata
         // 5. Client.play() called with correct parameters
-        
+
         assert!(true, "Sound playback test infrastructure is set up");
     }
-    
+
     #[test]
     fn test_volume_calculation_integration() {
         // Test that volume calculation works end-to-end
         // Uses the calculate_volume_adjustment function from audio_utils
         // Verifies dB to linear conversion in Client.play()
-        
+
         // This is covered by unit tests in audio_utils.rs
-        assert!(true, "Volume calculation is tested in audio_utils unit tests");
+        assert!(
+            true,
+            "Volume calculation is tested in audio_utils unit tests"
+        );
     }
 }
