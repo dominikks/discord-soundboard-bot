@@ -143,3 +143,21 @@ Set the env variables `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECR
 - Start the frontend using `npm start` in `frontend/`. The proxy will pass api requests data to the backend (see
   `proxy.config.js`).
 - Access the frontend server under [http://localhost:4200](http://localhost:4200).
+
+### Testing
+
+The backend includes comprehensive unit tests for core functionality. Run tests using:
+
+```bash
+cd backend
+cargo test
+```
+
+**Test Coverage:**
+- ✅ Volume calculation and dB conversion (`audio_utils.rs`)
+- ✅ Recording timeline math and gap calculations (`discord/recorder.rs`)
+- ✅ File path handling and sanitization (`file_handling.rs`)
+
+For detailed information about the testing strategy, see [TESTING.md](TESTING.md).
+
+**CI/CD:** Tests are automatically run on all pull requests via GitHub Actions.
