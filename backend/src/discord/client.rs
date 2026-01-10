@@ -1,3 +1,4 @@
+use crate::audio_utils;
 use crate::discord::recorder::Recorder;
 use crate::discord::CacheHttp;
 use serenity::client::ClientBuilder;
@@ -132,8 +133,7 @@ impl Client {
         let handle = call.play(source.into());
 
         // Convert dB to linear scale for volume adjustment
-        // Formula: linear = 10^(dB/20)
-        let linear_volume = 10f32.powf(volume_adjustment / 20.0);
+        let linear_volume = audio_utils::db_to_linear(volume_adjustment);
         if let Err(e) = handle.set_volume(linear_volume) {
             warn!("Failed to set volume to {}: {:?}", linear_volume, e);
         }

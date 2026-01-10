@@ -1,5 +1,6 @@
 use crate::api::auth::TokenUserId;
 use crate::api::EventBus;
+use crate::audio_utils;
 use crate::db::models;
 use crate::db::DbConn;
 use crate::discord::client::Client;
@@ -195,11 +196,13 @@ async fn play(
         })
         .unwrap_or((0.0, -13.0));
 
-    let adjustment = sound.volume_adjustment.unwrap_or_else(|| {
-        (target_max_volume - soundfile.max_volume)
-            .max(target_mean_volume - soundfile.mean_volume)
-            .max(0.0)
-    });
+    let adjustment = audio_utils::calculate_volume_adjustment(
+        target_max_volume,
+        target_mean_volume,
+        soundfile.max_volume,
+        soundfile.mean_volume,
+        sound.volume_adjustment,
+    );
 
     if autojoin {
         client

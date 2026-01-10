@@ -546,3 +546,80 @@ impl Recorder {
         guild_recorder.save_channel_recording(cache_and_http).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tick_to_sample_conversion() {
+        // At 48kHz stereo, 20ms per tick = 960 samples per channel * 2 channels = 1920 samples total
+        // (interleaved stereo: LRLRLR...)
+        
+        // 1 tick = 1920 samples
+        assert_eq!(1 * SAMPLES_PER_TICK, 1920);
+        
+        // 10 ticks = 19200 samples
+        assert_eq!(10 * SAMPLES_PER_TICK, 19200);
+        
+        // 108 ticks (common gap size) = 207360 samples
+        assert_eq!(108 * SAMPLES_PER_TICK, 207360);
+        
+        // 50 ticks = 1 second = 96000 samples
+        assert_eq!(50 * SAMPLES_PER_TICK, 96000);
+    }
+
+    #[test]
+    fn test_gap_calculation() {
+        // Gap between tick 100 and tick 208 = 108 ticks
+        let gap_ticks = 208u64.saturating_sub(100u64);
+        assert_eq!(gap_ticks, 108);
+        
+        // No gap when consecutive
+        let gap_ticks = 11u64.saturating_sub(10u64);
+        assert_eq!(gap_ticks, 1);
+        
+        // Zero gap when same tick
+        let gap_ticks = 100u64.saturating_sub(100u64);
+        assert_eq!(gap_ticks, 0);
+        
+        // Saturating_sub prevents underflow
+        let gap_ticks = 10u64.saturating_sub(20u64);
+        assert_eq!(gap_ticks, 0);
+    }
+
+    #[test]
+    fn test_sample_rate_constants() {
+        // Verify our constants match expected Discord voice specs
+        assert_eq!(SAMPLE_RATE, 48_000.0);
+        assert_eq!(CHANNEL_COUNT, 2);
+        
+        // Verify samples per tick calculation
+        // 48kHz * 0.020s (20ms) * 2 channels = 1920 samples
+        let expected = (SAMPLE_RATE * 0.020 * CHANNEL_COUNT as f64) as usize;
+        assert_eq!(SAMPLES_PER_TICK, expected);
+    }
+
+    #[test]
+    fn test_recording_length_config() {
+        // Just verify the default is reasonable (60 seconds)
+        // This is a config value so we don't assert exact value
+        assert!(*RECORDING_LENGTH > 0);
+        assert!(*RECORDING_LENGTH <= 3600); // Max 1 hour seems reasonable
+    }
+
+    #[test]
+    fn test_gap_fill_calculation() {
+        // Simulating the logic from save_user_recording
+        // When there's a gap of 108 ticks between recordings:
+        let gap_ticks = 108u64;
+        let missing_samples = gap_ticks as usize * SAMPLES_PER_TICK;
+        
+        // Should fill with 207,360 silence samples
+        assert_eq!(missing_samples, 207360);
+        
+        // This represents 108 ticks * 20ms = 2.16 seconds of silence
+        let gap_duration_ms = gap_ticks as f64 * 20.0;
+        assert_eq!(gap_duration_ms, 2160.0);
+    }
+}

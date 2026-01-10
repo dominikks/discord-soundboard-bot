@@ -31,3 +31,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Use bundled postgres for diesel (without openssl)
 pq-sys = { version = "0.6", default-features = false, features = ["bundled_without_openssl"] }
 
+[dev-dependencies]
+tokio-test = "0.4"      # For testing async code
+mockall = "0.13"        # For creating mock objects
+rstest = "0.18"         # For parameterized tests
+insta = "1.34"          # For snapshot testing
+tempfile = "3.8"        # For temporary file handling

@@ -104,3 +104,80 @@ pub async fn get_recordings_for_guild(guild_id: u64) -> Result<Vec<Recording>, F
 
     Ok(results)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_full_sound_path() {
+        // Test basic path construction
+        let path = get_full_sound_path("123/456/test.mp3");
+        assert_eq!(path, PathBuf::from("data/sounds/123/456/test.mp3"));
+        
+        // Test with different filename
+        let path = get_full_sound_path("789/sound.wav");
+        assert_eq!(path, PathBuf::from("data/sounds/789/sound.wav"));
+        
+        // Test with just filename
+        let path = get_full_sound_path("simple.mp3");
+        assert_eq!(path, PathBuf::from("data/sounds/simple.mp3"));
+    }
+
+    #[test]
+    fn test_sounds_folder_constant() {
+        // Verify the sounds folder path is as expected
+        assert_eq!(*SOUNDS_FOLDER, Path::new("data/sounds"));
+    }
+
+    #[test]
+    fn test_recordings_folder_constant() {
+        // Verify the recordings folder path is as expected
+        assert_eq!(*RECORDINGS_FOLDER, Path::new("data/recorder"));
+    }
+
+    #[test]
+    fn test_mixes_folder_constant() {
+        // Verify the mixes folder path is as expected
+        assert_eq!(*MIXES_FOLDER, Path::new("data/mixes"));
+    }
+
+    #[test]
+    fn test_file_path_components() {
+        // Test that paths can be constructed safely
+        let guild_id = 123u64;
+        let timestamp = 1234567890u64;
+        
+        // Construct path like save_channel_recording does
+        let folder = (*RECORDINGS_FOLDER)
+            .join(guild_id.to_string())
+            .join(timestamp.to_string());
+        
+        assert_eq!(
+            folder,
+            PathBuf::from("data/recorder/123/1234567890")
+        );
+    }
+
+    #[test]
+    fn test_sanitize_filename_integration() {
+        // Test that sanitize_filename crate works as expected
+        // Note: @ is allowed in filenames by sanitize_filename
+        let safe = sanitize_filename::sanitize("user@name.mp3");
+        assert!(safe.contains('@')); // @ is a valid filename character
+        
+        // Test path traversal prevention - slashes are removed/replaced
+        let safe = sanitize_filename::sanitize("../../../etc/passwd");
+        assert!(!safe.contains('/')); // No slashes allowed
+        // Note: sanitize_filename may keep dots if they don't form path separators
+        
+        // Test spaces are preserved
+        let safe = sanitize_filename::sanitize("test file.mp3");
+        assert_eq!(safe, "test file.mp3");
+        
+        // Test that the result is not empty for problematic input
+        let safe = sanitize_filename::sanitize("file/path");
+        assert!(!safe.is_empty());
+        assert!(!safe.contains('/'));
+    }
+}
