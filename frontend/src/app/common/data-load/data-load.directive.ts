@@ -32,7 +32,6 @@ type DataLoadState<T> =
  */
 @Directive({ selector: '[appDataLoad]' })
 export class DataLoadDirective<T> implements OnChanges {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   static ngTemplateGuard_appDataLoad: 'binding';
 
   static ngTemplateContextGuard<T>(
