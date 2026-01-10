@@ -63,7 +63,7 @@ impl Client {
             .songbird
             .join(guild_id, channel_id)
             .await
-            .map_err(|e| ClientError::ConnectionError(e))?;
+            .map_err(ClientError::ConnectionError)?;
 
         self.recorder
             .register_with_call(guild_id, call_lock.clone())
@@ -100,6 +100,8 @@ impl Client {
 
     #[instrument(skip(self))]
     pub async fn leave(&self, guild_id: GuildId) -> Result<(), ClientError> {
+        self.recorder.unregister_guild(guild_id).await;
+
         self.songbird
             .remove(guild_id)
             .await

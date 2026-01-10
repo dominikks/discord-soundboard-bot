@@ -41,9 +41,8 @@ static RECORDING_LENGTH: LazyLock<u64> = LazyLock::new(|| {
 pub const SAMPLE_RATE: f64 = 48_000.0;
 pub const CHANNEL_COUNT: u8 = 2;
 
-/// Samples per tick: 48kHz * 20ms * 2 channels = 1920 samples total
-/// Divided by 2 channels = 960 samples per channel per tick
-pub const SAMPLES_PER_TICK: usize = 960;
+/// Samples per tick: 48kHz * 20ms * 2 channels = 1920 samples total (interleaved stereo)
+pub const SAMPLES_PER_TICK: usize = 1920;
 
 #[derive(Debug, Error)]
 pub enum RecordingError {
@@ -72,6 +71,8 @@ struct GuildRecorder {
     users: Arc<RwLock<HashMap<u32, Arc<Mutex<UserData>>>>>,
     /// Tick counter for precise timing synchronization
     tick_counter: Arc<Mutex<u64>>,
+    /// Counter for periodic cleanup (only cleanup every N ticks to avoid spam)
+    cleanup_counter: Arc<Mutex<u64>>,
 }
 
 #[derive(Clone)]
@@ -90,6 +91,19 @@ impl VoiceEventHandler for GuildRecorderArc {
     #[instrument(skip(self, ctx), fields(guild_id = self.guild_id.get()))]
     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
         match ctx {
+            EventContext::ClientDisconnect(_) => {
+                // Bot was disconnected from voice (either by Discord user action,
+                // network issue, or channel deletion). Clean up all recorder state.
+                debug!("Bot disconnected from voice channel, cleaning up recorder state");
+
+                // Clear all user data
+                let mut users = self.users.write().await;
+                users.clear();
+
+                // Note: The Recorder's guild entry will be cleaned up when
+                // the bot explicitly joins a new channel, as register_with_call
+                // will be called again with the new connection.
+            }
             EventContext::SpeakingStateUpdate(Speaking { ssrc, user_id, .. }) => {
                 if let Some(user_id) = user_id {
                     let is_new_user;
@@ -189,7 +203,7 @@ impl VoiceEventHandler for GuildRecorderArc {
                     }
                 }
 
-                // Process silent users - mark recordings as ended and cleanup
+                // Process silent users - mark recordings as ended
                 let users = self.users.read().await;
                 for (ssrc, user_lock) in users.iter() {
                     if !voice_tick.speaking.contains_key(ssrc) {
@@ -202,8 +216,21 @@ impl VoiceEventHandler for GuildRecorderArc {
                                 trace!(ssrc = ssrc, tick = current_tick, "Ending recording");
                             }
                         }
+                    }
+                }
 
-                        // Cleanup old recordings
+                // Periodic cleanup: run every 250 ticks (5 seconds) to prevent memory leaks
+                // without spamming the logs
+                let should_cleanup = {
+                    let mut cleanup_counter = self.cleanup_counter.lock().await;
+                    *cleanup_counter += 1;
+                    *cleanup_counter % 250 == 0
+                };
+
+                if should_cleanup {
+                    let users = self.users.read().await;
+                    for user_lock in users.values() {
+                        let mut user = user_lock.lock().await;
                         self.cleanup_user_recordings(&mut user, current_tick);
                     }
                 }
@@ -224,6 +251,7 @@ impl GuildRecorderArc {
             guild_id,
             users: Default::default(),
             tick_counter: Arc::new(Mutex::new(0)),
+            cleanup_counter: Arc::new(Mutex::new(0)),
         }))
     }
 
@@ -288,10 +316,12 @@ impl GuildRecorderArc {
             counter += 1;
         }
 
-        debug!(
-            remaining_recordings = user.recordings.len(),
-            "Removed {} timed out recordings", counter
-        );
+        if counter > 0 {
+            debug!(
+                remaining_recordings = user.recordings.len(),
+                "Removed {} timed out recordings", counter
+            );
+        }
     }
 
     /// Saves the recording to disk
@@ -301,11 +331,7 @@ impl GuildRecorderArc {
         cache_and_http: &CacheHttp,
     ) -> Result<(), RecordingError> {
         let mut recordings: HashMap<UserId, VecDeque<VoiceRecording>> = HashMap::new();
-        let current_tick = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_millis() as u64
-            / 20; // Convert to tick number (20ms per tick)
+        let current_tick = *self.tick_counter.lock().await;
 
         {
             let users = self.users.read().await;
@@ -409,9 +435,9 @@ impl GuildRecorderArc {
             let gap_ticks = r.start_tick.saturating_sub(previous_end_tick);
 
             if gap_ticks > 0 {
-                // Fill gap with silence: gap_ticks * SAMPLES_PER_TICK * CHANNEL_COUNT
-                let missing_samples =
-                    gap_ticks as usize * SAMPLES_PER_TICK * CHANNEL_COUNT as usize;
+                // Fill gap with silence: gap_ticks * SAMPLES_PER_TICK
+                // (SAMPLES_PER_TICK already includes both channels as interleaved data)
+                let missing_samples = gap_ticks as usize * SAMPLES_PER_TICK;
                 trace!(gap_ticks, missing_samples, "Filling in recording gap");
                 data.append(&mut vec![0; missing_samples]);
             }
@@ -493,8 +519,15 @@ impl Recorder {
                 CoreEvent::SpeakingStateUpdate.into(),
                 guild_recorder.clone(),
             );
-            call.add_global_event(CoreEvent::VoiceTick.into(), guild_recorder);
+            call.add_global_event(CoreEvent::VoiceTick.into(), guild_recorder.clone());
+            call.add_global_event(CoreEvent::ClientDisconnect.into(), guild_recorder);
         }
+    }
+
+    /// Removes the guild recorder and cleans up all associated data
+    pub async fn unregister_guild(&self, guild_id: GuildId) {
+        let mut guilds = self.guilds.write().await;
+        guilds.remove(&guild_id);
     }
 
     /// Saves the recording to disk
