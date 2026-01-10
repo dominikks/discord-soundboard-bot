@@ -70,17 +70,20 @@ pub async fn check_guild_admin(
         .await
         .map_err(|_| PermissionError::InsufficientPermission)?;
 
-    member
-        .permissions(cache_http)
-        .ok()
-        .and_then(|perms| {
-            if perms.administrator() {
-                Some(())
-            } else {
-                None
-            }
-        })
-        .ok_or(PermissionError::InsufficientPermission)
+    let is_admin = {
+        let guild = guild_id
+            .to_guild_cached(cache_http)
+            .ok_or(PermissionError::InsufficientPermission)?;
+
+        let perms = guild.member_permissions(&member);
+        perms.administrator()
+    };
+
+    if is_admin {
+        Ok(())
+    } else {
+        Err(PermissionError::InsufficientPermission)
+    }
 }
 
 pub async fn get_permission_level(
@@ -94,11 +97,16 @@ pub async fn get_permission_level(
         .await
         .map_err(|_| PermissionError::InsufficientPermission)?;
 
-    if member
-        .permissions(cache_http)
-        .map(|perms| perms.administrator())
-        .unwrap_or(false)
-    {
+    let is_admin = {
+        let guild = guild_id
+            .to_guild_cached(cache_http)
+            .ok_or(PermissionError::InsufficientPermission)?;
+
+        let perms = guild.member_permissions(&member);
+        perms.administrator()
+    };
+
+    if is_admin {
         return Ok(PermissionResponse {
             member,
             permission: UserPermission::Admin,
