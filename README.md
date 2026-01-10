@@ -96,7 +96,7 @@ The website should now be up, so that you can add the bot to your Discord server
 ### Configuration
 
 | Environment Variable  | Meaning                                                                                                                                                                      | Example                        |
-|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | DISCORD_TOKEN         | **Required.** Can be obtained in the Discord developer portal. Should be kept private.                                                                                       | `ABCDE...dg`                   |
 | DISCORD_CLIENT_ID     | **Required.** Can be obtained in the Discord developer portal.                                                                                                               | `ABCDE...dg`                   |
 | DISCORD_CLIENT_SECRET | **Required.** Can be obtained in the Discord developer portal. Should be kept private.                                                                                       | `ABCDE...dg`                   |
@@ -109,7 +109,7 @@ The website should now be up, so that you can add the bot to your Discord server
 ### Docker Volumes
 
 | Volume               | Explanation                                             |
-|----------------------|---------------------------------------------------------|
+| -------------------- | ------------------------------------------------------- |
 | `/app/data/sounds`   | Sounds are saved here.                                  |
 | `/app/data/recorder` | Contains recordings made by the sound-recorder feature. |
 
@@ -119,7 +119,7 @@ By default, the app runs with UID 1000, so make sure that if you mount folders, 
 ## Development
 
 You need to have the latest Rust toolchain, Node, Docker and Docker Compose installed. Furthermore, `ffmpeg`,
-`libpq-dev`, `cmake`, `pkg-config` and `libssl-dev` need to be installed.
+`libpq-dev`, `cmake` and `pkg-config` need to be installed.
 
 Then, create a `.env` file in the main project folder:
 
