@@ -1,3 +1,5 @@
+#![allow(deprecated)] // StandardFramework is deprecated but we continue using it for compatibility
+
 use crate::discord::client;
 use crate::discord::recorder::RecordingError;
 use crate::BASE_URL;
@@ -19,9 +21,11 @@ use std::fmt::Write;
 
 /// Creates the framework used by the discord client
 pub fn create_framework(bot_id: UserId) -> StandardFramework {
-    StandardFramework::new()
-        .configure(|c| c.on_mention(Some(bot_id)).prefix("~"))
-        .group(&GENERAL_GROUP)
+    use serenity::framework::standard::Configuration;
+
+    let framework = StandardFramework::new();
+    framework.configure(Configuration::new().on_mention(Some(bot_id)).prefix("~"));
+    framework.group(&GENERAL_GROUP)
 }
 
 #[group]

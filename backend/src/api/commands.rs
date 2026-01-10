@@ -76,7 +76,7 @@ async fn join(
     db: DbConn,
     user: TokenUserId,
 ) -> Result<String, CommandError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     let permission = check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     let (channel_id, _) = client.join_user(guild_id, user.into(), cache_http).await?;
@@ -85,7 +85,7 @@ async fn join(
         channel_id
             .name(cache_http.inner())
             .await
-            .unwrap_or_else(|| String::from("")),
+            .unwrap_or_else(|_| String::from("")),
     );
 
     Ok(String::from("Joined channel"))
@@ -100,7 +100,7 @@ async fn leave(
     db: DbConn,
     user: TokenUserId,
 ) -> Result<String, CommandError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     let permission = check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     client.leave(guild_id).await?;
@@ -118,7 +118,7 @@ async fn stop(
     db: DbConn,
     user: TokenUserId,
 ) -> Result<String, CommandError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     let permission = check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     client.stop(guild_id).await?;
@@ -141,8 +141,13 @@ async fn play(
 ) -> Result<(), CommandError> {
     // Check permission to play on this guild
     let serenity_user = user.into();
-    let permission =
-        check_guild_user(cache_http.inner(), &db, serenity_user, GuildId(guild_id)).await?;
+    let permission = check_guild_user(
+        cache_http.inner(),
+        &db,
+        serenity_user,
+        GuildId::new(guild_id),
+    )
+    .await?;
 
     let (sound, soundfile) = db
         .run(move |c| {
@@ -161,7 +166,13 @@ async fn play(
         .guild_id
         .to_u64()
         .ok_or_else(|| CommandError::BigDecimalError)?;
-    check_guild_user(cache_http.inner(), &db, serenity_user, GuildId(sound_gid)).await?;
+    check_guild_user(
+        cache_http.inner(),
+        &db,
+        serenity_user,
+        GuildId::new(sound_gid),
+    )
+    .await?;
 
     let gid = BigDecimal::from_u64(guild_id).ok_or_else(|| CommandError::BigDecimalError)?;
     let guild_settings = db
@@ -192,7 +203,7 @@ async fn play(
 
     if autojoin {
         client
-            .join_user(GuildId(guild_id), user.into(), cache_http.inner())
+            .join_user(GuildId::new(guild_id), user.into(), cache_http.inner())
             .await?;
     }
 
@@ -200,7 +211,7 @@ async fn play(
         .play(
             &file_handling::get_full_sound_path(&soundfile.file_name),
             adjustment,
-            GuildId(guild_id),
+            GuildId::new(guild_id),
         )
         .await?;
 
@@ -221,7 +232,7 @@ async fn record(
     db: DbConn,
     user: TokenUserId,
 ) -> Result<String, CommandError> {
-    let guild_id = GuildId(guild_id);
+    let guild_id = GuildId::new(guild_id);
     let permission = check_guild_user(cache_http.inner(), &db, user.into(), guild_id).await?;
 
     client

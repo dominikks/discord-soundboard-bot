@@ -70,17 +70,20 @@ pub async fn check_guild_admin(
         .await
         .map_err(|_| PermissionError::InsufficientPermission)?;
 
-    member
-        .permissions(cache_http)
-        .ok()
-        .and_then(|perms| {
-            if perms.administrator() {
-                Some(())
-            } else {
-                None
-            }
-        })
-        .ok_or(PermissionError::InsufficientPermission)
+    let is_admin = {
+        let guild = guild_id
+            .to_guild_cached(cache_http)
+            .ok_or(PermissionError::InsufficientPermission)?;
+
+        let perms = guild.member_permissions(&member);
+        perms.administrator()
+    };
+
+    if is_admin {
+        Ok(())
+    } else {
+        Err(PermissionError::InsufficientPermission)
+    }
 }
 
 pub async fn get_permission_level(
@@ -94,18 +97,23 @@ pub async fn get_permission_level(
         .await
         .map_err(|_| PermissionError::InsufficientPermission)?;
 
-    if member
-        .permissions(cache_http)
-        .map(|perms| perms.administrator())
-        .unwrap_or(false)
-    {
+    let is_admin = {
+        let guild = guild_id
+            .to_guild_cached(cache_http)
+            .ok_or(PermissionError::InsufficientPermission)?;
+
+        let perms = guild.member_permissions(&member);
+        perms.administrator()
+    };
+
+    if is_admin {
         return Ok(PermissionResponse {
             member,
             permission: UserPermission::Admin,
         });
     }
 
-    let gid = BigDecimal::from_u64(guild_id.0).ok_or(PermissionError::BigDecimalError)?;
+    let gid = BigDecimal::from_u64(guild_id.get()).ok_or(PermissionError::BigDecimalError)?;
     let (user_role_id, moderator_role_id) = db
         .run(move |c| {
             use crate::db::schema::guildsettings::dsl::*;
@@ -123,7 +131,7 @@ pub async fn get_permission_level(
             .to_u64()
             .ok_or(PermissionError::BigDecimalError)?;
 
-        if member.roles.iter().any(|role| role.0 == rid) {
+        if member.roles.iter().any(|role| role.get() == rid) {
             return Ok(PermissionResponse {
                 member,
                 permission: UserPermission::Moderator,
@@ -136,7 +144,7 @@ pub async fn get_permission_level(
             .to_u64()
             .ok_or(PermissionError::BigDecimalError)?;
 
-        if member.roles.iter().any(|role| role.0 == rid) {
+        if member.roles.iter().any(|role| role.get() == rid) {
             return Ok(PermissionResponse {
                 member,
                 permission: UserPermission::User,
@@ -157,7 +165,7 @@ pub async fn get_guilds_for_user(
     for guild_id in cache_http.cache.guilds() {
         if let Ok(perm) = get_permission_level(cache_http, db, user_id, guild_id).await {
             if let Some(guild) = guild_id.to_guild_cached(&cache_http.cache) {
-                response.push((guild, perm.permission));
+                response.push(((*guild).clone(), perm.permission));
             }
         }
     }

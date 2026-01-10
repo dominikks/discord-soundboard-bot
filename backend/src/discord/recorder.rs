@@ -5,8 +5,6 @@ use serenity::model::prelude::GuildId;
 use serenity::model::voice_gateway::id::UserId;
 use serenity::prelude::Mutex;
 use serenity::prelude::RwLock;
-use songbird::events::context_data::SpeakingUpdateData;
-use songbird::events::context_data::VoiceData;
 use songbird::model::payload::Speaking;
 use songbird::Call;
 use songbird::CoreEvent;
@@ -16,7 +14,6 @@ use songbird::EventHandler as VoiceEventHandler;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::env::var;
-use std::num::Wrapping;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -44,12 +41,9 @@ static RECORDING_LENGTH: LazyLock<u64> = LazyLock::new(|| {
 pub const SAMPLE_RATE: f64 = 48_000.0;
 pub const CHANNEL_COUNT: u8 = 2;
 
-fn samples_to_duration(samples: usize) -> Duration {
-    Duration::from_nanos((samples as f64 / SAMPLE_RATE / CHANNEL_COUNT as f64 * 1e9).round() as u64)
-}
-fn nanos_to_samples(nanos: u128) -> usize {
-    (nanos as f64 * 1e-9 * SAMPLE_RATE * CHANNEL_COUNT as f64).round() as usize
-}
+/// Samples per tick: 48kHz * 20ms * 2 channels = 1920 samples total
+/// Divided by 2 channels = 960 samples per channel per tick
+pub const SAMPLES_PER_TICK: usize = 960;
 
 #[derive(Debug, Error)]
 pub enum RecordingError {
@@ -61,8 +55,8 @@ pub enum RecordingError {
 
 #[derive(Clone)]
 struct VoiceRecording {
-    // The timestamp is the start time of the recording
-    timestamp: SystemTime,
+    start_tick: u64,
+    end_tick: Option<u64>, // None = still recording, Some = ended
     data: Vec<i16>,
 }
 
@@ -70,14 +64,14 @@ struct UserData {
     user_id: UserId,
     recordings: VecDeque<VoiceRecording>,
     last_voice_activity: SystemTime,
-    last_rtp_timestamp: Wrapping<u32>,
-    last_sequence: Wrapping<u16>,
 }
 
 struct GuildRecorder {
     guild_id: GuildId,
     /// Maps an ssrc to a user
     users: Arc<RwLock<HashMap<u32, Arc<Mutex<UserData>>>>>,
+    /// Tick counter for precise timing synchronization
+    tick_counter: Arc<Mutex<u64>>,
 }
 
 #[derive(Clone)]
@@ -93,7 +87,7 @@ impl Deref for GuildRecorderArc {
 
 #[async_trait]
 impl VoiceEventHandler for GuildRecorderArc {
-    #[instrument(skip(self, ctx), fields(guild_id = self.guild_id.0))]
+    #[instrument(skip(self, ctx), fields(guild_id = self.guild_id.get()))]
     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
         use EventContext as Ctx;
         match ctx {
@@ -119,8 +113,6 @@ impl VoiceEventHandler for GuildRecorderArc {
                                 Arc::new(Mutex::new(UserData {
                                     user_id: *user_id,
                                     last_voice_activity: SystemTime::now(),
-                                    last_rtp_timestamp: Wrapping(0),
-                                    last_sequence: Wrapping(0),
                                     recordings: Default::default(),
                                 })),
                             );
@@ -131,81 +123,90 @@ impl VoiceEventHandler for GuildRecorderArc {
                     }
                 }
             }
-            Ctx::SpeakingUpdate(SpeakingUpdateData { ssrc, speaking, .. }) => {
-                trace!(
-                    "Source {} has {} speaking",
-                    ssrc,
-                    if *speaking { "started" } else { "stopped" },
-                );
+            Ctx::VoiceTick(voice_tick) => {
+                // VoiceTick event provides decoded voice data for all speaking users
+                // We use tick numbers for precise synchronization (1 tick = 20ms)
+                let current_tick = {
+                    let mut tick_counter = self.tick_counter.lock().await;
+                    *tick_counter += 1;
+                    *tick_counter
+                };
 
-                // Once a user stops speaking, we cleanup their recordings
-                if !*speaking {
-                    let user_lock;
-                    {
-                        let users = self.users.read().await;
-                        user_lock = users.get(ssrc).cloned()?;
+                // Process speaking users - extend or create recordings
+                for (ssrc, decoded_voice) in voice_tick.speaking.iter() {
+                    let audio = decoded_voice.decoded_voice.as_ref();
+
+                    if let Some(audio) = audio {
+                        trace!(
+                            ssrc = ssrc,
+                            tick = current_tick,
+                            "Audio data has {:04} bytes",
+                            audio.len() * std::mem::size_of::<i16>(),
+                        );
+
+                        let user_lock;
+                        {
+                            let users = self.users.read().await;
+                            user_lock = users.get(ssrc).cloned();
+                        }
+
+                        if let Some(user_lock) = user_lock {
+                            let mut user = user_lock.lock().await;
+
+                            // Check if we have an active recording (end_tick = None)
+                            let has_active_recording = user
+                                .recordings
+                                .back()
+                                .map(|r| r.end_tick.is_none())
+                                .unwrap_or(false);
+
+                            if has_active_recording {
+                                // Extend the active recording
+                                let recording = user
+                                    .recordings
+                                    .back_mut()
+                                    .expect("Recordings cannot be empty");
+                                recording.data.extend_from_slice(audio);
+
+                                trace!(
+                                    total_len = recording.data.len(),
+                                    "Extending active recording"
+                                );
+                            } else {
+                                // Create a new recording
+                                user.recordings.push_back(VoiceRecording {
+                                    start_tick: current_tick,
+                                    end_tick: None, // Active recording
+                                    data: audio.to_vec(),
+                                });
+                                trace!(
+                                    recording_count = user.recordings.len(),
+                                    len = audio.len(),
+                                    "Starting new recording"
+                                );
+                            }
+                            user.last_voice_activity = SystemTime::now();
+                        }
                     }
-
-                    let mut user = user_lock.lock().await;
-                    self.cleanup_user_recordings(&mut user);
                 }
-            }
-            Ctx::VoicePacket(VoiceData { audio, packet, .. }) => {
-                // An event which fires for every received audio packet,
-                // containing the decoded data.
-                if let Some(audio) = audio {
-                    trace!(
-                        ssrc = packet.ssrc,
-                        timestamp = packet.timestamp.0,
-                        "Audio packet sequence {:05} has {:04} bytes",
-                        packet.sequence.0,
-                        audio.len() * std::mem::size_of::<i16>(),
-                    );
 
-                    let user_lock;
-                    {
-                        let users = self.users.read().await;
-                        user_lock = users.get(&packet.ssrc).cloned()?;
+                // Process silent users - mark recordings as ended and cleanup
+                let users = self.users.read().await;
+                for (ssrc, user_lock) in users.iter() {
+                    if !voice_tick.speaking.contains_key(ssrc) {
+                        let mut user = user_lock.lock().await;
+
+                        // Mark the active recording as ended
+                        if let Some(recording) = user.recordings.back_mut() {
+                            if recording.end_tick.is_none() {
+                                recording.end_tick = Some(current_tick);
+                                trace!(ssrc = ssrc, tick = current_tick, "Ending recording");
+                            }
+                        }
+
+                        // Cleanup old recordings
+                        self.cleanup_user_recordings(&mut user, current_tick);
                     }
-
-                    let mut user = user_lock.lock().await;
-
-                    if user.last_sequence == packet.sequence.0 {
-                        trace!("Received duplicate audio packet, ignoring");
-                    } else if usize::try_from((packet.timestamp.0 - user.last_rtp_timestamp).0)
-                        .ok()?
-                        * std::mem::size_of::<i16>()
-                        == audio.len()
-                        && !user.recordings.is_empty()
-                    {
-                        // If this recording is the continuation of the previous one, we simply append
-                        let recording = user
-                            .recordings
-                            .back_mut()
-                            .expect("Recordings cannot be empty");
-                        recording.data.extend(audio);
-
-                        trace!(
-                            total_len = recording.data.len(),
-                            "Extending existing recording"
-                        );
-                    } else {
-                        // If it is a new recording, we create a new entry
-                        user.recordings.push_back(VoiceRecording {
-                            timestamp: SystemTime::now() - samples_to_duration(audio.len()),
-                            data: audio.clone(),
-                        });
-                        trace!(
-                            recording_count = user.recordings.len(),
-                            len = audio.len(),
-                            "Adding new recording"
-                        );
-                    }
-                    user.last_voice_activity = SystemTime::now();
-                    user.last_rtp_timestamp = packet.timestamp.0;
-                    user.last_sequence = packet.sequence.0;
-                } else {
-                    error!("RTP packet, but no audio. Driver may not be configured to decode.");
                 }
             }
             _ => {
@@ -223,6 +224,7 @@ impl GuildRecorderArc {
         GuildRecorderArc(Arc::new(GuildRecorder {
             guild_id,
             users: Default::default(),
+            tick_counter: Arc::new(Mutex::new(0)),
         }))
     }
 
@@ -269,13 +271,17 @@ impl GuildRecorderArc {
     }
 
     /// Cleans up timed out recordings for a user
-    #[instrument(skip(self, user), fields(user_id = user.user_id.0))]
-    fn cleanup_user_recordings(&self, user: &mut MutexGuard<UserData>) -> Option<()> {
+    #[instrument(skip(self, user))]
+    fn cleanup_user_recordings(&self, user: &mut MutexGuard<UserData>, current_tick: u64) {
         let mut counter: u32 = 0;
 
+        // Remove recordings older than RECORDING_LENGTH seconds
+        // 50 ticks per second (1 tick = 20ms)
+        let max_age_ticks = *RECORDING_LENGTH * 50;
+
         while let Some(true) = user.recordings.front().map(|front| {
-            SystemTime::now().duration_since(front.timestamp).unwrap()
-                > Duration::from_secs(*RECORDING_LENGTH) + samples_to_duration(front.data.len())
+            // Check if recording is too old
+            front.start_tick < current_tick.saturating_sub(max_age_ticks)
         }) {
             user.recordings
                 .pop_front()
@@ -287,8 +293,6 @@ impl GuildRecorderArc {
             remaining_recordings = user.recordings.len(),
             "Removed {} timed out recordings", counter
         );
-
-        Some(())
     }
 
     /// Saves the recording to disk
@@ -298,6 +302,12 @@ impl GuildRecorderArc {
         cache_and_http: &CacheHttp,
     ) -> Result<(), RecordingError> {
         let mut recordings: HashMap<UserId, VecDeque<VoiceRecording>> = HashMap::new();
+        let current_tick = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64
+            / 20; // Convert to tick number (20ms per tick)
+
         {
             let users = self.users.read().await;
 
@@ -305,7 +315,7 @@ impl GuildRecorderArc {
                 let mut user = user.lock().await;
 
                 // Make sure we only consider recordings that are within scope
-                self.cleanup_user_recordings(&mut user);
+                self.cleanup_user_recordings(&mut user, current_tick);
 
                 if !user.recordings.is_empty() {
                     recordings.insert(user.user_id, user.recordings.clone());
@@ -313,35 +323,38 @@ impl GuildRecorderArc {
             }
         }
 
-        // We make all files have the same length by padding them at the start
-        let first_start_time = recordings
+        // Find the earliest start_tick and latest end_tick across all users
+        let first_start_tick = recordings
             .iter()
-            .filter_map(|(_, recs)| recs.front().map(|first_rec| first_rec.timestamp))
+            .filter_map(|(_, recs)| recs.front().map(|first_rec| first_rec.start_tick))
             .min()
             .ok_or(RecordingError::NoData)?;
-        let last_end_time = recordings
+
+        let last_end_tick = recordings
             .iter()
             .filter_map(|(_, recs)| {
-                recs.back()
-                    .map(|last_rec| last_rec.timestamp + samples_to_duration(last_rec.data.len()))
+                recs.back().and_then(|last_rec| {
+                    // Use end_tick if available, otherwise current_tick
+                    last_rec.end_tick.or(Some(current_tick))
+                })
             })
             .max()
             .ok_or(RecordingError::NoData)?;
 
         debug!(
             recording_user_count = recordings.len(),
-            ?first_start_time,
-            ?last_end_time,
-            "Saving recordings"
+            first_start_tick, last_end_tick, "Saving recordings"
         );
 
-        let folder = (*RECORDINGS_FOLDER).join(self.guild_id.0.to_string()).join(
-            SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-                .to_string(),
-        );
+        let folder = (*RECORDINGS_FOLDER)
+            .join(self.guild_id.get().to_string())
+            .join(
+                SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs()
+                    .to_string(),
+            );
         fs::create_dir_all(&folder).await?;
 
         let mut tasks = Vec::new();
@@ -352,8 +365,8 @@ impl GuildRecorderArc {
                 uid,
                 rec,
                 folder.clone(),
-                first_start_time,
-                last_end_time,
+                first_start_tick,
+                last_end_tick,
             )));
         }
 
@@ -364,57 +377,59 @@ impl GuildRecorderArc {
         Ok(())
     }
 
-    #[instrument(skip(cache_and_http, rec, folder, first_start_time, last_end_time))]
+    #[instrument(skip(cache_and_http, rec, folder))]
     async fn save_user_recording(
         cache_and_http: CacheHttp,
         guild_id: GuildId,
         user_id: UserId,
         mut rec: VecDeque<VoiceRecording>,
         folder: PathBuf,
-        first_start_time: SystemTime,
-        last_end_time: SystemTime,
+        first_start_tick: u64,
+        last_end_tick: u64,
     ) -> Result<(), RecordingError> {
-        // Add a last empty recording at last_end_time to ensure everything ends at same timepoint
+        // Add a last empty recording at last_end_tick to ensure everything ends at same timepoint
         rec.push_back(VoiceRecording {
-            timestamp: last_end_time,
+            start_tick: last_end_tick,
+            end_tick: Some(last_end_tick),
             data: Vec::new(),
         });
 
         // Assemble all the vectors into one big vector respecting gaps
         let mut data = Vec::new();
-        let mut previous_end = first_start_time;
+        let mut previous_end_tick = first_start_tick;
 
         trace!(
             recording_count = rec.len(),
-            ?first_start_time,
-            ?last_end_time,
+            first_start_tick,
+            last_end_tick,
             "Saving recording of user"
         );
 
         for mut r in rec.into_iter() {
-            // Fill in possible gap. If there is overlap (raises SystemTimeError), we just append and ignore.
-            let diff = r
-                .timestamp
-                .duration_since(previous_end)
-                .map(|d| d.as_nanos())
-                .unwrap_or(0);
-            trace!(?diff, ?previous_end, ?r.timestamp, "Filling in recording gap");
+            // Calculate gap in ticks
+            let gap_ticks = r.start_tick.saturating_sub(previous_end_tick);
 
-            let missing_samples = nanos_to_samples(diff);
-            data.append(&mut vec![0; missing_samples]);
+            if gap_ticks > 0 {
+                // Fill gap with silence: gap_ticks * SAMPLES_PER_TICK * CHANNEL_COUNT
+                let missing_samples =
+                    gap_ticks as usize * SAMPLES_PER_TICK * CHANNEL_COUNT as usize;
+                trace!(gap_ticks, missing_samples, "Filling in recording gap");
+                data.append(&mut vec![0; missing_samples]);
+            }
 
-            // Update previous_end before mutating r
-            previous_end = r.timestamp + samples_to_duration(r.data.len());
+            // Update previous_end_tick before mutating r
+            previous_end_tick = r.end_tick.unwrap_or(r.start_tick);
             data.append(&mut r.data);
         }
         debug!("Extracted {} samples", data.len());
 
-        let UserId(uid) = user_id;
+        // Convert songbird's UserId to serenity's UserId
+        let serenity_user_id = serenity::model::prelude::UserId::new(user_id.0);
         let name = guild_id
-            .member(cache_and_http, uid)
+            .member(cache_and_http, serenity_user_id)
             .await
             .map(|member| member.user.name)
-            .unwrap_or_else(|_| uid.to_string());
+            .unwrap_or_else(|_| user_id.0.to_string());
 
         let file = folder.join(sanitize_filename::sanitize(format!("{}.mp3", name)));
         let args = [
@@ -479,8 +494,7 @@ impl Recorder {
                 CoreEvent::SpeakingStateUpdate.into(),
                 guild_recorder.clone(),
             );
-            call.add_global_event(CoreEvent::SpeakingUpdate.into(), guild_recorder.clone());
-            call.add_global_event(CoreEvent::VoicePacket.into(), guild_recorder);
+            call.add_global_event(CoreEvent::VoiceTick.into(), guild_recorder);
         }
     }
 

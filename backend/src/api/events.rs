@@ -126,7 +126,7 @@ impl EventBus {
 impl EventData {
     fn new(member: &Member) -> Self {
         Self {
-            guild_id: Snowflake(member.guild_id.0),
+            guild_id: Snowflake(member.guild_id.get()),
             user_name: member
                 .nick
                 .clone()
@@ -148,9 +148,14 @@ async fn events(
 ) -> Result<EventStream![], Status> {
     // Only users may get events from this guild
     let serenity_user = user.into();
-    check_guild_user(cache_http.inner(), &db, serenity_user, GuildId(guild_id))
-        .await
-        .map_err(|_| Status::Forbidden)?;
+    check_guild_user(
+        cache_http.inner(),
+        &db,
+        serenity_user,
+        GuildId::new(guild_id),
+    )
+    .await
+    .map_err(|_| Status::Forbidden)?;
 
     let mut rx = event_bus.subscribe();
     Ok(EventStream! {
@@ -164,7 +169,7 @@ async fn events(
           _ = &mut end => break,
         };
 
-        if msg_guild.0 == guild_id {
+        if msg_guild.get() == guild_id {
           yield Event::json(&msg);
         }
       }

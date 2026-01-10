@@ -63,7 +63,7 @@ impl AvatarOrDefault for SerenityUser {
             })
             .unwrap_or(format!(
                 "https://cdn.discordapp.com/embed/avatars/{}.png",
-                self.discriminator % 5
+                self.discriminator.map(|d| d.get()).unwrap_or(0) % 5
             ))
     }
 }

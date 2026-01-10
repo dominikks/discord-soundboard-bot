@@ -91,7 +91,7 @@ pub struct UserId(pub u64);
 
 impl From<UserId> for SerenityUserId {
     fn from(user: UserId) -> Self {
-        SerenityUserId(user.0)
+        SerenityUserId::new(user.0)
     }
 }
 
@@ -149,7 +149,7 @@ pub struct TokenUserId(u64);
 
 impl From<TokenUserId> for SerenityUserId {
     fn from(user: TokenUserId) -> Self {
-        SerenityUserId(user.0)
+        SerenityUserId::new(user.0)
     }
 }
 
@@ -327,7 +327,7 @@ async fn user(
 
     for (guild, perm) in user_guilds.into_iter() {
         guilds.push(GuildInfo {
-            id: Snowflake(guild.id.0),
+            id: Snowflake(guild.id.get()),
             icon_url: guild.icon_url(),
             name: guild.name,
             role: perm,
@@ -335,9 +335,9 @@ async fn user(
     }
 
     Ok(Json(User {
-        id: Snowflake(s_user.id.0),
+        id: Snowflake(s_user.id.get()),
         username: s_user.name,
-        discriminator: s_user.discriminator,
+        discriminator: s_user.discriminator.map(|d| d.get()).unwrap_or(0),
         avatar_url,
         guilds,
     }))
