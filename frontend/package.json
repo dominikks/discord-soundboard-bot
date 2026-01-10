@@ -37,6 +37,7 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.2.1",
     "@angular-devkit/build-angular": "^21.0.5",
     "@angular-eslint/builder": "^21.1.0",
     "@angular-eslint/eslint-plugin": "^21.1.0",
@@ -46,18 +47,27 @@
     "@angular/cli": "^21.0.5",
     "@angular/compiler-cli": "^21.0.8",
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.57.0",
+    "@testing-library/angular": "^19.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.13.1",
     "@typescript-eslint/eslint-plugin": "^8.52.0",
     "@typescript-eslint/parser": "^8.52.0",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
     "angular-eslint": "^21.1.0",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
+    "jsdom": "^27.4.0",
+    "msw": "^2.12.7",
     "prettier": "^3.4.2",
     "pretty-quick": "^4.0.0",
     "ts-node": "~10.9.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.52.0"
+    "typescript-eslint": "^8.52.0",
+    "vitest": "^4.0.16"
   }
 }
