@@ -5,7 +5,6 @@ use serenity::model::prelude::GuildId;
 use serenity::model::voice_gateway::id::UserId;
 use serenity::prelude::Mutex;
 use serenity::prelude::RwLock;
-use songbird::events::context_data::VoiceTick;
 use songbird::model::payload::Speaking;
 use songbird::Call;
 use songbird::CoreEvent;
@@ -69,7 +68,11 @@ struct UserData {
     user_id: UserId,
     recordings: VecDeque<VoiceRecording>,
     last_voice_activity: SystemTime,
+    // Note: last_rtp_timestamp and last_sequence are kept for potential future use
+    // but songbird 0.5's VoiceTick doesn't provide RTP sequence/timestamp data
+    #[allow(dead_code)]
     last_rtp_timestamp: Wrapping<u32>,
+    #[allow(dead_code)]
     last_sequence: Wrapping<u16>,
 }
 
