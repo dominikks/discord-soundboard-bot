@@ -25,3 +25,7 @@ yarn-error.log
 testem.log
 /typings
 
+# Testing artifacts
+/playwright-report
+/test-results
+/.vitest
