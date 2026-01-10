@@ -21,7 +21,8 @@ serde_json = "1.0"
 serde_derive = "1.0"
 serde_with = "3.3"
 serenity = { version = "0.12", features = ["cache", "standard_framework", "voice", "voice_model", "rustls_backend"] }
-songbird = { version = "0.5", features = ["driver", "gateway", "serenity", "rustls", "receive"] }
+songbird = { version = "0.5", default-features = false, features = ["driver", "gateway", "serenity", "rustls", "receive", "tungstenite"] }
+symphonia = { version = "0.5", features = ["mp3"] }
 thiserror = "1.0"
 tokio = { version = "1.32", features = ["rt", "rt-multi-thread", "macros", "process"] }
 tracing = "0.1"

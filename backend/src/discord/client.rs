@@ -8,6 +8,7 @@ use serenity::model::id::UserId;
 use serenity::prelude::TypeMapKey;
 use songbird::driver::DecodeMode;
 use songbird::error::JoinError;
+use songbird::input::File;
 use songbird::Config as DriverConfig;
 use songbird::SerenityInit;
 use songbird::Songbird;
@@ -121,12 +122,11 @@ impl Client {
             .ok_or(ClientError::NotInAChannel)?;
         let mut call = call_lock.lock().await;
 
-        // Use File input which internally uses ffmpeg
-        use songbird::input::File;
-
-        let source = File::new(sound_path.as_ref().to_path_buf());
+        // Stop any currently playing audio first
+        call.stop();
 
         // Play the source
+        let source = File::new(sound_path.as_ref().to_path_buf());
         let handle = call.play(source.into());
 
         // Convert dB to linear scale for volume adjustment
