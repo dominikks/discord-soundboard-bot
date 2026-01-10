@@ -124,7 +124,6 @@ export default tseslint.config(
     files: ['**/*.html'],
     extends: [
       ...angular.configs.templateRecommended,
-      ...angular.configs.templateAccessibility,
     ],
     rules: {
       '@angular-eslint/template/eqeqeq': [
