@@ -68,8 +68,11 @@ struct UserData {
     user_id: UserId,
     recordings: VecDeque<VoiceRecording>,
     last_voice_activity: SystemTime,
-    // Note: last_rtp_timestamp and last_sequence are kept for potential future use
-    // but songbird 0.5's VoiceTick doesn't provide RTP sequence/timestamp data
+    // TODO: These fields were used in songbird 0.3 for RTP sequence/timestamp tracking
+    // Songbird 0.5's VoiceTick doesn't expose this data. If future songbird versions
+    // re-expose RTP packet metadata or we switch back to VoicePacket events, these
+    // fields could be used for more precise gap detection and duplicate packet handling.
+    // Consider removing if songbird 0.6+ doesn't provide this functionality.
     #[allow(dead_code)]
     last_rtp_timestamp: Wrapping<u32>,
     #[allow(dead_code)]
@@ -156,8 +159,9 @@ impl VoiceEventHandler for GuildRecorderArc {
                         if let Some(user_lock) = user_lock {
                             let mut user = user_lock.lock().await;
 
-                            // In songbird 0.5, we don't have sequence numbers in VoiceTick
-                            // so we always append or create new recordings based on gaps
+                            // In songbird 0.5's VoiceTick, we receive consolidated audio chunks per tick
+                            // Gap detection is handled by the absence of users from the speaking HashMap
+                            // (see the cleanup loop below), so we continuously append audio when present
                             if !user.recordings.is_empty() {
                                 // Always extend the last recording if it exists
                                 let recording = user

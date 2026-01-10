@@ -131,7 +131,9 @@ impl Client {
         // Convert dB to linear scale for volume adjustment
         // Formula: linear = 10^(dB/20)
         let linear_volume = 10f32.powf(volume_adjustment / 20.0);
-        let _ = handle.set_volume(linear_volume);
+        if let Err(e) = handle.set_volume(linear_volume) {
+            warn!("Failed to set volume to {}: {:?}", linear_volume, e);
+        }
         
         Ok(())
     }
