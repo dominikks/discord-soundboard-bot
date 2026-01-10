@@ -6,10 +6,7 @@ import importPlugin from 'eslint-plugin-import';
 export default tseslint.config(
   {
     files: ['**/*.ts'],
-    extends: [
-      ...tseslint.configs.recommended,
-      ...angular.configs.tsRecommended,
-    ],
+    extends: [...tseslint.configs.recommended, ...angular.configs.tsRecommended],
     processor: angular.processInlineTemplates,
     plugins: {
       import: importPlugin,
@@ -122,9 +119,7 @@ export default tseslint.config(
   },
   {
     files: ['**/*.html'],
-    extends: [
-      ...angular.configs.templateRecommended,
-    ],
+    extends: [...angular.configs.templateRecommended],
     rules: {
       '@angular-eslint/template/eqeqeq': [
         'error',
@@ -136,5 +131,5 @@ export default tseslint.config(
   },
   {
     ignores: ['projects/**/*'],
-  }
+  },
 );
