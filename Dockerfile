@@ -28,7 +28,7 @@ RUN cargo build --release
 
 ############################################################
 ### Stage 2: Compose
-FROM debian:12-slim AS composer
+FROM debian:13-slim AS composer
 
 # Get ffmpeg
 RUN apt-get update && apt-get install -y curl tar xz-utils \
