@@ -34,7 +34,7 @@ jobs:
         working-directory: frontend
 
       - name: Archive binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: frontend
           path: frontend/dist/discord-soundboard-bot/**
