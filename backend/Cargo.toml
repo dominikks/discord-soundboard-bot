@@ -15,7 +15,7 @@ regex = "1.9"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 rocket = { version = "0.5.1", features = ["secrets", "json"] }
 rocket_sync_db_pools = { version = "0.1.0", features = ["diesel_postgres_pool"] }
-sanitize-filename = "0.5"
+sanitize-filename = "0.6"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
