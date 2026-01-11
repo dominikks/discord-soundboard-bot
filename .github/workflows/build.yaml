@@ -1,6 +1,14 @@
 name: Build app
 
-on: push
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      push:
+        description: 'Push Docker image to registry'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   compile-frontend:
@@ -73,7 +81,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development' || startsWith(github.ref, 'refs/tags/') || github.event.inputs.push == 'true' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
           cache-from: type=gha
