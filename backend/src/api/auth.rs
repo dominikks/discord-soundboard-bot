@@ -491,11 +491,14 @@ impl From<models::AuthToken> for AuthToken {
 async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, AuthError> {
     let uid = BigDecimal::from_u64(user.0).ok_or_else(|| AuthError::BigDecimalError)?;
 
-    let random_token: String = iter::repeat(())
-        .map(|_| rand::rng().sample(Alphanumeric))
-        .map(char::from)
-        .take(32)
-        .collect();
+    let random_token: String = {
+        let mut rng = rand::rng();
+        iter::repeat(())
+            .map(|_| rng.sample(Alphanumeric))
+            .map(char::from)
+            .take(32)
+            .collect()
+    };
 
     let auth_token = models::AuthToken {
         user_id: uid,
