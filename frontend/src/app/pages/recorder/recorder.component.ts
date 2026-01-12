@@ -5,6 +5,7 @@ import {
   computed,
   inject,
   Input,
+  OutputEmitterRef,
   QueryList,
   signal,
   ViewChild,
@@ -49,6 +50,11 @@ import { RecorderService, Recording as SrvRecording, RecordingUser } from '../..
 import { AppSettingsService } from '../../services/app-settings.service';
 import { User } from '../../services/api.service';
 import { FooterComponent } from '../../common/footer/footer.component';
+
+// Interface to represent WaBufferSource with the 'ended' output from WaScheduledSource host directive
+interface WaBufferSourceWithEnded extends WaBufferSource {
+  ended: OutputEmitterRef<void>;
+}
 
 interface Recording extends SrvRecording {
   selected: boolean[];
@@ -189,7 +195,7 @@ export class RecorderComponent {
       this.audioBufferSources.forEach(source => {
         source.start(playTime, recording.start, duration);
         // Access the 'ended' output from the WaScheduledSource host directive
-        (source as any).ended?.subscribe(() => this.stop());
+        (source as WaBufferSourceWithEnded).ended?.subscribe(() => this.stop());
       });
     });
   }
