@@ -18,8 +18,7 @@ use oauth2::{
     AuthUrl, AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope,
     TokenResponse,
 };
-use rand::distributions::Alphanumeric;
-use rand::rngs::OsRng;
+use rand::distr::Alphanumeric;
 use rand::Rng;
 use rocket::get;
 use rocket::http::CookieJar;
@@ -493,7 +492,7 @@ async fn create_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, 
     let uid = BigDecimal::from_u64(user.0).ok_or_else(|| AuthError::BigDecimalError)?;
 
     let random_token: String = iter::repeat(())
-        .map(|_| OsRng.sample(Alphanumeric))
+        .map(|_| rand::rng().sample(Alphanumeric))
         .map(char::from)
         .take(32)
         .collect();
