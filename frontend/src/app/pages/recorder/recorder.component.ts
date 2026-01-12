@@ -51,7 +51,12 @@ import { AppSettingsService } from '../../services/app-settings.service';
 import { User } from '../../services/api.service';
 import { FooterComponent } from '../../common/footer/footer.component';
 
-// Interface to represent WaBufferSource with the 'ended' output from WaScheduledSource host directive
+/**
+ * Interface to represent WaBufferSource with the 'ended' output from WaScheduledSource host directive.
+ * The WaBufferSource directive uses WaScheduledSource as a host directive, which provides an 'ended'
+ * output that emits when audio playback completes. This interface extends WaBufferSource to include
+ * the 'ended' property for type-safe access.
+ */
 interface WaBufferSourceWithEnded extends WaBufferSource {
   ended: OutputEmitterRef<void>;
 }
@@ -194,7 +199,9 @@ export class RecorderComponent {
 
       this.audioBufferSources.forEach(source => {
         source.start(playTime, recording.start, duration);
-        // Access the 'ended' output from the WaScheduledSource host directive
+        // Subscribe to the 'ended' event from the WaScheduledSource host directive.
+        // No need to manually unsubscribe as the audio source nodes are destroyed when
+        // currentlyPlaying changes, and the 'ended' event fires only once per playback.
         (source as WaBufferSourceWithEnded).ended?.subscribe(() => this.stop());
       });
     });
