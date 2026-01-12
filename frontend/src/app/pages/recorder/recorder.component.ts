@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   Input,
+  OutputRefSubscription,
   QueryList,
   signal,
   ViewChild,
@@ -116,16 +117,31 @@ export class RecorderComponent {
   readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
   readonly currentlyPlaying = signal<Recording | null>(null);
 
+  private endedSubscriptions: OutputRefSubscription[] = [];
+
   constructor() {
     // Subscribe to 'ended' events from scheduled sources whenever they change
     effect(() => {
       // Track when currentlyPlaying changes to trigger re-subscription
       const isPlaying = this.currentlyPlaying() !== null;
 
+      // Clean up previous subscriptions
+      this.endedSubscriptions.forEach(sub => sub.unsubscribe());
+      this.endedSubscriptions = [];
+
       if (isPlaying) {
         // Subscribe to all scheduled sources' ended events
+        // Use a flag to ensure stop() is only called once
+        let hasStopped = false;
+
         this.scheduledSources.forEach(source => {
-          source.ended.subscribe(() => this.stop());
+          const sub = source.ended.subscribe(() => {
+            if (!hasStopped) {
+              hasStopped = true;
+              this.stop();
+            }
+          });
+          this.endedSubscriptions.push(sub);
         });
       }
     });
