@@ -8,7 +8,6 @@ use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use oauth2::basic::BasicClient;
-use oauth2::reqwest::async_http_client;
 use oauth2::ClientId;
 use oauth2::ClientSecret;
 use oauth2::RedirectUrl;
@@ -18,6 +17,7 @@ use oauth2::{
     AuthUrl, AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope,
     TokenResponse,
 };
+use oauth2::{EndpointNotSet, EndpointSet};
 use rand::distr::Alphanumeric;
 use rand::Rng;
 use rocket::get;
@@ -56,21 +56,31 @@ use crate::BASE_URL;
 static SESSION_COOKIE: &str = "auth_session";
 static LOGIN_COOKIE: &str = "auth_login";
 
-pub fn get_oauth_client() -> BasicClient {
-    BasicClient::new(
-        ClientId::new(DISCORD_CLIENT_ID.clone()),
-        Some(ClientSecret::new(DISCORD_CLIENT_SECRET.clone())),
-        AuthUrl::new("https://discord.com/api/oauth2/authorize".to_string())
-            .expect("Parse discord auth url"),
-        Some(
+// Type alias for a BasicClient with auth and token endpoints configured
+// Generic parameters represent: <HasAuthUrl, HasDeviceAuthUrl, HasIntrospectionUrl, HasRevocationUrl, HasTokenUrl>
+// - HasAuthUrl: EndpointSet (authorization endpoint is configured)
+// - HasDeviceAuthUrl: EndpointNotSet (device authorization not used)
+// - HasIntrospectionUrl: EndpointNotSet (token introspection not used)
+// - HasRevocationUrl: EndpointNotSet (token revocation not used)
+// - HasTokenUrl: EndpointSet (token endpoint is configured)
+type ConfiguredOAuthClient =
+    BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
+
+pub fn get_oauth_client() -> ConfiguredOAuthClient {
+    BasicClient::new(ClientId::new(DISCORD_CLIENT_ID.clone()))
+        .set_client_secret(ClientSecret::new(DISCORD_CLIENT_SECRET.clone()))
+        .set_auth_uri(
+            AuthUrl::new("https://discord.com/api/oauth2/authorize".to_string())
+                .expect("Parse discord auth url"),
+        )
+        .set_token_uri(
             TokenUrl::new("https://discord.com/api/oauth2/token".to_string())
                 .expect("Parse discord token url"),
-        ),
-    )
-    .set_redirect_uri(
-        RedirectUrl::new(format!("{}/api/auth/login", BASE_URL.clone()))
-            .expect("Create redirect url"),
-    )
+        )
+        .set_redirect_uri(
+            RedirectUrl::new(format!("{}/api/auth/login", BASE_URL.clone()))
+                .expect("Create redirect url"),
+        )
 }
 
 pub fn get_routes() -> Vec<Route> {
@@ -369,7 +379,7 @@ struct DiscordUser {
 #[get("/auth/login?<code>&<state>", rank = 2)]
 async fn login_post(
     cookies: &CookieJar<'_>,
-    oauth: &State<BasicClient>,
+    oauth: &State<ConfiguredOAuthClient>,
     db: DbConn,
     code: String,
     state: String,
@@ -384,14 +394,15 @@ async fn login_post(
         return Err(AuthError::CsrfMissmatch);
     }
 
+    let http_client = reqwest::Client::new();
     let token_result = oauth
         .exchange_code(AuthorizationCode::new(code))
         .set_pkce_verifier(PkceCodeVerifier::new(login_cookie.pkce_verifier))
-        .request_async(async_http_client)
+        .request_async(&http_client)
         .await?;
 
     let access_token = token_result.access_token().secret();
-    let user_info: DiscordUser = reqwest::Client::new()
+    let user_info: DiscordUser = http_client
         .get("https://discord.com/api/v8/users/@me")
         .header("Authorization", format!("Bearer {}", access_token))
         .send()
@@ -433,7 +444,10 @@ async fn login_post(
 /// This initializes the oauth request
 #[instrument(skip(cookies, oauth))]
 #[get("/auth/login", rank = 3)]
-fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redirect, AuthError> {
+fn login_pre(
+    cookies: &CookieJar<'_>,
+    oauth: &State<ConfiguredOAuthClient>,
+) -> Result<Redirect, AuthError> {
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
     // Generate the full authorization URL.
@@ -459,7 +473,7 @@ fn login_pre(cookies: &CookieJar<'_>, oauth: &State<BasicClient>) -> Result<Redi
     );
 
     // Send redirect
-    Ok(Redirect::to(auth_url.as_str().to_string()))
+    Ok(Redirect::to(auth_url.to_string()))
 }
 
 #[post("/auth/logout")]
