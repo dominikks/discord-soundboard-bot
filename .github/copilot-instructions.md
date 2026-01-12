@@ -173,4 +173,4 @@ export class ExampleComponent {
 - [README.md](../README.md): Comprehensive usage and deployment guide
 - Discord Developer Portal: https://discord.com/developers/applications
 - Rocket Documentation: https://rocket.rs
-- Angular Documentation: https://angular.io
+- Angular Documentation: https://angular.dev
