@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   Input,
+  OnDestroy,
   OutputRefSubscription,
   QueryList,
   signal,
@@ -91,7 +92,7 @@ interface Recording extends SrvRecording {
     WaOutput,
   ],
 })
-export class RecorderComponent {
+export class RecorderComponent implements OnDestroy {
   private recorderService = inject(RecorderService);
   private settingsService = inject(AppSettingsService);
   private snackBar = inject(MatSnackBar);
@@ -118,6 +119,7 @@ export class RecorderComponent {
   readonly currentlyPlaying = signal<Recording | null>(null);
 
   private endedSubscriptions: OutputRefSubscription[] = [];
+  private hasStopped = false;
 
   constructor() {
     // Subscribe to 'ended' events from scheduled sources whenever they change
@@ -128,16 +130,14 @@ export class RecorderComponent {
       // Clean up previous subscriptions
       this.endedSubscriptions.forEach(sub => sub.unsubscribe());
       this.endedSubscriptions = [];
+      this.hasStopped = false;
 
       if (isPlaying) {
         // Subscribe to all scheduled sources' ended events
-        // Use a flag to ensure stop() is only called once
-        let hasStopped = false;
-
         this.scheduledSources.forEach(source => {
           const sub = source.ended.subscribe(() => {
-            if (!hasStopped) {
-              hasStopped = true;
+            if (!this.hasStopped) {
+              this.hasStopped = true;
               this.stop();
             }
           });
@@ -145,6 +145,12 @@ export class RecorderComponent {
         });
       }
     });
+  }
+
+  ngOnDestroy() {
+    // Clean up all subscriptions when component is destroyed
+    this.endedSubscriptions.forEach(sub => sub.unsubscribe());
+    this.endedSubscriptions = [];
   }
 
   data$ = this.getRecordingsObservable();
