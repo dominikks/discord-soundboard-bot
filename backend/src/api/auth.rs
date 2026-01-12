@@ -8,7 +8,6 @@ use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use oauth2::basic::BasicClient;
-use oauth2::{EndpointNotSet, EndpointSet};
 use oauth2::ClientId;
 use oauth2::ClientSecret;
 use oauth2::RedirectUrl;
@@ -18,6 +17,7 @@ use oauth2::{
     AuthUrl, AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope,
     TokenResponse,
 };
+use oauth2::{EndpointNotSet, EndpointSet};
 use rand::distr::Alphanumeric;
 use rand::Rng;
 use rocket::get;
@@ -63,7 +63,8 @@ static LOGIN_COOKIE: &str = "auth_login";
 // - HasIntrospectionUrl: EndpointNotSet (token introspection not used)
 // - HasRevocationUrl: EndpointNotSet (token revocation not used)
 // - HasTokenUrl: EndpointSet (token endpoint is configured)
-type ConfiguredOAuthClient = BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
+type ConfiguredOAuthClient =
+    BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
 pub fn get_oauth_client() -> ConfiguredOAuthClient {
     BasicClient::new(ClientId::new(DISCORD_CLIENT_ID.clone()))
@@ -443,7 +444,10 @@ async fn login_post(
 /// This initializes the oauth request
 #[instrument(skip(cookies, oauth))]
 #[get("/auth/login", rank = 3)]
-fn login_pre(cookies: &CookieJar<'_>, oauth: &State<ConfiguredOAuthClient>) -> Result<Redirect, AuthError> {
+fn login_pre(
+    cookies: &CookieJar<'_>,
+    oauth: &State<ConfiguredOAuthClient>,
+) -> Result<Redirect, AuthError> {
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
     // Generate the full authorization URL.
