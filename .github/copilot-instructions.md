@@ -159,7 +159,7 @@ async fn handler(conn: DbConn) -> Result<Json<Response>, Status> {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExampleComponent {
-  constructor(private service: ExampleService) {}
+  private service = inject(ExampleService);
 }
 ```
 
