@@ -3,9 +3,9 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  effect,
   inject,
   Input,
-  OutputEmitterRef,
   QueryList,
   signal,
   ViewChild,
@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
-import { WaBufferSource, WaAudioContext, WaDestination, WaGain, WaOutput } from '@ng-web-apis/audio';
+import { WaBufferSource, WaAudioContext, WaDestination, WaGain, WaOutput, WaScheduledSource } from '@ng-web-apis/audio';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MatToolbar } from '@angular/material/toolbar';
@@ -44,16 +44,6 @@ import { RecorderService, Recording as SrvRecording, RecordingUser } from '../..
 import { AppSettingsService } from '../../services/app-settings.service';
 import { User } from '../../services/api.service';
 import { FooterComponent } from '../../common/footer/footer.component';
-
-/**
- * Interface to represent WaBufferSource with the 'ended' output from WaScheduledSource host directive.
- * The WaBufferSource directive uses WaScheduledSource as a host directive, which provides an 'ended'
- * output that emits when audio playback completes. This interface extends WaBufferSource to include
- * the 'ended' property for type-safe access.
- */
-interface WaBufferSourceWithEnded extends WaBufferSource {
-  ended: OutputEmitterRef<void>;
-}
 
 interface Recording extends SrvRecording {
   selected: boolean[];
@@ -119,11 +109,27 @@ export class RecorderComponent {
   });
 
   @ViewChildren(WaBufferSource) audioBufferSources!: QueryList<WaBufferSource>;
+  @ViewChildren(WaBufferSource, { read: WaScheduledSource }) scheduledSources!: QueryList<WaScheduledSource>;
   @ViewChild(WaGain) gainNode!: WaGain;
   @ViewChild(WaAudioContext) contextNode!: WaAudioContext;
 
   readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
   readonly currentlyPlaying = signal<Recording | null>(null);
+
+  constructor() {
+    // Subscribe to 'ended' events from scheduled sources whenever they change
+    effect(() => {
+      // Track when currentlyPlaying changes to trigger re-subscription
+      const isPlaying = this.currentlyPlaying() !== null;
+
+      if (isPlaying) {
+        // Subscribe to all scheduled sources' ended events
+        this.scheduledSources.forEach(source => {
+          source.ended.subscribe(() => this.stop());
+        });
+      }
+    });
+  }
 
   data$ = this.getRecordingsObservable();
 
@@ -193,10 +199,6 @@ export class RecorderComponent {
 
       this.audioBufferSources.forEach(source => {
         source.start(playTime, recording.start, duration);
-        // Subscribe to the 'ended' event from the WaScheduledSource host directive.
-        // No need to manually unsubscribe as the audio source nodes are destroyed when
-        // currentlyPlaying changes, and the 'ended' event fires only once per playback.
-        (source as WaBufferSourceWithEnded).ended?.subscribe(() => this.stop());
       });
     });
   }
