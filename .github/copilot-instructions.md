@@ -56,7 +56,7 @@ This is a Discord soundboard bot that allows users to play custom sounds in voic
 ### TypeScript/Angular Frontend
 - **Indentation**: 2 spaces
 - **Quotes**: Single quotes for strings
-- **Line length**: Maximum 120 characters (Prettier), 140 characters (ESLint)
+- **Line length**: Prettier formats at 120 characters; ESLint allows up to 140 characters
 - **Import order**: Enforced via ESLint
 - **Component selectors**: Use `app-` prefix with kebab-case
 - **Directive selectors**: Use `app` prefix with camelCase
