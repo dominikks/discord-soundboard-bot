@@ -28,7 +28,7 @@ RUN cargo build --release
 
 ############################################################
 ### Stage 2: Compose
-FROM debian:12-slim AS composer
+FROM debian:13-slim AS composer
 
 # Get ffmpeg
 RUN apt-get update && apt-get install -y curl tar xz-utils \
@@ -37,8 +37,8 @@ RUN apt-get update && apt-get install -y curl tar xz-utils \
   && tar -x -C /usr/bin --strip-components 1 -f linux-x64.tar.xz --wildcards '*/ffmpeg' '*/ffprobe' \
   && tar -x -f linux-x64.tar.xz --ignore-case --wildcards -O '**/GPLv3.txt' > /usr/bin/ffmpeg.LICENSE
 
-RUN addgroup --gid 1000 discordbot \
-  && adduser -u 1000 --system --gid 1000 discordbot \
+RUN groupadd --gid 1000 discordbot \
+  && useradd -u 1000 --system --gid 1000 --no-create-home discordbot \
   && mkdir -p /app/data/sounds \
   && mkdir -p /app/data/recorder \
   && chown -R discordbot:discordbot /app
