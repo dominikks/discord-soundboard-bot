@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download frontend
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: frontend
           path: frontend/dist/discord-soundboard-bot/
