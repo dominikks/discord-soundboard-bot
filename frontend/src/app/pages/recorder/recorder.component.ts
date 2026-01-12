@@ -13,13 +13,7 @@ import {
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
-import {
-  WaBufferSource,
-  WaAudioContext,
-  WaDestination,
-  WaGain,
-  WaOutput,
-} from '@ng-web-apis/audio';
+import { WaBufferSource, WaAudioContext, WaDestination, WaGain, WaOutput } from '@ng-web-apis/audio';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MatToolbar } from '@angular/material/toolbar';
