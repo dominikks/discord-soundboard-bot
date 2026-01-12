@@ -13,11 +13,11 @@ import {
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
 import {
-  WebAudioBufferSource,
-  WebAudioContext,
-  WebAudioDestination,
-  WebAudioGain,
-  WebAudioOutput,
+  WaBufferSource,
+  WaAudioContext,
+  WaDestination,
+  WaGain,
+  WaOutput,
 } from '@ng-web-apis/audio';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -88,11 +88,11 @@ interface Recording extends SrvRecording {
     FooterComponent,
     DecimalPipe,
     DatePipe,
-    WebAudioContext,
-    WebAudioGain,
-    WebAudioDestination,
-    WebAudioBufferSource,
-    WebAudioOutput,
+    WaAudioContext,
+    WaGain,
+    WaDestination,
+    WaBufferSource,
+    WaOutput,
   ],
 })
 export class RecorderComponent {
@@ -113,9 +113,9 @@ export class RecorderComponent {
     return this.recordings().filter(recording => recording.guildId === guildId);
   });
 
-  @ViewChildren(WebAudioBufferSource) audioBufferSources!: QueryList<WebAudioBufferSource>;
-  @ViewChild(WebAudioGain) gainNode!: WebAudioGain;
-  @ViewChild(WebAudioContext) contextNode!: WebAudioContext;
+  @ViewChildren(WaBufferSource) audioBufferSources!: QueryList<WaBufferSource>;
+  @ViewChild(WaGain) gainNode!: WaGain;
+  @ViewChild(WaAudioContext) contextNode!: WaAudioContext;
 
   readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
   readonly currentlyPlaying = signal<Recording | null>(null);
@@ -188,7 +188,8 @@ export class RecorderComponent {
 
       this.audioBufferSources.forEach(source => {
         source.start(playTime, recording.start, duration);
-        source.ended?.subscribe(() => this.stop());
+        // Access the 'ended' output from the WaScheduledSource host directive
+        (source as any).ended?.subscribe(() => this.stop());
       });
     });
   }
