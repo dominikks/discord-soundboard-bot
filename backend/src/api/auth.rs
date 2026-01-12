@@ -57,6 +57,12 @@ static SESSION_COOKIE: &str = "auth_session";
 static LOGIN_COOKIE: &str = "auth_login";
 
 // Type alias for a BasicClient with auth and token endpoints configured
+// Generic parameters represent: <HasAuthUrl, HasDeviceAuthUrl, HasIntrospectionUrl, HasRevocationUrl, HasTokenUrl>
+// - HasAuthUrl: EndpointSet (authorization endpoint is configured)
+// - HasDeviceAuthUrl: EndpointNotSet (device authorization not used)
+// - HasIntrospectionUrl: EndpointNotSet (token introspection not used)
+// - HasRevocationUrl: EndpointNotSet (token revocation not used)
+// - HasTokenUrl: EndpointSet (token endpoint is configured)
 type ConfiguredOAuthClient = BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
 pub fn get_oauth_client() -> ConfiguredOAuthClient {
