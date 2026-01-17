@@ -3,22 +3,16 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  effect,
   inject,
   Input,
-  QueryList,
   signal,
   ViewChild,
-  ViewChildren,
+  viewChildren,
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
-import {
-  WebAudioBufferSource,
-  WebAudioContext,
-  WebAudioDestination,
-  WebAudioGain,
-  WebAudioOutput,
-} from '@ng-web-apis/audio';
+import { WaBufferSource, WaAudioContext, WaDestination, WaGain, WaOutput, WaScheduledSource } from '@ng-web-apis/audio';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MatToolbar } from '@angular/material/toolbar';
@@ -88,11 +82,11 @@ interface Recording extends SrvRecording {
     FooterComponent,
     DecimalPipe,
     DatePipe,
-    WebAudioContext,
-    WebAudioGain,
-    WebAudioDestination,
-    WebAudioBufferSource,
-    WebAudioOutput,
+    WaAudioContext,
+    WaGain,
+    WaDestination,
+    WaBufferSource,
+    WaOutput,
   ],
 })
 export class RecorderComponent {
@@ -113,14 +107,39 @@ export class RecorderComponent {
     return this.recordings().filter(recording => recording.guildId === guildId);
   });
 
-  @ViewChildren(WebAudioBufferSource) audioBufferSources!: QueryList<WebAudioBufferSource>;
-  @ViewChild(WebAudioGain) gainNode!: WebAudioGain;
-  @ViewChild(WebAudioContext) contextNode!: WebAudioContext;
+  readonly audioBufferSources = viewChildren(WaBufferSource);
+  readonly audioScheduledSources = viewChildren(WaBufferSource, { read: WaScheduledSource });
+  @ViewChild(WaGain) gainNode!: WaGain;
+  @ViewChild(WaAudioContext) contextNode!: WaAudioContext;
 
   readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
   readonly currentlyPlaying = signal<Recording | null>(null);
 
   data$ = this.getRecordingsObservable();
+
+  constructor() {
+    // When we display new sources, we immediately want to play them
+    effect(() => {
+      const sources = this.audioBufferSources();
+      const recording = this.currentlyPlaying();
+
+      if (!recording || sources.length === 0) return;
+
+      const playTime = this.contextNode.currentTime + 0.1;
+      const duration = recording.end - recording.start;
+
+      sources.forEach(source => {
+        source.start(playTime, recording.start, duration);
+      });
+    });
+
+    // Subscribe to the end events to stop all sources simultaneously
+    effect(onCleanup => {
+      const sources = this.audioScheduledSources();
+      const subscriptions = sources.map(source => source.ended.subscribe(() => this.stop()));
+      onCleanup(() => subscriptions.forEach(sub => sub.unsubscribe()));
+    });
+  }
 
   reload() {
     this.data$ = this.getRecordingsObservable();
@@ -181,16 +200,6 @@ export class RecorderComponent {
 
   play(recording: Recording) {
     this.currentlyPlaying.set(recording);
-
-    setTimeout(() => {
-      const playTime = this.contextNode.currentTime + 0.1;
-      const duration = recording.end - recording.start;
-
-      this.audioBufferSources.forEach(source => {
-        source.start(playTime, recording.start, duration);
-        source.ended?.subscribe(() => this.stop());
-      });
-    });
   }
 
   stop() {
