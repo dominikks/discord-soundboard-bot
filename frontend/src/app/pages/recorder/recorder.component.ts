@@ -115,6 +115,8 @@ export class RecorderComponent {
   readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
   readonly currentlyPlaying = signal<Recording | null>(null);
 
+  data$ = this.getRecordingsObservable();
+
   constructor() {
     // When we display new sources, we immediately want to play them
     effect(() => {
@@ -138,8 +140,6 @@ export class RecorderComponent {
       onCleanup(() => subscriptions.forEach(sub => sub.unsubscribe()));
     });
   }
-
-  data$ = this.getRecordingsObservable();
 
   reload() {
     this.data$ = this.getRecordingsObservable();
