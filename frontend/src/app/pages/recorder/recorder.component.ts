@@ -6,12 +6,9 @@ import {
   effect,
   inject,
   Input,
-  OnDestroy,
-  OutputRefSubscription,
-  QueryList,
   signal,
   ViewChild,
-  ViewChildren,
+  viewChildren,
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { clamp } from 'lodash-es';
@@ -92,7 +89,7 @@ interface Recording extends SrvRecording {
     WaOutput,
   ],
 })
-export class RecorderComponent implements OnDestroy {
+export class RecorderComponent {
   private recorderService = inject(RecorderService);
   private settingsService = inject(AppSettingsService);
   private snackBar = inject(MatSnackBar);
@@ -110,47 +107,36 @@ export class RecorderComponent implements OnDestroy {
     return this.recordings().filter(recording => recording.guildId === guildId);
   });
 
-  @ViewChildren(WaBufferSource) audioBufferSources!: QueryList<WaBufferSource>;
-  @ViewChildren(WaBufferSource, { read: WaScheduledSource }) scheduledSources!: QueryList<WaScheduledSource>;
+  readonly audioBufferSources = viewChildren(WaBufferSource);
+  readonly audioScheduledSources = viewChildren(WaBufferSource, { read: WaScheduledSource });
   @ViewChild(WaGain) gainNode!: WaGain;
   @ViewChild(WaAudioContext) contextNode!: WaAudioContext;
 
   readonly gain = computed(() => clamp(this.settings.localVolume() / 100, 0, 1));
   readonly currentlyPlaying = signal<Recording | null>(null);
 
-  private endedSubscriptions: OutputRefSubscription[] = [];
-  private hasStopped = false;
-
   constructor() {
-    // Subscribe to 'ended' events from scheduled sources whenever they change
+    // When we display new sources, we immediately want to play them
     effect(() => {
-      // Track when currentlyPlaying changes to trigger re-subscription
-      const isPlaying = this.currentlyPlaying() !== null;
+      const sources = this.audioBufferSources();
+      const recording = this.currentlyPlaying();
 
-      // Clean up previous subscriptions
-      this.endedSubscriptions.forEach(sub => sub.unsubscribe());
-      this.endedSubscriptions = [];
-      this.hasStopped = false;
+      if (!recording || sources.length === 0) return;
 
-      if (isPlaying) {
-        // Subscribe to all scheduled sources' ended events
-        this.scheduledSources.forEach(source => {
-          const sub = source.ended.subscribe(() => {
-            if (!this.hasStopped) {
-              this.hasStopped = true;
-              this.stop();
-            }
-          });
-          this.endedSubscriptions.push(sub);
-        });
-      }
+      const playTime = this.contextNode.currentTime + 0.1;
+      const duration = recording.end - recording.start;
+
+      sources.forEach(source => {
+        source.start(playTime, recording.start, duration);
+      });
     });
-  }
 
-  ngOnDestroy() {
-    // Clean up all subscriptions when component is destroyed
-    this.endedSubscriptions.forEach(sub => sub.unsubscribe());
-    this.endedSubscriptions = [];
+    // Subscribe to the end events to stop all sources simultaneously
+    effect(onCleanup => {
+      const sources = this.audioScheduledSources();
+      const subscriptions = sources.map(source => source.ended.subscribe(() => this.stop()));
+      onCleanup(() => subscriptions.forEach(sub => sub.unsubscribe()));
+    });
   }
 
   data$ = this.getRecordingsObservable();
@@ -214,15 +200,6 @@ export class RecorderComponent implements OnDestroy {
 
   play(recording: Recording) {
     this.currentlyPlaying.set(recording);
-
-    setTimeout(() => {
-      const playTime = this.contextNode.currentTime + 0.1;
-      const duration = recording.end - recording.start;
-
-      this.audioBufferSources.forEach(source => {
-        source.start(playTime, recording.start, duration);
-      });
-    });
   }
 
   stop() {
