@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 bigdecimal = "0.4"
-diesel = { version = "2.2", default-features = false, features = ["postgres", "numeric"] }
+diesel = { version = "2.3", default-features = false, features = ["postgres", "numeric"] }
 diesel_migrations = "2.2"
 dotenv = "0.15"
 oauth2 = "5.0"
