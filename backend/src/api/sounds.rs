@@ -55,7 +55,7 @@ enum SoundsError {
     IoError(#[from] std::io::Error),
 
     #[error("Discord API error: {0}")]
-    SerenityError(#[from] serenity::Error),
+    SerenityError(Box<serenity::Error>),
 
     #[error("Internal error: {0}")]
     InternalError(String),
@@ -77,6 +77,12 @@ enum SoundsError {
 
     #[error("Number handling error")]
     BigDecimalError,
+}
+
+impl From<serenity::Error> for SoundsError {
+    fn from(err: serenity::Error) -> Self {
+        Self::SerenityError(Box::new(err))
+    }
 }
 
 impl From<DieselError> for SoundsError {
