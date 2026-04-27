@@ -3,10 +3,13 @@
 FROM clux/muslrust:stable AS builder
 WORKDIR /app
 
-# Install CMAKE for audiopus_sys
+# Install libopus-dev so audiopus_sys can use pkg-config instead of building from source
 RUN apt-get update && \
-  apt-get install -y cmake --no-install-recommends && \
+  apt-get install -y libopus-dev pkg-config --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
+
+# Allow pkg-config when cross-compiling for the musl target
+ENV PKG_CONFIG_ALLOW_CROSS=1
 
 # Statically link libopus
 ARG LIBOPUS_STATIC=1
