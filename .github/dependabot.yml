@@ -13,40 +13,14 @@ updates:
       angular:
         patterns:
           - "@angular/*"
-        update-types:
-          - "minor"
-          - "patch"
-      angular-major:
-        patterns:
-          - "@angular/*"
-        update-types:
-          - "major"
       angular-eslint:
         patterns:
           - "@angular-eslint/*"
           - "angular-eslint"
-        update-types:
-          - "minor"
-          - "patch"
-      angular-eslint-major:
-        patterns:
-          - "@angular-eslint/*"
-          - "angular-eslint"
-        update-types:
-          - "major"
       typescript-eslint:
         patterns:
           - "@typescript-eslint/*"
           - "typescript-eslint"
-        update-types:
-          - "minor"
-          - "patch"
-      typescript-eslint-major:
-        patterns:
-          - "@typescript-eslint/*"
-          - "typescript-eslint"
-        update-types:
-          - "major"
       eslint:
         patterns:
           - "eslint"
@@ -109,6 +83,3 @@ updates:
       github-actions-all:
         patterns:
           - "*"
-        update-types:
-          - "minor"
-          - "patch"
