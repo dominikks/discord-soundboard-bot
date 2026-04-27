@@ -3,16 +3,13 @@
 FROM clux/muslrust:stable AS builder
 WORKDIR /app
 
-# Install libopus-dev so audiopus_sys can use pkg-config instead of building from source
+# Install cmake for audiopus_sys bundled opus build
 RUN apt-get update && \
-  apt-get install -y libopus-dev pkg-config --no-install-recommends && \
+  apt-get install -y cmake --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
 
-# Allow pkg-config when cross-compiling for the musl target
-ENV PKG_CONFIG_ALLOW_CROSS=1
-
-# Statically link libopus
-ARG LIBOPUS_STATIC=1
+# Allow cmake 4.0+ to build projects that use cmake_minimum_required < 3.5
+ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
 
 ### Dep caching start
 COPY backend/Cargo.toml backend/Cargo.lock ./
