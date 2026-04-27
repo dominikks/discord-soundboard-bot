@@ -9,6 +9,27 @@ updates:
     ignore:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+      angular-eslint:
+        patterns:
+          - "@angular-eslint/*"
+          - "angular-eslint"
+      typescript-eslint:
+        patterns:
+          - "@typescript-eslint/*"
+          - "typescript-eslint"
+      eslint:
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+          - "eslint-plugin-*"
+      karma:
+        patterns:
+          - "karma"
+          - "karma-*"
 
   # Backend Rust dependencies
   - package-ecosystem: "cargo"
@@ -16,6 +37,15 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 10
+    groups:
+      serde:
+        patterns:
+          - "serde"
+          - "serde_*"
+      tracing:
+        patterns:
+          - "tracing"
+          - "tracing-*"
 
   # Dockerfile and Docker Compose
   - package-ecosystem: "docker"
@@ -23,6 +53,10 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5
+    groups:
+      docker-all:
+        patterns:
+          - "*"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -30,3 +64,7 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5
+    groups:
+      github-actions-all:
+        patterns:
+          - "*"
