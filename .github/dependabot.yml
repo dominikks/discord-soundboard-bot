@@ -13,23 +13,55 @@ updates:
       angular:
         patterns:
           - "@angular/*"
+        update-types:
+          - "minor"
+          - "patch"
+      angular-major:
+        patterns:
+          - "@angular/*"
+        update-types:
+          - "major"
       angular-eslint:
         patterns:
           - "@angular-eslint/*"
           - "angular-eslint"
+        update-types:
+          - "minor"
+          - "patch"
+      angular-eslint-major:
+        patterns:
+          - "@angular-eslint/*"
+          - "angular-eslint"
+        update-types:
+          - "major"
       typescript-eslint:
         patterns:
           - "@typescript-eslint/*"
           - "typescript-eslint"
+        update-types:
+          - "minor"
+          - "patch"
+      typescript-eslint-major:
+        patterns:
+          - "@typescript-eslint/*"
+          - "typescript-eslint"
+        update-types:
+          - "major"
       eslint:
         patterns:
           - "eslint"
           - "@eslint/*"
           - "eslint-plugin-*"
+        update-types:
+          - "minor"
+          - "patch"
       karma:
         patterns:
           - "karma"
           - "karma-*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Backend Rust dependencies
   - package-ecosystem: "cargo"
@@ -42,10 +74,16 @@ updates:
         patterns:
           - "serde"
           - "serde_*"
+        update-types:
+          - "minor"
+          - "patch"
       tracing:
         patterns:
           - "tracing"
           - "tracing-*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Dockerfile and Docker Compose
   - package-ecosystem: "docker"
@@ -57,6 +95,9 @@ updates:
       docker-all:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -68,3 +109,6 @@ updates:
       github-actions-all:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
