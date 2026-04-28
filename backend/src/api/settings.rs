@@ -43,10 +43,16 @@ enum SettingsError {
     DieselError(#[from] DieselError),
 
     #[error("Discord API error: {0}")]
-    SerenityError(#[from] serenity::Error),
+    SerenityError(Box<serenity::Error>),
 
     #[error("Insufficient permission: you do not have the permission to perform this action")]
     InsufficientPermission(#[from] PermissionError),
+}
+
+impl From<serenity::Error> for SettingsError {
+    fn from(err: serenity::Error) -> Self {
+        Self::SerenityError(Box::new(err))
+    }
 }
 
 impl SettingsError {
