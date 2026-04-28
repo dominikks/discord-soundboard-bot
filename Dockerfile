@@ -3,13 +3,17 @@
 FROM clux/muslrust:stable AS builder
 WORKDIR /app
 
-# Install CMAKE for audiopus_sys
+# Install cmake for audiopus_sys bundled opus build
 RUN apt-get update && \
   apt-get install -y cmake --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
 
-# Statically link libopus
-ARG LIBOPUS_STATIC=1
+# Allow cmake 4.0+ to build projects that use cmake_minimum_required < 3.5
+ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
+
+# libopus (built from source by audiopus_sys) uses sqrtf/log10 from libm.
+# musl does not auto-link libm, so explicitly pass -lm to the linker.
+ENV RUSTFLAGS="-C link-arg=-lm"
 
 ### Dep caching start
 COPY backend/Cargo.toml backend/Cargo.lock ./

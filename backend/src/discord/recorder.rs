@@ -350,14 +350,14 @@ impl GuildRecorderArc {
 
         // Find the earliest start_tick and latest end_tick across all users
         let first_start_tick = recordings
-            .iter()
-            .filter_map(|(_, recs)| recs.front().map(|first_rec| first_rec.start_tick))
+            .values()
+            .filter_map(|recs| recs.front().map(|first_rec| first_rec.start_tick))
             .min()
             .ok_or(RecordingError::NoData)?;
 
         let last_end_tick = recordings
-            .iter()
-            .filter_map(|(_, recs)| {
+            .values()
+            .filter_map(|recs| {
                 recs.back().and_then(|last_rec| {
                     // Use end_tick if available, otherwise current_tick
                     last_rec.end_tick.or(Some(current_tick))
