@@ -10,7 +10,7 @@ diesel = { version = "2.3", default-features = false, features = ["postgres", "n
 diesel_migrations = "2.3"
 dotenv = "0.15"
 oauth2 = "5.0"
-rand = "0.9"
+rand = "0.10"
 regex = "1.12"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 rocket = { version = "0.5.1", features = ["secrets", "json"] }
