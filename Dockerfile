@@ -11,6 +11,10 @@ RUN apt-get update && \
 # Allow cmake 4.0+ to build projects that use cmake_minimum_required < 3.5
 ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
 
+# libopus (built from source by audiopus_sys) uses sqrtf/log10 from libm.
+# musl does not auto-link libm, so explicitly pass -lm to the linker.
+ENV RUSTFLAGS="-C link-arg=-lm"
+
 ### Dep caching start
 COPY backend/Cargo.toml backend/Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
