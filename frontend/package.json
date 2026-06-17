@@ -23,7 +23,7 @@
     "@angular/router": "^21.2.11",
     "@ng-web-apis/audio": "^5.1.0",
     "fuse.js": "^7.1.0",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "^4.18.1",
     "ngx-mat-select-search": "^8.0.4",
     "ngx-timeago": "^4.1.0",
     "ress": "^5.0.2",
