@@ -638,9 +638,9 @@ dependencies = [
 
 [[package]]
 name = "diesel"
-version = "2.3.9"
+version = "2.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9940fb8467a0a06312218ed384185cb8536aa10d8ec017d0ce7fad2c1bd882d5"
+checksum = "29fe29a87fb84c631ffb3ba21798c4b1f3a964701ba78f0dce4bf8668562ec88"
 dependencies = [
  "bigdecimal",
  "bitflags 2.10.0",
@@ -1310,7 +1310,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.5.10",
+ "socket2 0.6.4",
  "tokio",
  "tower-service",
  "tracing",
@@ -2111,7 +2111,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls 0.23.36",
- "socket2 0.5.10",
+ "socket2 0.6.4",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -2148,7 +2148,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.5.10",
+ "socket2 0.6.4",
  "tracing",
  "windows-sys 0.60.2",
 ]
