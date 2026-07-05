@@ -20,10 +20,7 @@ interface DataLoadContext<T> {
 }
 
 type DataLoadState<T> =
-  | { type: 'idle' }
-  | { type: 'loading'; subscription: Subscription }
-  | { type: 'error' }
-  | { type: 'done'; data: T };
+  { type: 'idle' } | { type: 'loading'; subscription: Subscription } | { type: 'error' } | { type: 'done'; data: T };
 
 /**
  * We borrow some code from the ngIf directive to enable type checking in the template:
