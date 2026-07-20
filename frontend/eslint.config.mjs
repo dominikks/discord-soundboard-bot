@@ -1,16 +1,12 @@
 // @ts-check
 import tseslint from 'typescript-eslint';
 import angular from 'angular-eslint';
-import importPlugin from 'eslint-plugin-import';
 
 export default tseslint.config(
   {
     files: ['**/*.ts'],
     extends: [...tseslint.configs.recommended, ...angular.configs.tsRecommended],
     processor: angular.processInlineTemplates,
-    plugins: {
-      import: importPlugin,
-    },
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -71,8 +67,6 @@ export default tseslint.config(
       ],
       'id-blacklist': 'off',
       'id-match': 'off',
-      'import/no-deprecated': 'warn',
-      'import/order': 'error',
       'max-classes-per-file': 'off',
       'max-len': [
         'error',

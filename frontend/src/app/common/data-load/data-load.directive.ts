@@ -36,8 +36,8 @@ export class DataLoadDirective<T> implements OnChanges {
 
   static ngTemplateContextGuard<T>(
     _dir: DataLoadDirective<T>,
-    ctx: unknown,
-  ): ctx is DataLoadContext<Exclude<T, false | 0 | '' | null | undefined>> {
+    _ctx: unknown,
+  ): _ctx is DataLoadContext<Exclude<T, false | 0 | '' | null | undefined>> {
     return true;
   }
 
