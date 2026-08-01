@@ -19,7 +19,7 @@ use oauth2::{
 };
 use oauth2::{EndpointNotSet, EndpointSet};
 use rand::distr::Alphanumeric;
-use rand::Rng;
+use rand::RngExt;
 use rocket::get;
 use rocket::http::CookieJar;
 use rocket::http::Status;
