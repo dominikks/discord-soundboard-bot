@@ -3,6 +3,8 @@ updates:
   # Frontend npm dependencies
   - package-ecosystem: "npm"
     directory: "/frontend"
+    assignees:
+      - "dominikks"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 10
@@ -40,6 +42,8 @@ updates:
   # Backend Rust dependencies
   - package-ecosystem: "cargo"
     directory: "/backend"
+    assignees:
+      - "dominikks"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 10
@@ -62,6 +66,8 @@ updates:
   # Dockerfile and Docker Compose
   - package-ecosystem: "docker"
     directory: "/"
+    assignees:
+      - "dominikks"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5
@@ -76,6 +82,8 @@ updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
+    assignees:
+      - "dominikks"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5

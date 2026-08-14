@@ -76,7 +76,7 @@ export class SoundboardComponent {
   readonly randomInfixes = computed(() => this.loadedData()?.[0]);
   readonly sounds = computed<[Sound[], Fuse<Sound>]>(() => {
     const data = this.loadedData();
-    if (!data) return [[], new Fuse([], { keys: ['name'] })];
+    if (!data) return [[], new Fuse<Sound>([], { keys: ['name'] })];
 
     const sounds = data[1];
     return [sounds, new Fuse(sounds, { keys: ['name'] })];
