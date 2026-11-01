@@ -51,6 +51,17 @@ fn discord_fixture() -> CacheHttp {
     let mut event: GuildCreateEvent =
         serde_json::from_value(serde_json::to_value(guild).unwrap()).unwrap();
     cache.update(&mut event);
+    let mut other_guild = event.guild.clone();
+    other_guild.id = GuildId::new(200);
+    for member in other_guild.members.values_mut() {
+        member.roles.clear();
+    }
+    let mut everyone = Role::default();
+    everyone.id = RoleId::new(200);
+    other_guild.roles.insert(everyone.id, everyone);
+    let mut other_event: GuildCreateEvent =
+        serde_json::from_value(serde_json::to_value(other_guild).unwrap()).unwrap();
+    cache.update(&mut other_event);
     CacheHttp {
         cache,
         // Any unexpected external request fails locally, never contacts Discord.
@@ -139,6 +150,13 @@ async fn authenticated_sound_crud_permissions_and_playback() {
         .get("Set-Cookie")
         .any(|value| value.contains("auth_session=")));
     assert_eq!(response.into_string().await.unwrap(), "2");
+    http.post("/test/session/2/0").dispatch().await;
+    let recent = http.get("/test/session-user").dispatch().await;
+    assert_eq!(recent.status(), Status::Ok);
+    assert!(!recent
+        .headers()
+        .get("Set-Cookie")
+        .any(|value| value.contains("auth_session=")));
 
     let payload = r#"{"guildId":"100","name":"Test sound","category":"effects"}"#;
     let created = http
@@ -191,6 +209,27 @@ async fn authenticated_sound_crud_permissions_and_playback() {
     let downloaded = http.get(format!("/api/sounds/{id}")).dispatch().await;
     assert_eq!(downloaded.status(), Status::Ok);
     assert_eq!(downloaded.into_bytes().await.unwrap(), audio);
+    http.post("/test/session/1/0").dispatch().await;
+    let source: serde_json::Value = http
+        .post("/api/sounds")
+        .header(ContentType::JSON)
+        .body(r#"{"guildId":"200","name":"Private source","category":""}"#)
+        .dispatch()
+        .await
+        .into_json()
+        .await
+        .unwrap();
+    let source_id = source["id"].as_str().unwrap();
+    assert_eq!(
+        http.post(format!("/api/sounds/{source_id}"))
+            .header(ContentType::new("audio", "mpeg"))
+            .body(audio.clone())
+            .dispatch()
+            .await
+            .status(),
+        Status::Ok
+    );
+    http.post("/test/session/2/0").dispatch().await;
     assert_eq!(
         http.put(format!("/api/sounds/{id}"))
             .header(ContentType::JSON)
@@ -211,6 +250,13 @@ async fn authenticated_sound_crud_permissions_and_playback() {
     assert!(sounds[0]["volumeAdjustment"].is_null());
 
     http.post("/test/session/3/0").dispatch().await;
+    assert_eq!(
+        http.post(format!("/api/guilds/100/play/{source_id}?autojoin=false"))
+            .dispatch()
+            .await
+            .status(),
+        Status::Forbidden
+    );
     assert_eq!(
         http.post(format!("/api/guilds/100/play/{id}?autojoin=false"))
             .dispatch()
@@ -266,6 +312,13 @@ async fn authenticated_sound_crud_permissions_and_playback() {
         Status::Forbidden
     );
     http.post("/test/session/1/0").dispatch().await;
+    assert_eq!(
+        http.delete(format!("/api/sounds/{source_id}"))
+            .dispatch()
+            .await
+            .status(),
+        Status::Ok
+    );
     assert_eq!(
         http.get("/api/sounds/2147483647").dispatch().await.status(),
         Status::NotFound
