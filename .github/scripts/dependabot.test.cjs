@@ -126,6 +126,11 @@ test("latest failures assign once using built-in PR write even while another wor
   f.state.pr.assignees = [{ login: "dominikks" }];
   await run(f);
   assert.equal(f.state.assignments.length, 1);
+  const missing = fixture();
+  missing.state.runs[0].conclusion = "failure";
+  missing.state.runs.pop();
+  await run(missing);
+  assert.equal(missing.state.assignments.length, 1);
 });
 
 test("a rerun replaces failed jobs rather than permanently blocking a fixed PR", async () => {

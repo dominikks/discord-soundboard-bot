@@ -69,15 +69,23 @@ async function validate({ github, core, context }) {
     const { data: catalog } = await github.rest.actions.listRepoWorkflows(context.repo);
     const runs = [];
     let triggerIsLatest = false;
+    let missingValidation = false;
     for (const [path, checks] of Object.entries(WORKFLOWS)) {
       const workflow = catalog.workflows.find(item => item.path === path && item.state === "active");
-      if (!workflow) throw new Error(`Required validation workflow unavailable: ${path}`);
+      if (!workflow) {
+        missingValidation = true;
+        continue;
+      }
       const history = await github.paginate(github.rest.actions.listWorkflowRuns, {
         ...context.repo, workflow_id: workflow.id, head_sha: event.head_sha,
         event: "pull_request", per_page: 100,
       });
       const run = latest(history, event.head_sha);
-      if (!run || run.head_repository?.full_name !== repo.full_name) return;
+      if (!run) {
+        missingValidation = true;
+        continue;
+      }
+      if (run.head_repository?.full_name !== repo.full_name) return;
       if (workflow.id === event.workflow_id) {
         triggerIsLatest = run.id === event.id && run.run_attempt === event.run_attempt;
         if (!triggerIsLatest) return;
@@ -98,7 +106,7 @@ async function validate({ github, core, context }) {
         return;
       }
     }
-    if (runs.some(({ run }) => run.status !== "completed")) return;
+    if (missingValidation || runs.some(({ run }) => run.status !== "completed")) return;
     // This endpoint returns only active rules, including inherited organization rules.
     const rules = await github.paginate("GET /repos/{owner}/{repo}/rules/branches/{branch}", {
       ...context.repo, branch: repo.default_branch, per_page: 100,
