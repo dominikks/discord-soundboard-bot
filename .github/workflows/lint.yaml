@@ -1,6 +1,12 @@
 name: Lint app
 
-on: push
+on:
+  pull_request:
+  push:
+    branches: [main, development]
+
+permissions:
+  contents: read
 
 jobs:
   frontend-lint:
@@ -9,6 +15,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Node
         uses: actions/setup-node@v7
@@ -32,8 +40,13 @@ jobs:
   backend-lint:
     name: Lint backend
     runs-on: ubuntu-latest
+    env:
+      CARGO_BUILD_JOBS: "2"
+      CARGO_PROFILE_DEV_DEBUG: "0"
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -45,4 +58,6 @@ jobs:
         run: cargo fmt --manifest-path backend/Cargo.toml --all -- --check
 
       - name: Run clippy
-        run: cargo clippy --manifest-path backend/Cargo.toml
+        run: cargo clippy --locked --all-targets --manifest-path backend/Cargo.toml -- -D warnings
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"

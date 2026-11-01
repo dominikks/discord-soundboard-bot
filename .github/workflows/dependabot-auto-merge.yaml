@@ -1,0 +1,60 @@
+name: Dependabot auto-merge
+
+on:
+  workflow_run:
+    workflows: ["Build app", "Lint app", "Behavioral tests"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+concurrency:
+  group: dependabot-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate trusted policy
+        id: policy
+        uses: actions/github-script@v8
+        with:
+          script: |
+            // Read only default-branch code at this trusted workflow's SHA. No checkout/artifacts.
+            const { data } = await github.rest.repos.getContent({
+              ...context.repo, path: ".github/scripts/dependabot.cjs", ref: context.sha,
+            });
+            const policy = new (require("module").Module)("dependabot-policy");
+            policy._compile(Buffer.from(data.content, "base64").toString(), "dependabot-policy.cjs");
+            await policy.exports.validate({ github, core, context });
+
+      - name: Enable native squash auto-merge for the validated head
+        id: merge
+        if: steps.policy.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.policy.outputs.number }}
+          HEAD_SHA: ${{ steps.policy.outputs.sha }}
+        run: |
+          test -n "$GH_TOKEN" || { echo "::error::DEPENDABOT_MERGE_TOKEN is required"; exit 1; }
+          gh pr merge "$PR_NUMBER" --auto --squash --match-head-commit "$HEAD_SHA"
+
+      - name: Assign a failed merge to dominikks
+        if: failure() && steps.policy.outputs.eligible == 'true'
+        uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ steps.policy.outputs.number }}
+        with:
+          script: |
+            const number = Number(process.env.PR_NUMBER);
+            const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: number });
+            if (!pr.assignees.some(user => user.login === "dominikks")) {
+              await github.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
+                ...context.repo, issue_number: number,
+                assignees: [...pr.assignees.map(user => user.login), "dominikks"],
+              });
+            }

@@ -143,3 +143,71 @@ Set the env variables `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECR
 - Start the frontend using `npm start` in `frontend/`. The proxy will pass api requests data to the backend (see
   `proxy.config.js`).
 - Access the frontend server under [http://localhost:4200](http://localhost:4200).
+
+### Validation
+
+Use Node 24, stable Rust, Chrome/Chromium, CMake and FFmpeg. Backend tests require a
+**disposable PostgreSQL database**: they run migrations and truncate their application tables.
+They exercise actual Rocket routes, encrypted sessions, command tokens, sound CRUD and
+MP3 upload/download, permission boundaries and disconnected playback. Discord data is
+cached locally and unexpected HTTP requests are directed to localhost, not Discord.
+
+```sh
+cd backend
+TEST_DATABASE_URL=postgres://postgres:password@localhost/soundboard_test \
+  CMAKE_POLICY_VERSION_MINIMUM=3.5 cargo test --locked
+cargo fmt --all -- --check
+CMAKE_POLICY_VERSION_MINIMUM=3.5 cargo clippy --locked --all-targets -- -D warnings
+cd ../frontend
+npm ci
+npm run test:ci
+npm run build
+npm run lint
+npm run format:check
+cd ..
+node --test .github/scripts/dependabot.test.cjs
+node .github/scripts/artifact-smoke.cjs frontend/dist/discord-soundboard-bot/browser
+node .github/scripts/browser-smoke.cjs frontend/dist/discord-soundboard-bot/browser
+```
+
+Set `CHROME_BIN` if Chrome is not found automatically. Angular tests cover rendered
+play/preview/stop controls, HTTP request payloads, authentication errors and routed
+session/guild permissions. CI also builds the deployable Docker image without registry
+credentials and checks packaged FFmpeg/FFprobe and production frontend assets.
+The packaged Angular bundles also boot in headless Chrome against fixture API responses
+and must navigate from the soundboard deep link to the real login screen.
+Bot startup itself requires real Discord credentials and is not simulated by this smoke check.
+Registry publication remains limited to main/development pushes, tags and explicit
+trusted-branch dispatches.
+
+### Weekly dependency updates
+
+Dependabot checks Cargo, frontend npm, GitHub Actions and Docker every Monday at 06:00
+Europe/Berlin. Existing Docker versions are digest-pinned so floating-tag changes are
+trackable; coordinated Angular packages update together. Major updates are not blanket
+ignored: incompatible versions stay unmerged until their peer/API incompatibilities are fixed.
+
+The trusted `workflow_run` merger considers only open, non-draft, same-repository
+Dependabot PRs targeting the default branch. It waits for the latest attempt of **all
+three** validation workflows on the exact PR head, checks named jobs and revalidates
+the head/runs before requesting native squash auto-merge. Stale/cancelled/nonbot runs
+are ignored. Failed validation or merge requests assign `dominikks` only if not already
+assigned; PRs are not assigned on creation. No PR checkout or artifacts are executed
+in the privileged merger.
+
+Repository setup (not changed by this PR):
+
+- Enable native repository auto-merge. Disable that setting or the `Dependabot auto-merge`
+  workflow to stop automation; no custom enable variable is needed.
+- Protect the default branch using an **active branch ruleset** with required GitHub
+  Actions checks **Compile frontend**,
+  **Build docker image**, **Lint frontend**, **Lint backend**, **Backend behavior**,
+  **Frontend behavior**, and **Auto-merge policy**, and require branches to be up to date.
+  The merger fails closed without this active, strict rule. Classic branch protection
+  also works when readable by the built-in token; prefer a ruleset because its active
+  branch rules can be checked without Administration permission.
+- Provide `DEPENDABOT_MERGE_TOKEN`, a fine-grained token restricted to this repository
+  with **Contents: read/write** and **Pull requests: read/write**. It is used only for
+  `gh pr merge --auto --squash --match-head-commit`, allowing the resulting merge to
+  trigger normal image publication. Validation and failure assignment use the built-in
+  token with read access and `pull-requests: write`, not `issues: write`.

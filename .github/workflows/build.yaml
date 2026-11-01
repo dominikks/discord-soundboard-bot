@@ -1,87 +1,119 @@
 name: Build app
 
 on:
+  pull_request:
   push:
+    branches: [main, development]
+    tags: ["**"]
   workflow_dispatch:
     inputs:
       push:
-        description: 'Push Docker image to registry'
+        description: "Push Docker image to registry"
         required: false
         default: false
         type: boolean
+
+permissions:
+  contents: read
 
 jobs:
   compile-frontend:
     name: Compile frontend
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v7
-
-      - name: Setup Node
-        uses: actions/setup-node@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
         working-directory: frontend
-
-      - name: Build
-        run: npm run build
+      - run: npm run build
         working-directory: frontend
-
-      - name: Archive binary
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7
         with:
           name: frontend
           path: frontend/dist/discord-soundboard-bot/**
 
   docker:
     name: Build docker image
-    needs: [ compile-frontend ]
+    needs: [compile-frontend]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
-      - name: Download frontend
-        uses: actions/download-artifact@v8
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
         with:
           name: frontend
           path: frontend/dist/discord-soundboard-bot/
+      - uses: docker/setup-buildx-action@v4
+      - name: Build without registry credentials
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: soundboard:validation
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke-test packaged runtime and frontend
+        run: |
+          docker run --rm --entrypoint /usr/bin/ffmpeg soundboard:validation -version
+          docker run --rm --entrypoint /usr/bin/ffprobe soundboard:validation -version
+          id=$(docker create soundboard:validation)
+          trap 'docker rm "$id"' EXIT
+          mkdir -p artifact-smoke
+          docker cp "$id:/app/static" artifact-smoke/static
+          docker cp "$id:/app/discord-soundboard-bot" artifact-smoke/backend
+          test -x artifact-smoke/backend
+          test -s artifact-smoke/static/index.html
+          node .github/scripts/artifact-smoke.cjs artifact-smoke/static
+          node .github/scripts/browser-smoke.cjs artifact-smoke/static
 
+  publish:
+    name: Publish docker image
+    needs: [compile-frontend, docker]
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true' &&
+       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend
+          path: frontend/dist/discord-soundboard-bot/
       - name: Docker meta
         id: docker_meta
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/dominikks/discord-soundboard-bot
-
-      - name: Set environment variables
+      - name: Set build metadata
         if: startsWith(github.ref, 'refs/heads/')
         run: |
-          echo "BUILD_TIMESTAMP=$(git show -s --format=%ct $GITHUB_SHA)" >> $GITHUB_ENV
-          echo "BUILD_ID=${GITHUB_REF#refs/heads/}#$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
+          echo "BUILD_TIMESTAMP=$(git show -s --format=%ct "$GITHUB_SHA")" >> "$GITHUB_ENV"
+          echo "BUILD_ID=${GITHUB_REF#refs/heads/}#$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v7
+      - uses: docker/build-push-action@v7
         with:
           context: .
-          push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development' || startsWith(github.ref, 'refs/tags/') || github.event.inputs.push == 'true' }}
+          push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
           cache-from: type=gha

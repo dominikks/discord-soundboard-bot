@@ -30,6 +30,9 @@ mod settings;
 mod sounds;
 mod utils;
 
+#[cfg(test)]
+mod tests;
+
 /// 64 bit integers can not be accurately represented in javascript. They are therefore
 /// treated as strings. This is similar to the Twitter Snowflake type.
 #[serde_as]
@@ -44,7 +47,10 @@ static DISCORD_CLIENT_ID: LazyLock<String> =
 static DISCORD_CLIENT_SECRET: LazyLock<String> =
     LazyLock::new(|| var("DISCORD_CLIENT_SECRET").expect("Expected DISCORD_CLIENT_SECRET as env"));
 
-pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>, RocketError> {
+pub async fn run(
+    cache_http: CacheHttp,
+    client: Client,
+) -> Result<Rocket<Ignite>, Box<RocketError>> {
     rocket::build()
         .attach(db::DbConn::fairing())
         .attach(AdHoc::on_ignite(
@@ -65,6 +71,7 @@ pub async fn run(cache_http: CacheHttp, client: Client) -> Result<Rocket<Ignite>
         .manage(EventBus::new())
         .launch()
         .await
+        .map_err(Box::new)
 }
 
 #[get("/<path..>", rank = 100)]

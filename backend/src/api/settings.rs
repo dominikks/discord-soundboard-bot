@@ -43,7 +43,7 @@ enum SettingsError {
     DieselError(#[from] DieselError),
 
     #[error("Discord API error: {0}")]
-    SerenityError(Box<serenity::Error>),
+    SerenityError(#[from] Box<serenity::Error>),
 
     #[error("Insufficient permission: you do not have the permission to perform this action")]
     InsufficientPermission(#[from] PermissionError),

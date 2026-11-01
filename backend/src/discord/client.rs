@@ -24,9 +24,15 @@ pub enum ClientError {
     #[error("User not found in a voice channel")]
     UserNotFound,
     #[error("Connection error: {0}")]
-    ConnectionError(#[from] JoinError),
+    ConnectionError(Box<JoinError>),
     #[error("Guild not found")]
     GuildNotFound,
+}
+
+impl From<JoinError> for ClientError {
+    fn from(error: JoinError) -> Self {
+        Self::ConnectionError(Box::new(error))
+    }
 }
 
 #[derive(Clone)]
@@ -63,7 +69,7 @@ impl Client {
             .songbird
             .join(guild_id, channel_id)
             .await
-            .map_err(ClientError::ConnectionError)?;
+            .map_err(ClientError::from)?;
 
         self.recorder
             .register_with_call(guild_id, call_lock.clone())
@@ -107,7 +113,7 @@ impl Client {
             .await
             .map_err(|err| match err {
                 JoinError::NoCall => ClientError::NotInAChannel,
-                other => ClientError::ConnectionError(other),
+                other => ClientError::from(other),
             })
     }
 

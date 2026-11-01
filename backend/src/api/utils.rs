@@ -30,16 +30,15 @@ impl<'r> Responder<'r, 'static> for CachedFile {
             response.set_header(ct);
         }
 
-        let cache_string;
-        if content_type == Some(ContentType::HTML) {
-            cache_string = "no-cache";
+        let cache_string = if content_type == Some(ContentType::HTML) {
+            "no-cache"
         } else if content_type == Some(ContentType::CSS)
             || content_type == Some(ContentType::JavaScript)
         {
-            cache_string = "public, max-age=315360000"; // indefinitely
+            "public, max-age=315360000" // indefinitely
         } else {
-            cache_string = "public, max-age=2592000"; // 30d
-        }
+            "public, max-age=2592000" // 30d
+        };
         response.set_raw_header("Cache-Control", cache_string);
 
         Ok(response)

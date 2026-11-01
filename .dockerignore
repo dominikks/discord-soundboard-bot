@@ -1,4 +1,5 @@
 /backend/target
 /backend/data
+/artifact-smoke
 /frontend/**
 !/frontend/dist/discord-soundboard-bot/**

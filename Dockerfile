@@ -1,6 +1,6 @@
 ############################################################
 ### Stage 1: Build
-FROM clux/muslrust:stable AS builder
+FROM clux/muslrust:stable@sha256:f2a743194641985fe49ed340369d71fdaefbbdda20871514b5dd086319c454d6 AS builder
 WORKDIR /app
 
 # Install cmake for audiopus_sys bundled opus build
@@ -19,7 +19,7 @@ ENV RUSTFLAGS="-C link-arg=-lm"
 COPY backend/Cargo.toml backend/Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 
-RUN cargo build --release
+RUN cargo build --release --locked
 ### Dep caching end
 
 # Not declared earlier for caching
@@ -28,11 +28,11 @@ ARG BUILD_TIMESTAMP
 
 COPY backend/ .
 RUN touch src/main.rs
-RUN cargo build --release
+RUN cargo build --release --locked
 
 ############################################################
 ### Stage 2: Compose
-FROM debian:13-slim AS composer
+FROM debian:13-slim@sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4 AS composer
 
 # Get ffmpeg
 RUN apt-get update && apt-get install -y curl tar xz-utils \
@@ -52,7 +52,7 @@ COPY --chown=discordbot:discordbot frontend/dist/discord-soundboard-bot/browser 
 
 ############################################################
 ### Stage 3: Final image
-FROM gcr.io/distroless/cc-debian12
+FROM gcr.io/distroless/cc-debian12:latest@sha256:e5d81ddde149641e2a9ba55be4545bc125c67de07508b03ba4c22e6eb0ded5aa
 LABEL maintainer="dominik@kus.software"
 
 COPY --from=composer /etc/passwd /etc/
