@@ -3,11 +3,12 @@ updates:
   # Frontend npm dependencies
   - package-ecosystem: "npm"
     directory: "/frontend"
-    assignees:
-      - "dominikks"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 20
     ignore:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
@@ -15,10 +16,10 @@ updates:
       angular:
         patterns:
           - "@angular/*"
-      angular-eslint:
-        patterns:
+          - "@angular-devkit/*"
           - "@angular-eslint/*"
           - "angular-eslint"
+          - "ngx-mat-select-search"
       typescript-eslint:
         patterns:
           - "@typescript-eslint/*"
@@ -42,11 +43,12 @@ updates:
   # Backend Rust dependencies
   - package-ecosystem: "cargo"
     directory: "/backend"
-    assignees:
-      - "dominikks"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 20
     groups:
       serde:
         patterns:
@@ -66,11 +68,12 @@ updates:
   # Dockerfile and Docker Compose
   - package-ecosystem: "docker"
     directory: "/"
-    assignees:
-      - "dominikks"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 5
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 10
     groups:
       docker-all:
         patterns:
@@ -82,11 +85,12 @@ updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
-    assignees:
-      - "dominikks"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 5
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 10
     groups:
       github-actions-all:
         patterns:

@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, RedirectCommand, Router } from '@angular/router';
-import { User } from '../services/api.service';
+import { catchError, map, of } from 'rxjs';
+import { ApiService, User } from '../services/api.service';
 
 export const guildPermissionGuard: CanActivateFn = (route, _state) => {
   const guildId = route.params.guildId;
@@ -24,7 +25,16 @@ export const guildPermissionGuard: CanActivateFn = (route, _state) => {
   }
 
   if (!user) {
-    return new RedirectCommand(router.parseUrl('/login'));
+    // On a direct deep link, canActivate runs before the parent resolver.
+    return inject(ApiService)
+      .loadUser()
+      .pipe(
+        map(loadedUser => {
+          const guild = loadedUser.guilds.find(g => g.id === guildId);
+          return guild && guild.role !== 'user' ? true : new RedirectCommand(router.parseUrl('/settings'));
+        }),
+        catchError(() => of(new RedirectCommand(router.parseUrl('/login')))),
+      );
   }
 
   const guild = user.guilds.find(g => g.id === guildId);

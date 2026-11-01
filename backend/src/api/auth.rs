@@ -112,6 +112,16 @@ struct SessionInfo {
     user_id: Snowflake,
 }
 
+fn session_timestamp(now: SystemTime) -> SystemTime {
+    // TimestampSeconds rounds; rounding up would briefly reject a newly issued session.
+    SystemTime::UNIX_EPOCH
+        + Duration::from_secs(
+            now.duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        )
+}
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for UserId {
     type Error = ();
@@ -135,7 +145,7 @@ impl<'r> FromRequest<'r> for UserId {
                 } else if diff > 60 * 60 {
                     if let Ok(data) = serde_json::to_string(&SessionInfo {
                         user_id: cookie.user_id.clone(),
-                        timestamp: SystemTime::now(),
+                        timestamp: session_timestamp(SystemTime::now()),
                     }) {
                         cookies.add_private(Cookie::new(SESSION_COOKIE, data));
                     }
@@ -234,7 +244,7 @@ enum AuthError {
     DieselError(#[from] DieselError),
 
     #[error("Discord API error: {0}")]
-    SerenityError(#[source] Box<serenity::Error>),
+    SerenityError(#[from] Box<serenity::Error>),
 
     #[error("Number handling error")]
     BigDecimalError,
@@ -430,7 +440,7 @@ async fn login_post(
     .await?;
 
     let session = SessionInfo {
-        timestamp: SystemTime::now(),
+        timestamp: session_timestamp(SystemTime::now()),
         user_id: Snowflake(user_id.0),
     };
     cookies.add_private(Cookie::new(
@@ -558,4 +568,27 @@ async fn get_auth_token(user: UserId, db: DbConn) -> Result<Json<AuthToken>, Aut
         })?;
 
     Ok(Json(token.into()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn session_timestamp_serialization_never_moves_into_the_future() {
+        for nanos in [0, 499_999_999, 500_000_000, 999_999_999] {
+            let now = SystemTime::UNIX_EPOCH + Duration::new(1_000_000, nanos);
+            let session = SessionInfo {
+                timestamp: session_timestamp(now),
+                user_id: Snowflake(1),
+            };
+            let decoded: SessionInfo =
+                serde_json::from_str(&serde_json::to_string(&session).unwrap()).unwrap();
+            assert!(decoded.timestamp <= now);
+            assert_eq!(
+                decoded.timestamp,
+                SystemTime::UNIX_EPOCH + Duration::from_secs(1_000_000)
+            );
+        }
+    }
 }

@@ -55,7 +55,7 @@ enum SoundsError {
     IoError(#[from] std::io::Error),
 
     #[error("Discord API error: {0}")]
-    SerenityError(Box<serenity::Error>),
+    SerenityError(#[from] Box<serenity::Error>),
 
     #[error("Internal error: {0}")]
     InternalError(String),

@@ -68,7 +68,13 @@ enum RecorderError {
     FileHandling(#[from] file_handling::FileError),
 
     #[error("Discord API error: {0}")]
-    SerenityError(#[from] serenity::Error),
+    SerenityError(#[from] Box<serenity::Error>),
+}
+
+impl From<serenity::Error> for RecorderError {
+    fn from(error: serenity::Error) -> Self {
+        Self::SerenityError(Box::new(error))
+    }
 }
 
 impl RecorderError {

@@ -160,7 +160,7 @@ pub async fn get_guilds_for_user(
     cache_http: &CacheHttp,
     db: &DbConn,
     user_id: UserId,
-) -> Result<Vec<(Guild, UserPermission)>, serenity::Error> {
+) -> Result<Vec<(Guild, UserPermission)>, Box<serenity::Error>> {
     let mut response = vec![];
     for guild_id in cache_http.cache.guilds() {
         if let Ok(perm) = get_permission_level(cache_http, db, user_id, guild_id).await {

@@ -120,11 +120,11 @@ This is a Discord soundboard bot that allows users to play custom sounds in voic
 ## Testing
 
 ### Backend
-- No specific test runner configured in the workflow
+- CI runs `cargo test --locked` against a disposable PostgreSQL database using `TEST_DATABASE_URL`
 - Follow standard Rust testing conventions with `#[cfg(test)]` modules
 
 ### Frontend
-- Unit tests: `npm run test`
+- Unit tests: `npm run test`; headless CI: `npm run test:ci`
 - Uses Jasmine and Karma
 - Tests should be in `.spec.ts` files alongside components
 
